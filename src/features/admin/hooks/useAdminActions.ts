@@ -17,8 +17,8 @@ export function useAdminActions() {
         items: section.items.map((item, itemIndex) => ({
           title: item.title,
           kind: item.kind,
-          assetPath: item.kind === "svg" ? item.assetPath : null,
-          youtubeUrl: item.kind === "youtube" ? item.youtubeUrl : null,
+          assetPath: item.kind === "svg" ? item.assetPath : undefined,
+          youtubeUrl: item.kind === "youtube" ? item.youtubeUrl : undefined,
           position: itemIndex,
           isPreview: false,
         })),

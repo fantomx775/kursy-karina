@@ -17,7 +17,7 @@ const ensureDbUrl = () => {
 
 const runSqlFile = (filePath: string) => {
   ensureDbUrl();
-  execFileSync("psql", [E2E_DB_URL, "-v", "ON_ERROR_STOP=1", "-f", filePath], {
+  execFileSync("psql", [E2E_DB_URL!, "-v", "ON_ERROR_STOP=1", "-f", filePath], {
     stdio: "inherit",
   });
 };

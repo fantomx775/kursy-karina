@@ -107,16 +107,13 @@ export async function GET(
   const disposition = isPreview
     ? `inline; filename="${filename}"`
     : `attachment; filename="${filename}"`;
-  const pdfBuffer = pdfBytes.buffer.slice(
-    pdfBytes.byteOffset,
-    pdfBytes.byteOffset + pdfBytes.byteLength,
-  );
+  const pdfBuffer = Buffer.from(pdfBytes);
   return new NextResponse(pdfBuffer, {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": disposition,
-      "Content-Length": String(pdfBuffer.byteLength),
+      "Content-Length": String(pdfBuffer.length),
     },
   });
 }

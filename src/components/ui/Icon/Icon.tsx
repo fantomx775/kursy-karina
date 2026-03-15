@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 export interface IconProps extends React.HTMLAttributes<SVGElement> {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
   color?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
 }
 
