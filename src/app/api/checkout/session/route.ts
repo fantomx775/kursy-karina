@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   const { data: courses } = await admin
     .from("courses")
     .select(
-      "id, title, description, price, promotion_discount_type, promotion_discount_value, promotion_start_date, promotion_end_date",
+      "id, slug, title, description, price, promotion_discount_type, promotion_discount_value, promotion_start_date, promotion_end_date",
     )
     .in("id", uniqueCourseIds)
     .eq("status", "active");
@@ -37,6 +37,7 @@ export async function POST(request: Request) {
   courses?.forEach((row) => {
     const course: Course = {
       id: row.id,
+      slug: row.slug,
       title: row.title,
       description: row.description,
       price: row.price,
