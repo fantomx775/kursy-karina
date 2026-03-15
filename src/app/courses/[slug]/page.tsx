@@ -74,12 +74,12 @@ export default async function CourseDetailPage({
           / {course.title}
         </nav>
 
-        <div className="grid gap-6 sm:gap-8 lg:grid-cols-[1.5fr_1fr]">
-          <div className="space-y-5 sm:space-y-6">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-[var(--coffee-charcoal)]">
-              {course.title}
-            </h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-[var(--coffee-charcoal)] mb-5 sm:mb-6">
+          {course.title}
+        </h1>
 
+        <div className="grid gap-6 sm:gap-8 lg:grid-cols-[1.5fr_1fr] lg:items-start">
+          <div className="space-y-5 sm:space-y-6">
             {course.main_image_url ? (
               <div className="relative w-full max-w-xl aspect-video overflow-hidden bg-[var(--coffee-cappuccino)] border border-[var(--coffee-cappuccino)]">
                 <Image
