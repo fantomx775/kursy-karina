@@ -21,6 +21,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Kursy App Modern",
   description: "Nowoczesna platforma kursów online",
+  icons: {
+    icon: "/logo/sygnet-header.png",
+    apple: "/logo/sygnet-header.png",
+  },
 };
 
 export default function RootLayout({
