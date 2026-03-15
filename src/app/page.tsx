@@ -5,6 +5,8 @@ import { createAdminSupabaseClient } from "@/services/supabase/admin";
 import type { Course } from "@/types/course";
 import { isPromoActive, getEffectivePriceCents, getPromoLabel } from "@/lib/coursePromo";
 
+export const dynamic = "force-dynamic";
+
 function CourseCard({
   title,
   description,

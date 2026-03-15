@@ -1,7 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
 import type { Course } from "@/types/course";
 import { isPromoActive, getEffectivePriceCents, getPromoLabel } from "@/lib/coursePromo";
+
+export const dynamic = "force-dynamic";
 
 export default async function CoursesPage() {
   const admin = createAdminSupabaseClient();
@@ -34,8 +37,36 @@ export default async function CoursesPage() {
               return (
                 <div
                   key={course.id}
-                  className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 flex flex-col transition-shadow duration-300 hover:shadow-[var(--shadow-lg)] border-radius"
+                  className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm overflow-hidden flex flex-col transition-shadow duration-300 hover:shadow-[var(--shadow-lg)] border-radius"
                 >
+                  <Link href={`/courses/${course.slug}`} className="block relative h-48 sm:h-52 flex-shrink-0">
+                    <div className="absolute inset-0 bg-[var(--coffee-cappuccino)] flex items-center justify-center overflow-hidden">
+                      {course.main_image_url ? (
+                        <Image
+                          src={course.main_image_url}
+                          alt={course.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <span className="text-[var(--coffee-espresso)] text-lg">Kurs Image</span>
+                      )}
+                    </div>
+                    {promoActive && (
+                      <div className="absolute top-2 right-2 flex flex-row flex-wrap gap-1.5 items-center">
+                        <span className="bg-[var(--coffee-mocha)] text-white px-2 py-0.5 text-xs font-semibold tracking-wider uppercase">
+                          PROMOCJA
+                        </span>
+                        {promoLabel && (
+                          <span className="bg-[var(--coffee-mocha)] text-white px-2 py-0.5 text-xs font-semibold">
+                            {promoLabel}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </Link>
+                  <div className="p-5 sm:p-6 flex flex-col flex-1">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <h2 className="text-lg sm:text-xl font-semibold text-[var(--coffee-charcoal)] leading-tight">
                       {course.title}
@@ -71,6 +102,7 @@ export default async function CoursesPage() {
                     >
                       Zobacz kurs
                     </Link>
+                  </div>
                   </div>
                 </div>
               );

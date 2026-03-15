@@ -64,7 +64,7 @@ export default function SuccessPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--coffee-cream)] to-[var(--coffee-latte)] flex items-center justify-center page-width">
-      <div className="border-radius bg-white border border-[var(--coffee-cappuccino)] p-8 text-center max-w-md w-full">
+      <div className="border-radius bg-white border border-[var(--coffee-cappuccino)] p-8 text-center max-w-md w-full shadow-[var(--shadow-md)]">
         {status === "loading" && (
           <div className="flex flex-col items-center gap-4">
             <Spinner size="lg" />
@@ -73,21 +73,23 @@ export default function SuccessPage() {
         )}
         {status === "success" && (
           <>
-            <div className="mb-4 flex justify-center">
+            <div className="mb-6 flex justify-center">
               <SuccessIcon
-                className="h-12 w-12"
+                className="h-14 w-14 text-[var(--coffee-charcoal)]"
                 size="xl"
-                color="var(--success)"
+                color="var(--coffee-charcoal)"
                 aria-hidden
               />
             </div>
-            <h1 className="text-2xl font-semibold text-[var(--coffee-charcoal)] mb-2">
-              Sukces!
+            <h1 className="text-2xl font-semibold text-[var(--coffee-charcoal)] tracking-tight mb-3">
+              Sukces!!
             </h1>
-            <p className="text-[var(--coffee-espresso)] mb-6">{message}</p>
+            <p className="text-[var(--coffee-espresso)] text-[15px] leading-relaxed mb-8 max-w-[280px] mx-auto">
+              {message}
+            </p>
             <Link
               href="/dashboard"
-              className="border-radius block bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-4 py-2"
+              className="border-radius inline-block bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-6 py-2.5 text-sm font-medium transition-colors"
             >
               Przejdź do kursów
             </Link>

@@ -261,6 +261,10 @@ export function CourseForm({
       return;
     }
 
+    // #region agent log
+    fetch('http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'9b4d30'},body:JSON.stringify({sessionId:'9b4d30',runId:'baseline',hypothesisId:'H1',location:'CourseForm.tsx:264',message:'Submitting course form payload to onSave',data:{title:title.trim(),status,price:priceNum,mainImageUrl:mainImageUrl.trim() || null,sectionsCount:validSections.length,itemCount:validSections.reduce((sum,section) => sum + section.items.length,0)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+
     onSave({
       title: title.trim(),
       description: description.trim(),

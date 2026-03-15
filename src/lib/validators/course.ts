@@ -34,6 +34,12 @@ export const courseInputSchema = z
     description: z.string().min(1),
     price: z.number().positive(),
     status: z.enum(["active", "inactive"]),
+    mainImageUrl: z
+      .string()
+      .url()
+      .max(2048)
+      .optional()
+      .nullable(),
     sections: z.array(courseSectionInputSchema),
     promotionDiscountType: z.enum(["percentage", "fixed"]).optional().nullable(),
     promotionDiscountValue: z.number().optional().nullable(),

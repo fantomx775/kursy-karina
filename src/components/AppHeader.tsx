@@ -53,7 +53,7 @@ export function AppHeader() {
   const mobileNavLinkClass =
     "block py-3 px-4 text-base text-[var(--coffee-espresso)] hover:text-[var(--coffee-mocha)] hover:bg-[var(--coffee-latte)] transition-colors min-h-[44px]";
   const cartLinkClass =
-    "w-10 h-10 justify-center border-radius leading-none hover:bg-[var(--coffee-latte)] transition-colors";
+    "min-h-[44px] w-10 flex items-center justify-center border-radius leading-none";
 
   const cartIcon = (itemsInCart: number) => (
     <span className="relative inline-flex h-5 w-5 items-center justify-center leading-none">

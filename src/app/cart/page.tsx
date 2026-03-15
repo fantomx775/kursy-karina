@@ -220,7 +220,7 @@ export default function CartPage() {
 
           {appliedCouponCode ? (
             <div
-              className="border-radius flex items-center gap-2 border border-[var(--success-dark)]/30 bg-[var(--success-light)] px-3 py-2.5 text-sm text-[var(--success-dark)]"
+              className="border-radius flex items-center gap-2 border border-[var(--coffee-cappuccino)] bg-[var(--coffee-latte)] px-3 py-2.5 text-sm text-[var(--coffee-charcoal)]"
               role="status"
               aria-live="polite"
             >

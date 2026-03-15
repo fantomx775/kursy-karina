@@ -24,6 +24,9 @@ export function useAdminActions() {
         })),
       })),
     };
+    // #region agent log
+    fetch('http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'9b4d30'},body:JSON.stringify({sessionId:'9b4d30',runId:'baseline',hypothesisId:'H2',location:'useAdminActions.ts:28',message:'Payload prepared in admin action',data:{slug:payload.slug,hasMainImageUrl:Boolean(payload.mainImageUrl),mainImageUrlLength:payload.mainImageUrl?.length ?? 0,sectionsLen:payload.sections?.length,fieldKeys:Object.keys(payload).filter((key) => ['title','slug','description','price','status','sections','mainImageUrl'].includes(key)).sort()},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 
     try {
       // #region agent log

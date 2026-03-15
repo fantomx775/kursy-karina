@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { FaLock, FaPlay } from "react-icons/fa";
 import { createServerSupabaseClient } from "@/services/supabase/server";
@@ -6,6 +7,8 @@ import { getCourseWithContentBySlug } from "@/services/courses";
 import { CoursePurchaseCard } from "@/features/courses/CoursePurchaseCard";
 import { isPromoActive, getEffectivePriceCents } from "@/lib/coursePromo";
 import type { Course } from "@/types/course";
+
+export const dynamic = "force-dynamic";
 
 export default async function CourseDetailPage({
   params,
@@ -76,6 +79,19 @@ export default async function CourseDetailPage({
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-[var(--coffee-charcoal)]">
               {course.title}
             </h1>
+
+            {course.main_image_url ? (
+              <div className="relative w-full max-w-xl aspect-video overflow-hidden bg-[var(--coffee-cappuccino)] border border-[var(--coffee-cappuccino)]">
+                <Image
+                  src={course.main_image_url}
+                  alt={course.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, 36rem"
+                />
+              </div>
+            ) : null}
+
             <p className="text-[var(--coffee-espresso)] text-base sm:text-lg leading-relaxed">{course.description}</p>
 
             <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm overflow-hidden">

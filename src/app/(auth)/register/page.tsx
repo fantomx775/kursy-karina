@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
 import { useAuth } from "@/features/auth/AuthContext";
-import { PasswordInput } from "@/components/ui/PasswordInput";
+import { Input, PasswordInput } from "@/components/ui";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -41,6 +42,7 @@ export default function RegisterPage() {
     }
 
     setIsSubmitting(true);
+    const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -81,16 +83,22 @@ export default function RegisterPage() {
       ) : null}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm text-[var(--coffee-charcoal)] mb-1">
-            Imię i nazwisko
-          </label>
-          <input
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Imię"
             type="text"
-            className="w-full border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white text-[var(--coffee-charcoal)]"
-            value={fullName}
-            onChange={(event) => setFullName(event.target.value)}
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
             required
+            className="border-radius"
+          />
+          <Input
+            label="Nazwisko"
+            type="text"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+            className="border-radius"
           />
         </div>
         <div>
