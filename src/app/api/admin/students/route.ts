@@ -22,7 +22,7 @@ export async function GET() {
 
   const lastSignInMap: Record<string, string | null> = {};
   if (studentIds.length > 0) {
-    const { data: authData } = await admin.auth.admin.listUsers({ per_page: 1000 });
+    const { data: authData } = await admin.auth.admin.listUsers({ perPage: 1000 });
     authData?.users?.forEach((u) => {
       lastSignInMap[u.id] = u.last_sign_in_at ?? null;
     });
