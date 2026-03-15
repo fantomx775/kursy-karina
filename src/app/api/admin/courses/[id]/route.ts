@@ -57,13 +57,7 @@ export async function PUT(
   }
 
   const payload = await request.json();
-  // #region agent log
-  fetch('http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'9b4d30'},body:JSON.stringify({sessionId:'9b4d30',runId:'baseline',hypothesisId:'H6',location:'courses/[id]/route.ts:PUT:payload',message:'Admin course update received payload',data:{hasMainImageUrl:Object.prototype.hasOwnProperty.call(payload ?? {}, 'mainImageUrl'),mainImageUrl:(payload && typeof payload === 'object' && payload.mainImageUrl) ? String(payload.mainImageUrl).slice(0,120) : null,keys:Object.keys(payload ?? {}).sort()},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   const parsed = courseInputSchema.safeParse(payload);
-  // #region agent log
-  fetch('http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'9b4d30'},body:JSON.stringify({sessionId:'9b4d30',runId:'baseline',hypothesisId:'H6',location:'courses/[id]/route.ts:PUT:parse',message:'Admin course update parse result',data:{success:parsed.success,error:parsed.success ? null : parsed.error.issues.slice(0,2).map((issue) => ({ path: issue.path, code: issue.code, message: issue.message })),parsedKeys:parsed.success && parsed.data ? Object.keys(parsed.data).sort() : null,mainImageInParsed: parsed.success ? Object.prototype.hasOwnProperty.call(parsed.data as Record<string, unknown>, 'mainImageUrl') : false},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   if (!parsed.success) {
     return Response.json(
       { error: "Validation failed", details: parsed.error.flatten() },
@@ -110,9 +104,6 @@ export async function PUT(
         ? promotionEndDate
         : null,
   };
-  // #region agent log
-  fetch('http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'9b4d30'},body:JSON.stringify({sessionId:'9b4d30',runId:'baseline',hypothesisId:'H7',location:'courses/[id]/route.ts:PUT:rpc',message:'Admin course update RPC payload',data:{paramKeys:Object.keys(rpcPayload).sort(),hasMainImageParam:false},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   // Use atomic RPC function for course update
   const { data, error } = await admin.rpc("update_course_with_content", rpcPayload);
 
@@ -142,9 +133,6 @@ export async function PUT(
     .from("courses")
     .update({ main_image_url: normalizedMainImageUrl })
     .eq("id", result.course_id);
-  // #region agent log
-  fetch('http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'9b4d30'},body:JSON.stringify({sessionId:'9b4d30',runId:'post-fix',hypothesisId:'H7',location:'courses/[id]/route.ts:PUT:image-save',message:'Persisting main image URL after update',data:{courseId:result.course_id,mainImageUrl:normalizedMainImageUrl,hasImage:normalizedMainImageUrl !== null},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   if (imageError) {
     return Response.json(
       { error: "Course updated, but failed to persist main image" },
@@ -158,9 +146,6 @@ export async function PUT(
     .select("*")
     .eq("id", result.course_id)
     .single();
-  // #region agent log
-  fetch('http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'9b4d30'},body:JSON.stringify({sessionId:'9b4d30',runId:'baseline',hypothesisId:'H8',location:'courses/[id]/route.ts:PUT:db-read',message:'Admin course update persisted row',data:{id:course?.id ?? null,mainImageUrl:course?.main_image_url ?? null,hasMainImage:Boolean(course?.main_image_url)},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
 
   if (fetchError || !course) {
     return Response.json({ error: "Course updated but failed to fetch details" }, { status: 500 });
