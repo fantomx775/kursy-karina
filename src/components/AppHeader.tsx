@@ -49,17 +49,17 @@ export function AppHeader() {
   }, [supabase, router]);
 
   const navLinkClass =
-    "py-2 px-1 text-[var(--coffee-espresso)] hover:text-[var(--coffee-mocha)] transition-colors min-h-[44px] flex items-center";
+    "h-11 flex items-center px-1 text-sm text-[var(--coffee-espresso)] hover:text-[var(--coffee-mocha)] transition-colors";
   const mobileNavLinkClass =
     "block py-3 px-4 text-base text-[var(--coffee-espresso)] hover:text-[var(--coffee-mocha)] hover:bg-[var(--coffee-latte)] transition-colors min-h-[44px]";
   const cartLinkClass =
-    "min-h-[44px] w-10 flex items-center justify-center border-radius leading-none";
+    "gap-2 border-radius items-baseline";
 
-  const cartIcon = (itemsInCart: number) => (
-    <span className="relative inline-flex h-5 w-5 items-center justify-center leading-none">
-      <CartIcon className="h-5 w-5 block" aria-hidden />
+  const cartLabel = (itemsInCart: number) => (
+    <span className="relative inline-flex items-center leading-none" aria-hidden>
+      <CartIcon size="md" className="translate-y-[0.35em]" strokeWidth={1.5} />
       {itemsInCart > 0 && (
-        <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-[10px] font-medium text-white bg-[var(--coffee-espresso)] rounded-full leading-none">
+        <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 flex items-center justify-center px-0.5 text-[9px] font-medium text-white bg-[var(--coffee-espresso)] rounded-full leading-none">
           {itemsInCart > 9 ? "9+" : itemsInCart}
         </span>
       )}
@@ -99,12 +99,12 @@ export function AppHeader() {
                 className={`${navLinkClass} ${cartLinkClass}`}
                 aria-label={`Koszyk${cart.length > 0 ? `, ${cart.length} ${cart.length === 1 ? "pozycja" : "pozycje"}` : ""}`}
               >
-                {cartIcon(cart.length)}
+                {cartLabel(cart.length)}
               </Link>
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="py-2 px-3 text-sm text-[var(--coffee-mocha)] hover:text-white hover:bg-[var(--coffee-mocha)] border border-[var(--coffee-mocha)] transition-colors min-h-[36px] border-radius"
+                className="h-11 flex items-center px-3 text-sm text-[var(--coffee-mocha)] hover:text-white hover:bg-[var(--coffee-mocha)] border border-[var(--coffee-mocha)] transition-colors border-radius"
               >
                 Wyloguj
               </button>
@@ -116,14 +116,14 @@ export function AppHeader() {
                 className={`${navLinkClass} ${cartLinkClass}`}
                 aria-label={`Koszyk${cart.length > 0 ? `, ${cart.length} pozycji` : ""}`}
               >
-                {cartIcon(cart.length)}
+                {cartLabel(cart.length)}
               </Link>
               <Link href="/login" className={navLinkClass}>
                 Zaloguj
               </Link>
               <Link
                 href="/register"
-                className="py-2 px-4 text-sm text-white bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] transition-colors min-h-[36px] flex items-center border-radius"
+                className="h-11 flex items-center px-4 text-sm text-white bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] transition-colors border-radius"
               >
                 Rejestracja
               </Link>
@@ -187,7 +187,7 @@ export function AppHeader() {
                 className={`${mobileNavLinkClass} flex items-center gap-2 leading-none`}
                 aria-label={`Koszyk${cart.length > 0 ? `, ${cart.length} pozycji` : ""}`}
               >
-                {cartIcon(cart.length)}
+                {cartLabel(cart.length)}
               </Link>
               <div className="px-4 py-3">
                 <button
@@ -206,7 +206,7 @@ export function AppHeader() {
                 className={`${mobileNavLinkClass} flex items-center gap-2 leading-none`}
                 aria-label={`Koszyk${cart.length > 0 ? `, ${cart.length} pozycji` : ""}`}
               >
-                {cartIcon(cart.length)}
+                {cartLabel(cart.length)}
               </Link>
               <Link href="/login" className={mobileNavLinkClass}>
                 Zaloguj

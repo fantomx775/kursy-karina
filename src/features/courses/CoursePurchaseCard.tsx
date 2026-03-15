@@ -41,6 +41,7 @@ export function CoursePurchaseCard({ course, isOwned }: Props) {
               description: course.description,
               price: effectivePriceCents,
               originalPrice: course.price,
+              imageUrl: course.main_image_url ?? null,
             });
           }
           router.push("/cart");

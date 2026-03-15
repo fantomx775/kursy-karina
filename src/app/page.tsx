@@ -74,12 +74,8 @@ function CourseCard({
         <h3 className="text-lg sm:text-xl font-semibold text-[var(--coffee-charcoal)] mb-2 leading-tight">
           {title}
         </h3>
-        <div className="flex items-center mb-3">
-          <div className="w-7 h-7 bg-[var(--coffee-macchiato)] rounded-full mr-2 flex-shrink-0"></div>
-          <span className="text-sm text-[var(--coffee-espresso)]">KARINA KOZIARA</span>
-        </div>
         <p className="text-[var(--coffee-espresso)] text-sm mb-5 leading-relaxed flex-1 line-clamp-3">
-          {description}
+          {description.length > 100 ? `${description.slice(0, 100).trim()}...` : description}
         </p>
         <div className="flex items-center justify-between gap-3 mt-auto pt-4 border-t border-[var(--coffee-cappuccino)]">
           <span className="text-xl sm:text-2xl font-bold text-[var(--coffee-charcoal)] whitespace-nowrap flex flex-wrap items-baseline gap-2">

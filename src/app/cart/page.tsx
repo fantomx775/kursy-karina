@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useCart } from "@/features/cart/CartContext";
 import { useAuth } from "@/features/auth/AuthContext";
+import { TrashIcon } from "@/components/ui/Icon";
 
 export default function CartPage() {
   const router = useRouter();
@@ -16,6 +18,17 @@ export default function CartPage() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [isApplying, setIsApplying] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [hydratedImageUrls, setHydratedImageUrls] = useState<Record<string, string | null>>({});
+
+  useEffect(() => {
+    const missingIds = cart.filter((item) => !item.imageUrl).map((item) => item.id);
+    if (missingIds.length === 0) return;
+    const ids = missingIds.join(",");
+    fetch(`/api/courses/images?ids=${encodeURIComponent(ids)}`)
+      .then((res) => res.json())
+      .then((map: Record<string, string | null>) => setHydratedImageUrls((prev) => ({ ...prev, ...map })))
+      .catch(() => {});
+  }, [cart]);
 
   const subtotal = useMemo(
     () => cart.reduce((sum, item) => sum + item.price, 0),
@@ -112,8 +125,12 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--coffee-cream)] to-[var(--coffee-latte)] py-10 sm:py-14 lg:py-20">
-      <div className="page-width grid gap-6 lg:gap-8 lg:grid-cols-[2fr_1fr]">
-        <div className="space-y-4">
+      <div className="page-width">
+        <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--coffee-charcoal)] mb-6 sm:mb-8">
+          Koszyk
+        </h1>
+        <div className="grid gap-6 lg:gap-8 lg:grid-cols-[2fr_1fr]">
+          <div className="space-y-4">
           {cart.map((item) => {
             const onPromo = item.originalPrice > item.price;
             return (
@@ -121,30 +138,49 @@ export default function CartPage() {
                 key={item.id}
                 className="bg-white border border-[var(--coffee-cappuccino)] p-4 sm:p-5 flex items-center justify-between gap-4"
               >
-                <div>
-                  <div className="font-semibold text-[var(--coffee-charcoal)]">
-                    {item.title}
-                  </div>
-                  <div className="text-sm text-[var(--coffee-espresso)] flex flex-wrap items-baseline gap-1.5">
-                    {onPromo ? (
-                      <>
-                        <span className="line-through">
-                          {(item.originalPrice / 100).toFixed(2)} PLN
-                        </span>
-                        <span className="font-medium text-[var(--coffee-charcoal)]">
-                          {(item.price / 100).toFixed(2)} PLN
-                        </span>
-                      </>
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-[var(--coffee-cappuccino)] overflow-hidden border-radius">
+                    {(item.imageUrl ?? hydratedImageUrls[item.id]) ? (
+                      <Image
+                        src={item.imageUrl ?? hydratedImageUrls[item.id] ?? ""}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
                     ) : (
-                      <span>{(item.price / 100).toFixed(2)} PLN</span>
+                      <span className="absolute inset-0 flex items-center justify-center text-[var(--coffee-espresso)] text-xs">
+                        Kurs
+                      </span>
                     )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-[var(--coffee-charcoal)]">
+                      {item.title}
+                    </div>
+                    <div className="text-sm text-[var(--coffee-espresso)] flex flex-wrap items-baseline gap-1.5">
+                      {onPromo ? (
+                        <>
+                          <span className="line-through">
+                            {(item.originalPrice / 100).toFixed(2)} PLN
+                          </span>
+                          <span className="font-medium text-[var(--coffee-charcoal)]">
+                            {(item.price / 100).toFixed(2)} PLN
+                          </span>
+                        </>
+                      ) : (
+                        <span>{(item.price / 100).toFixed(2)} PLN</span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <button
-                  className="text-sm text-red-600 hover:text-red-800 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0"
+                  type="button"
+                  className="text-red-600 hover:text-red-800 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0"
                   onClick={() => removeFromCart(item.id)}
+                  aria-label="Usuń z koszyka"
                 >
-                  Usuń
+                  <TrashIcon size="xl" className="text-current" />
                 </button>
               </div>
             );
@@ -263,6 +299,7 @@ export default function CartPage() {
           >
             {isCheckingOut ? "Przekierowanie..." : "Przejdź do płatności"}
           </button>
+        </div>
         </div>
       </div>
     </div>

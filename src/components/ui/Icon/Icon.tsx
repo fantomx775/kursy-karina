@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 export interface IconProps extends React.HTMLAttributes<SVGElement> {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
   color?: string;
+  strokeWidth?: number;
   children?: React.ReactNode;
   className?: string;
 }
@@ -12,6 +13,7 @@ const Icon = React.forwardRef<SVGSVGElement, IconProps>(
   ({ 
     size = 'md', 
     color = 'currentColor',
+    strokeWidth = 1,
     className,
     children,
     ...props 
@@ -38,7 +40,7 @@ const Icon = React.forwardRef<SVGSVGElement, IconProps>(
         )}
         fill="none"
         stroke={color}
-        strokeWidth={2}
+        strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
         viewBox="0 0 24 24"
