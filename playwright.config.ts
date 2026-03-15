@@ -22,7 +22,7 @@ export default defineConfig({
     locale: "pl-PL",
     trace: "on-first-retry",
     video: "on-first-retry",
-    screenshot: "on-first-retry",
+      screenshot: "only-on-failure",
     actionTimeout: 10_000,
     navigationTimeout: 20_000,
   },
