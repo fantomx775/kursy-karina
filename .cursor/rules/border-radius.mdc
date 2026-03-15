@@ -1,0 +1,14 @@
+---
+description: Use root CSS for container and button border radius so it can be changed in one place
+alwaysApply: true
+---
+
+# Border radius – root CSS
+
+Border radius for **containers** (cards, tables, modals, panels) and **buttons** (including table action buttons, pagination, tabs) must be controlled from root CSS so the whole app can switch between square and rounded in one place.
+
+- **Root variable**: In `src/app/globals.css`, `:root` defines `--border-radius` (e.g. `0` for square, `4px` or `0.25rem` for slightly rounded). Derived variables: `--border-radius-sm`, `--border-radius-md`, `--border-radius-lg`.
+- **Usage in components**: Use the utility class **`.border-radius`** (or `.border-radius-sm` / `.border-radius-lg` where appropriate) on elements that should follow the global border shape. Do **not** use Tailwind’s fixed `rounded-lg`, `rounded-md`, `rounded` etc. for these containers and buttons.
+- **Exceptions**: Purely decorative or semantic shapes (e.g. avatar circle, progress bar pill) may keep their own radius (e.g. `rounded-full`) where the design intentionally differs from the global container style.
+
+When adding or editing UI (admin panel, tables, forms, modals, buttons), apply `.border-radius` so all such elements stay consistent and editable from `--border-radius` in `globals.css`.

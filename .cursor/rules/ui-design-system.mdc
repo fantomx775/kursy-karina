@@ -1,0 +1,317 @@
+---
+description: Comprehensive UI Design System Rules for Kursy App
+---
+
+# UI Design System Rules
+
+## 1. Design Tokens Management
+
+### 1.1 Color System
+- All colors must be defined in `:root` CSS variables in `globals.css`
+- Use semantic naming convention: `--{category}-{shade}`
+- Maintain coffee-inspired palette as primary theme
+- All color references in components must use CSS variables, not hardcoded values
+
+### 1.2 Typography
+- Font families defined in CSS variables: `--font-{name}`
+- Font sizes use CSS variables: `--text-{size}`
+- Font weights use CSS variables: `--font-weight-{name}`
+- Line heights use CSS variables: `--leading-{size}`
+
+### 1.3 Spacing
+- All margins/paddings use CSS variables: `--space-{size}`
+- Follow 4px base unit system (4, 8, 12, 16, 20, 24, 32, 40, 48, 64px)
+- Component-specific spacing: `--component-{name}-spacing`
+
+### 1.4 Border Radius
+- Global border radius variable: `--border-radius`
+- Set to 0 for sharp edges (current requirement)
+- Can be easily changed for future design updates
+- Use utility classes for different radius sizes
+
+## 2. Icon System
+
+### 2.1 Icon Source Consistency
+- Use only **react-icons** library for all icons
+- No mixing icon libraries (react-icons, lucide-react, heroicons, etc.)
+- Create icon wrapper components for consistent sizing and styling
+- All icons must be semantic and accessible
+
+### 2.2 Icon Usage Rules
+- **NO EMOJIS IN TEXT** - strictly forbidden in UI text
+- Use icons only for visual enhancement, not as primary content
+- Icons must have proper aria-labels for screen readers
+- Consistent sizing: use CSS variables for icon dimensions
+- Icons should match the coffee theme color palette
+
+### 2.3 Icon Component Structure
+```
+src/components/ui/Icon/
+├── Icon.tsx          # Base icon wrapper
+├── index.ts          # Exports
+└── icons/           # Specific icon components
+    ├── UserIcon.tsx
+    ├── CartIcon.tsx
+    └── ...
+```
+
+### 2.4 Icon Sizing System
+- Define icon sizes in CSS variables: `--icon-{size}`
+- Standard sizes: xs(16px), sm(20px), md(24px), lg(32px), xl(40px)
+- Use consistent stroke width for outline icons
+- Proper spacing around icons in text
+
+## 3. Error Boundaries & Empty States
+
+### 3.1 Error Boundaries
+- All major sections must have error boundaries
+- Consistent error message styling
+- Provide recovery options when possible
+- Log errors for debugging
+- User-friendly error messages (no technical jargon)
+
+### 3.2 Empty States
+- Every list/table must have empty state design
+- Provide clear guidance on what to do next
+- Use illustrations or icons for visual appeal
+- Include CTAs when appropriate
+- Maintain brand voice in empty state copy
+
+### 3.3 Loading States
+- Skeleton screens for content loading
+- Use the app **Spinner** component (`@/components/ui/Spinner`) for all loading indicators (buttons, tables, pages).
+- Progress indicators for multi-step processes
+- Avoid blocking entire UI when possible
+
+### 3.4 Error/Empty Component Structure
+```
+src/components/ui/states/
+├── ErrorBoundary.tsx    # Enhanced error boundary
+├── EmptyState.tsx       # Generic empty state
+├── LoadingState.tsx     # Loading skeletons
+├── NotFound.tsx         # 404 state
+└── index.ts            # Exports
+```
+
+## 4. Layout System
+
+### 4.1 Layout Principles
+- Mobile-first responsive design
+- Consistent spacing using design tokens
+- Semantic HTML5 structure
+- Logical content hierarchy
+- Accessible navigation patterns
+
+### 4.2 Grid System
+- Use CSS Grid for complex layouts
+- Define grid gaps using spacing variables
+- Responsive breakpoints: sm(640px), md(768px), lg(1024px), xl(1280px)
+- Grid templates for common layouts:
+  - `--grid-2-cols`: 50/50 split
+  - `--grid-3-cols`: 33/33/33 split
+  - `--grid-sidebar`: main + sidebar
+
+### 4.3 Stack System
+- Use Flexbox for single-axis layouts
+- Define stack spacing variables: `--stack-{size}`
+- Direction variants: vertical, horizontal
+- Alignment options: start, center, end, stretch
+- Responsive stacking (horizontal on desktop, vertical on mobile)
+
+### 4.4 Container System
+- Max-width containers for content
+- Consistent padding using spacing variables
+- Center alignment by default
+- Full-width option for hero sections
+
+### 4.5 Layout Components
+```
+src/components/ui/layout/
+├── Container.tsx       # Max-width container
+├── Grid.tsx           # CSS Grid wrapper
+├── Stack.tsx          # Flexbox stack
+├── Section.tsx        # Content sections
+└── index.ts          # Exports
+```
+
+### 4.6 Responsive Design Rules
+- Mobile-first approach always
+- Test on actual devices, not just browser resize
+- Touch-friendly tap targets (minimum 44px)
+- Readable text sizes on all devices
+- Consistent breakpoint usage
+
+## 5. Component Architecture
+
+### 5.1 Generic Component Requirements
+- All UI components must be generic and reusable
+- Use composition over inheritance
+- Accept `className` prop for custom styling
+- Use forwardRef for DOM elements when needed
+- Support all standard HTML attributes
+
+### 5.2 Required Base Components
+- **Button**: Multiple variants (primary, secondary, ghost, outline)
+- **Modal**: Configurable sizes, animations, accessibility
+- **Input**: Text, email, password, number variants
+- **Card**: Flexible container component
+- **Badge**: Status indicators, labels
+- **Avatar**: User images with fallbacks
+- **Dropdown**: Menu, select, context menu
+- **Toast**: Notifications system
+- **Skeleton**: Loading states
+- **Spinner**: Loading indicators (use `@/components/ui/Spinner` everywhere)
+
+### 5.3 Component Structure
+```
+src/components/ui/
+├── Button/
+│   ├── Button.tsx
+│   ├── Button.test.tsx
+│   └── index.ts
+├── Modal/
+│   ├── Modal.tsx
+│   ├── Modal.test.tsx
+│   └── index.ts
+└── ...
+```
+
+## 6. Styling Rules
+
+### 6.1 CSS-in-JS vs Utility Classes
+- Use Tailwind utility classes for styling
+- Use CSS variables for dynamic values
+- Avoid inline styles except for dynamic calculations
+- Use CSS modules only for complex animations
+
+### 6.2 Responsive Design
+- Mobile-first approach
+- Use Tailwind responsive prefixes (sm:, md:, lg:, xl:)
+- Define breakpoints in CSS variables
+- Test on all screen sizes
+
+### 6.3 Dark Mode Support
+- Use `prefers-color-scheme: dark` media query
+- Define color pairs for light/dark themes
+- Test color contrast ratios
+
+## 7. Accessibility Standards
+
+### 7.1 ARIA Support
+- All interactive elements need proper ARIA labels
+- Use semantic HTML elements
+- Implement keyboard navigation
+- Screen reader compatibility
+
+### 7.2 Focus Management
+- Visible focus indicators
+- Logical tab order
+- Focus trapping in modals
+- Skip links for navigation
+
+### 7.3 Color Contrast
+- WCAG AA compliance minimum
+- Test contrast ratios
+- Don't rely on color alone for information
+
+## 8. Animation and Transitions
+
+### 8.1 Motion Principles
+- Subtle, purposeful animations
+- Consistent timing functions
+- Respect user preferences (prefers-reduced-motion)
+- Performance optimized (transform, opacity)
+
+### 8.2 Transition Standards
+- Use CSS variables for durations: `--transition-{speed}`
+- Standard easing functions: `--ease-{type}`
+- Consistent hover states
+- Loading state animations
+
+## 9. State Management
+
+### 9.1 Component States
+- Default, hover, active, disabled, loading, error
+- Consistent visual feedback
+- Clear state transitions
+- Error state handling
+
+### 9.2 Form Validation
+- Real-time validation feedback
+- Clear error messages
+- Success state indicators
+- Accessible error announcements
+
+## 10. Performance Guidelines
+
+### 10.1 Rendering Optimization
+- Use React.memo for expensive components
+- Implement proper key props
+- Avoid unnecessary re-renders
+- Lazy load heavy components
+
+### 10.2 CSS Optimization
+- Minimize CSS custom properties usage
+- Use efficient selectors
+- Avoid layout thrashing
+- Optimize images and assets
+
+## 11. Testing Requirements
+
+### 11.1 Unit Tests
+- Test all component props
+- Test user interactions
+- Test accessibility features
+- Test error states
+
+### 11.2 Visual Testing
+- Screenshot testing for UI consistency
+- Cross-browser testing
+- Responsive design testing
+- Dark mode testing
+
+## 12. Documentation Standards
+
+### 12.1 Component Documentation
+- JSDoc comments for all props
+- Usage examples
+- Accessibility notes
+- Design tokens used
+
+### 12.2 Storybook Integration
+- Visual component library
+- Interactive examples
+- Design token documentation
+- Accessibility testing
+
+## 13. Migration Strategy
+
+### 13.1 Gradual Migration
+- Migrate one component at a time
+- Maintain backward compatibility
+- Test thoroughly before deployment
+- Update documentation
+
+### 13.2 Legacy Code Support
+- Wrapper components for old code
+- Gradual deprecation warnings
+- Migration guides
+- Support during transition period
+
+## 14. Implementation Checklist
+
+- [ ] Update CSS variables in globals.css
+- [ ] Create base component templates
+- [ ] Implement Button component with variants
+- [ ] Update Modal component with new standards
+- [ ] Create Input component family
+- [ ] Implement Card component
+- [ ] Add Badge component
+- [ ] Create Avatar component
+- [ ] Implement Dropdown components
+- [ ] Update Toast system
+- [ ] Enhance Skeleton component
+- [ ] Create Spinner component
+- [ ] Add comprehensive tests
+- [ ] Update documentation
+- [ ] Create migration guide

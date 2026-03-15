@@ -1,0 +1,16 @@
+---
+description: Use the app Spinner component for all loading states
+alwaysApply: true
+---
+
+# Spinner – jeden komponent ładowania
+
+Wszystkie stany ładowania w aplikacji muszą używać **jednego** komponentu: `Spinner` z `@/components/ui/Spinner`.
+
+- **Import**: `import { Spinner } from '@/components/ui/Spinner';`
+- **Gdzie używać**: przyciski z `loading`, tabele z `loading`, strony/ekrany podczas ładowania danych, weryfikacji, zapisu – wszędzie, gdzie użytkownik widzi „czekaj”.
+- **Nie używać**: inline SVG z `animate-spin`, własnych divów z `border-b-2` ani innych ad-hoc wskaźników ładowania. Dzięki jednemu komponentowi wygląd i dostępność (aria, role) są spójne w całej aplikacji.
+- **Rozmiary**: `size="xs" | "sm" | "md" | "lg" | "xl"` – w przyciskach zwykle `sm`, w pełnoekranowym ładowaniu `lg`.
+- **Warianty**: `variant="default" | "dots" | "pulse"` – domyślnie `default` (obracający się ring).
+
+Przy dodawaniu nowych ekranów ładowania, przycisków „Zapisz”/„Wyślij” lub tabel ładujących dane zawsze używaj `<Spinner />`.
