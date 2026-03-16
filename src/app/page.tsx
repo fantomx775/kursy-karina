@@ -204,9 +204,16 @@ export default async function HomePage() {
                   doświadczeniu.
                 </p>
               </div>
-              <div className="relative order-first md:order-last">
-                <div className="h-72 sm:h-80 lg:h-96 bg-[var(--coffee-cappuccino)] border-radius flex items-center justify-center">
-                  <span className="text-[var(--coffee-espresso)] text-lg">Image Placeholder</span>
+              <div className="relative order-first md:order-last flex justify-center md:justify-end">
+                <div className="relative w-full max-w-md aspect-[3/4] bg-[var(--coffee-cappuccino)] border-radius overflow-hidden shadow-[var(--shadow-lg)]">
+                  <Image
+                    src="/main.jpg"
+                    alt="Karina Koziara – stylistka brwi, wielokrotna zwyciężczyni mistrzostw"
+                    fill
+                    className="object-cover object-center"
+                    sizes="(max-width: 768px) 100vw, min(50vw, 420px)"
+                    priority
+                  />
                 </div>
               </div>
             </div>

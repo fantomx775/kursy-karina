@@ -13,7 +13,7 @@ describe('AppFooter', () => {
     render(<AppFooter />)
 
     // Assert
-    expect(screen.getByText('© 2024 Kursy App Modern')).toBeInTheDocument()
+    expect(screen.getByText('© 2024 Kursy Karina Koziara')).toBeInTheDocument()
   })
 
   it('renders privacy policy link', () => {

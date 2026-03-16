@@ -19,10 +19,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kursy App Modern",
-  description: "Nowoczesna platforma kursów online",
+  title: "Kursy Karina Koziara",
+  description: "Profesjonalne kursy stylizacji brwi od Kariny Koziara",
   icons: {
-    icon: "/logo/sygnet-header.png",
     apple: "/logo/sygnet-header.png",
   },
 };

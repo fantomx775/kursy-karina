@@ -84,7 +84,7 @@ describe('AppHeader', () => {
       render(<AppHeader />)
 
       // Assert
-      expect(screen.getByText('Mój panel')).toBeInTheDocument()
+      expect(screen.getByText('Moje konto')).toBeInTheDocument()
       expect(screen.getByText('Wyloguj')).toBeInTheDocument()
       expect(screen.queryByText('Admin')).not.toBeInTheDocument()
       expect(screen.queryByText('Zaloguj')).not.toBeInTheDocument()
@@ -113,12 +113,12 @@ describe('AppHeader', () => {
       } as any)
     })
 
-    it('renders Mój panel link for admin (no separate Admin in nav)', () => {
+    it('renders Moje konto link for admin (no separate Admin in nav)', () => {
       // Act
       render(<AppHeader />)
 
       // Assert
-      expect(screen.getByText('Mój panel')).toBeInTheDocument()
+      expect(screen.getByText('Moje konto')).toBeInTheDocument()
       expect(screen.queryByText('Admin')).not.toBeInTheDocument()
     })
   })

@@ -92,7 +92,7 @@ export function AppHeader() {
           {user ? (
             <>
               <Link href="/dashboard" className={navLinkClass}>
-                Mój panel
+                Moje konto
               </Link>
               <Link
                 href="/cart"
@@ -180,7 +180,7 @@ export function AppHeader() {
           {user ? (
             <>
               <Link href="/dashboard" className={mobileNavLinkClass}>
-                Mój panel
+                Moje konto
               </Link>
               <Link
                 href="/cart"

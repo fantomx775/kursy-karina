@@ -230,7 +230,7 @@ export default async function DashboardPage() {
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-[var(--coffee-charcoal)]">
-              Mój panel
+              Moje konto
             </h1>
             <p className="text-[var(--coffee-espresso)]">
               Twoje kursy i ustawienia konta.
