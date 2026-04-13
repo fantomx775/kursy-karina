@@ -1,6 +1,7 @@
 "use client";
 
 import type { CourseItem } from "@/types/course";
+import { QuizSection } from "./QuizSection";
 import { SvgSection } from "./SvgSection";
 import { YouTubePlayer } from "./YouTubePlayer";
 
@@ -8,10 +9,35 @@ type Props = {
   item: CourseItem;
   isCompleted: boolean;
   onToggleCompleted: (itemId: string) => void;
+  onQuizPassed: (itemId: string) => Promise<void> | void;
 };
 
-export function CourseStepCard({ item, isCompleted, onToggleCompleted }: Props) {
-  const badgeLabel = item.kind === "svg" ? "SVG" : "YouTube";
+function getBadgeLabel(item: CourseItem): string {
+  switch (item.kind) {
+    case "youtube":
+      return "Video";
+    case "quiz":
+      return "Quiz";
+    default:
+      return "Tekst";
+  }
+}
+
+function getStatusLabel(item: CourseItem, isCompleted: boolean): string {
+  if (item.kind === "quiz") {
+    return isCompleted ? "Zaliczone" : "Do zaliczenia";
+  }
+
+  return isCompleted ? "Ukonczone" : "Nieukonczone";
+}
+
+export function CourseStepCard({
+  item,
+  isCompleted,
+  onToggleCompleted,
+  onQuizPassed,
+}: Props) {
+  const badgeLabel = getBadgeLabel(item);
 
   return (
     <section
@@ -30,28 +56,37 @@ export function CourseStepCard({ item, isCompleted, onToggleCompleted }: Props) 
             </span>
           </div>
           <div className="text-sm text-[var(--coffee-espresso)]">
-            {isCompleted ? "Ukończone ✓" : "Nieukończone"}
+            {getStatusLabel(item, isCompleted)}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => onToggleCompleted(item.id)}
-          className={`h-10 border-radius px-4 text-sm font-medium transition-colors ${
-            isCompleted
-              ? "bg-emerald-600 text-white hover:bg-emerald-700"
-              : "bg-[var(--coffee-mocha)] text-white hover:bg-[var(--coffee-espresso)]"
-          }`}
-        >
-          {isCompleted ? "Oznacz jako nieukończone" : "Oznacz jako ukończone"}
-        </button>
+
+        {item.kind === "quiz" ? null : (
+          <button
+            type="button"
+            onClick={() => onToggleCompleted(item.id)}
+            className={`h-10 border-radius px-4 text-sm font-medium transition-colors ${
+              isCompleted
+                ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                : "bg-[var(--coffee-mocha)] text-white hover:bg-[var(--coffee-espresso)]"
+            }`}
+          >
+            {isCompleted ? "Oznacz jako nieukonczone" : "Oznacz jako ukonczone"}
+          </button>
+        )}
       </div>
 
       <div className="mt-4">
         {item.kind === "svg" ? (
           <SvgSection src={item.asset_path ?? ""} alt={item.title} />
-        ) : (
+        ) : null}
+
+        {item.kind === "youtube" ? (
           <YouTubePlayer url={item.youtube_url ?? ""} />
-        )}
+        ) : null}
+
+        {item.kind === "quiz" ? (
+          <QuizSection item={item} isCompleted={isCompleted} onPass={onQuizPassed} />
+        ) : null}
       </div>
     </section>
   );

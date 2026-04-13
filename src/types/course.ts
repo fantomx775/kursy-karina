@@ -1,5 +1,21 @@
 export type CourseStatus = "active" | "inactive";
-export type CourseItemKind = "svg" | "youtube";
+export type CourseItemKind = "svg" | "youtube" | "quiz";
+export type CourseQuizQuestionType = "single" | "multiple";
+
+export type CourseQuizAnswer = {
+  text: string;
+  isCorrect: boolean;
+};
+
+export type CourseQuizQuestion = {
+  text: string;
+  type: CourseQuizQuestionType;
+  answers: CourseQuizAnswer[];
+};
+
+export type CourseQuiz = {
+  questions: CourseQuizQuestion[];
+};
 
 export type PromotionDiscountType = "percentage" | "fixed";
 
@@ -26,6 +42,7 @@ export type CourseItem = {
   kind: CourseItemKind;
   asset_path: string | null;
   youtube_url: string | null;
+  quiz_data: CourseQuiz | null;
   position: number;
   is_preview: boolean;
 };

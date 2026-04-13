@@ -1,33 +1,17 @@
 "use client";
 
-import React from 'react';
-import { FormEvent, useState, useCallback, useRef, useEffect } from "react";
+import React from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { Button, Card, CardContent, FileUpload } from "@/components/ui";
 import type { Course } from "@/types/course";
-
-export type CourseFormSection = {
-  title: string;
-  items: {
-    title: string;
-    kind: "svg" | "youtube";
-    assetPath: string;
-    youtubeUrl: string;
-  }[];
-};
-
-export type CourseFormData = {
-  title: string;
-  description: string;
-  price: number;
-  status: "active" | "inactive";
-  mainImageUrl?: string;
-  sections: CourseFormSection[];
-  promotionDiscountType?: "percentage" | "fixed" | null;
-  promotionDiscountValue?: number | null;
-  promotionStartDate?: string | null;
-  promotionEndDate?: string | null;
-};
+import { CourseQuizBuilder, createEmptyQuiz } from "./CourseQuizBuilder";
+import type {
+  CourseFormData,
+  CourseFormItem,
+  CourseFormQuiz,
+  CourseFormSection,
+} from "./course-form-types";
 
 type Props = {
   initial?: Course;
@@ -42,19 +26,116 @@ const emptySection: CourseFormSection = {
   items: [],
 };
 
-const emptyItem = (kind: "svg" | "youtube") => ({
-  title: "",
-  kind,
-  assetPath: "",
-  youtubeUrl: "",
-});
+function createEmptyItem(kind: CourseFormItem["kind"]): CourseFormItem {
+  return {
+    title: "",
+    kind,
+    assetPath: "",
+    youtubeUrl: "",
+    quiz: kind === "quiz" ? createEmptyQuiz() : null,
+  };
+}
 
 function toFormDate(iso: string | undefined | null): string {
   if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toISOString().slice(0, 10);
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
 }
+
+function getItemKindLabel(kind: CourseFormItem["kind"]): string {
+  switch (kind) {
+    case "youtube":
+      return "Video";
+    case "quiz":
+      return "Quiz";
+    default:
+      return "Tekst";
+  }
+}
+
+function normalizeQuiz(quiz: CourseFormQuiz | null): CourseFormQuiz {
+  return quiz ?? createEmptyQuiz();
+}
+
+function hasQuizDraftContent(quiz: CourseFormQuiz | null): boolean {
+  if (!quiz) {
+    return false;
+  }
+
+  return quiz.questions.some(
+    (question) =>
+      question.text.trim() !== "" ||
+      question.answers.some(
+        (answer) => answer.text.trim() !== "" || answer.isCorrect,
+      ),
+  );
+}
+
+function getCourseValidationError(sections: CourseFormSection[]): string | null {
+  for (const section of sections) {
+    for (const item of section.items) {
+      const hasKindSpecificContent =
+        item.assetPath.trim() !== "" ||
+        item.youtubeUrl.trim() !== "" ||
+        hasQuizDraftContent(item.quiz);
+
+      if (!item.title.trim() && hasKindSpecificContent) {
+        return "Kazdy element lekcji musi miec tytul.";
+      }
+
+      if (!item.title.trim()) {
+        continue;
+      }
+
+      if (item.kind === "svg" && !item.assetPath.trim()) {
+        return "Kazdy element typu Tekst musi miec dodany plik SVG.";
+      }
+
+      if (item.kind === "youtube" && !item.youtubeUrl.trim()) {
+        return "Kazdy element typu Video musi miec podany adres URL.";
+      }
+
+      if (item.kind !== "quiz") {
+        continue;
+      }
+
+      if (!item.quiz || item.quiz.questions.length === 0) {
+        return "Quiz musi zawierac co najmniej jedno pytanie.";
+      }
+
+      for (const question of item.quiz.questions) {
+        if (!question.text.trim()) {
+          return "Kazde pytanie quizu musi miec tresc.";
+        }
+
+        if (question.answers.length < 2) {
+          return "Kazde pytanie quizu musi miec minimum 2 odpowiedzi.";
+        }
+
+        if (question.answers.some((answer) => !answer.text.trim())) {
+          return "Kazda odpowiedz w quizie musi miec tresc.";
+        }
+
+        const correctAnswers = question.answers.filter(
+          (answer) => answer.isCorrect,
+        );
+
+        if (correctAnswers.length === 0) {
+          return "Kazde pytanie quizu musi miec przynajmniej jedna poprawna odpowiedz.";
+        }
+
+        if (question.type === "single" && correctAnswers.length > 1) {
+          return "Pytanie jednokrotnego wyboru moze miec tylko jedna poprawna odpowiedz.";
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+export type { CourseFormData, CourseFormSection } from "./course-form-types";
 
 export function CourseForm({
   initial,
@@ -92,126 +173,168 @@ export function CourseForm({
   );
   const [sections, setSections] = useState<CourseFormSection[]>(
     initialSections?.length
-      ? initialSections.map((s) => ({
-          title: s.title,
-            items: s.items.map((i) => ({
-            title: i.title,
-            kind: i.kind,
-            assetPath: i.assetPath ?? "",
-            youtubeUrl: i.youtubeUrl ?? "",
+      ? initialSections.map((section) => ({
+          title: section.title,
+          items: section.items.map((item) => ({
+            title: item.title,
+            kind: item.kind,
+            assetPath: item.assetPath ?? "",
+            youtubeUrl: item.youtubeUrl ?? "",
+            quiz: item.kind === "quiz" ? normalizeQuiz(item.quiz) : null,
           })),
         }))
-      : [structuredClone(emptySection)],
+      : [{ ...emptySection }],
   );
-
-  /** Indices of sections that are collapsed (content hidden). */
-  const [collapsedSections, setCollapsedSections] = useState<Set<number>>(new Set());
-  /** Błąd walidacji przy zapisie (np. brak ceny, pusta sekcja). */
+  const [collapsedSections, setCollapsedSections] = useState<Set<number>>(
+    new Set(),
+  );
   const [formError, setFormError] = useState<string | null>(null);
   const formErrorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (formError && formErrorRef.current) {
-      formErrorRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      formErrorRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }
   }, [formError]);
 
+  const notifyChange = () => {
+    setFormError(null);
+    onChange?.();
+  };
+
   const toggleSectionCollapsed = useCallback((index: number) => {
-    setCollapsedSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
+    setCollapsedSections((previous) => {
+      const next = new Set(previous);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
       return next;
     });
   }, []);
 
-  // Helper to call onChange when provided
-  const handleChange = () => {
-    setFormError(null);
-    if (onChange) {
-      onChange();
-    }
-  };
-
-
   const addSection = () => {
-    setSections((prev) => [...prev, structuredClone(emptySection)]);
-    handleChange();
+    setSections((previous) => [...previous, { ...emptySection }]);
+    notifyChange();
   };
 
   const removeSection = (index: number) => {
-    setSections((prev) => prev.filter((_, i) => i !== index));
-    setCollapsedSections((prev) =>
+    setSections((previous) => previous.filter((_, current) => current !== index));
+    setCollapsedSections((previous) =>
       new Set(
-        [...prev]
-          .filter((i) => i !== index)
-          .map((i) => (i > index ? i - 1 : i)),
+        [...previous]
+          .filter((current) => current !== index)
+          .map((current) => (current > index ? current - 1 : current)),
       ),
     );
-    handleChange();
+    notifyChange();
   };
 
   const setSectionTitle = (index: number, value: string) => {
-    setSections((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, title: value } : s)),
-    );
-    handleChange();
-  };
-
-  const addItem = (sectionIndex: number, kind: "svg" | "youtube") => {
-    setSections((prev) =>
-      prev.map((s, i) =>
-        i === sectionIndex
-          ? { ...s, items: [...s.items, emptyItem(kind)] }
-          : s,
+    setSections((previous) =>
+      previous.map((section, current) =>
+        current === index ? { ...section, title: value } : section,
       ),
     );
-    handleChange();
+    notifyChange();
+  };
+
+  const addItem = (sectionIndex: number, kind: CourseFormItem["kind"]) => {
+    setSections((previous) =>
+      previous.map((section, current) =>
+        current === sectionIndex
+          ? {
+              ...section,
+              items: [...section.items, createEmptyItem(kind)],
+            }
+          : section,
+      ),
+    );
+    notifyChange();
   };
 
   const removeItem = (sectionIndex: number, itemIndex: number) => {
-    setSections((prev) =>
-      prev.map((s, i) =>
-        i === sectionIndex
-          ? { ...s, items: s.items.filter((_, j) => j !== itemIndex) }
-          : s,
+    setSections((previous) =>
+      previous.map((section, current) =>
+        current === sectionIndex
+          ? {
+              ...section,
+              items: section.items.filter((_, currentItem) => currentItem !== itemIndex),
+            }
+          : section,
       ),
     );
-    handleChange();
+    notifyChange();
   };
 
   const setItem = (
     sectionIndex: number,
     itemIndex: number,
-    updates: Partial<CourseFormSection["items"][0]>,
+    updates: Partial<CourseFormItem>,
   ) => {
-    setSections((prev) =>
-      prev.map((s, i) =>
-        i === sectionIndex
+    setSections((previous) =>
+      previous.map((section, currentSectionIndex) =>
+        currentSectionIndex === sectionIndex
           ? {
-              ...s,
-              items: s.items.map((item, j) =>
-                j === itemIndex ? { ...item, ...updates } : item,
-              ),
+              ...section,
+              items: section.items.map((item, currentItemIndex) => {
+                if (currentItemIndex !== itemIndex) {
+                  return item;
+                }
+
+                const nextItem = {
+                  ...item,
+                  ...updates,
+                };
+
+                if (updates.kind === "quiz") {
+                  nextItem.assetPath = "";
+                  nextItem.youtubeUrl = "";
+                  nextItem.quiz = normalizeQuiz(updates.quiz ?? item.quiz);
+                }
+
+                if (updates.kind === "svg") {
+                  nextItem.youtubeUrl = "";
+                  nextItem.quiz = null;
+                }
+
+                if (updates.kind === "youtube") {
+                  nextItem.assetPath = "";
+                  nextItem.quiz = null;
+                }
+
+                return nextItem;
+              }),
             }
-          : s,
+          : section,
       ),
     );
-    handleChange();
+    notifyChange();
   };
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
     setFormError(null);
 
-    const priceNum = parseFloat(price.replace(",", "."));
-    if (Number.isNaN(priceNum) || priceNum <= 0) {
-      setFormError("Podaj cenę większą niż 0.");
+    const priceValue = parseFloat(price.replace(",", "."));
+    if (Number.isNaN(priceValue) || priceValue <= 0) {
+      setFormError("Podaj cene wieksza niz 0.");
       return;
     }
-    const validSections = sections.filter((s) => s.title.trim());
+
+    const validSections = sections.filter((section) => section.title.trim());
     if (validSections.length === 0) {
-      setFormError("Dodaj co najmniej jedną sekcję i podaj jej tytuł.");
+      setFormError("Dodaj co najmniej jedna sekcje i podaj jej tytul.");
+      return;
+    }
+
+    const contentValidationError = getCourseValidationError(validSections);
+    if (contentValidationError) {
+      setFormError(contentValidationError);
       return;
     }
 
@@ -224,71 +347,61 @@ export function CourseForm({
           promotionEndDate: string | null;
         }
       | undefined;
+
     if (hasPromo) {
-      const valueNum = parseFloat(promotionDiscountValue.replace(",", "."));
-      if (Number.isNaN(valueNum) || valueNum <= 0) {
-        setFormError("Podaj prawidłową wartość zniżki promocji.");
+      const value = parseFloat(promotionDiscountValue.replace(",", "."));
+      if (Number.isNaN(value) || value <= 0) {
+        setFormError("Podaj prawidlowa wartosc znizki promocji.");
         return;
       }
-      if (promotionDiscountType === "percentage" && valueNum > 100) {
-        setFormError("Zniżka procentowa nie może być większa niż 100.");
+
+      if (promotionDiscountType === "percentage" && value > 100) {
+        setFormError("Znizka procentowa nie moze byc wieksza niz 100.");
         return;
       }
+
       promotionPayload = {
-        promotionDiscountType: promotionDiscountType,
+        promotionDiscountType,
         promotionDiscountValue:
-          promotionDiscountType === "fixed"
-            ? Math.round(valueNum * 100)
-            : valueNum,
-        promotionStartDate: promotionStartDate || new Date().toISOString().slice(0, 10),
+          promotionDiscountType === "fixed" ? Math.round(value * 100) : value,
+        promotionStartDate:
+          promotionStartDate || new Date().toISOString().slice(0, 10),
         promotionEndDate: promotionEndDate.trim() || null,
       };
     }
 
-    const itemsWithMissingAsset = validSections.some((s) =>
-      s.items.some((i) => i.title.trim() && i.kind === "svg" && !i.assetPath?.trim())
-    );
-    if (itemsWithMissingAsset) {
-      setFormError("Każdy element typu SVG musi mieć dodany plik.");
-      return;
-    }
-
-    const itemsWithMissingYoutube = validSections.some((s) =>
-      s.items.some((i) => i.title.trim() && i.kind === "youtube" && !i.youtubeUrl?.trim())
-    );
-    if (itemsWithMissingYoutube) {
-      setFormError("Każdy element typu YouTube musi mieć podany adres URL.");
-      return;
-    }
-
-    // #region agent log
-    fetch('http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'9b4d30'},body:JSON.stringify({sessionId:'9b4d30',runId:'baseline',hypothesisId:'H1',location:'CourseForm.tsx:264',message:'Submitting course form payload to onSave',data:{title:title.trim(),status,price:priceNum,mainImageUrl:mainImageUrl.trim() || null,sectionsCount:validSections.length,itemCount:validSections.reduce((sum,section) => sum + section.items.length,0)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-
     onSave({
       title: title.trim(),
       description: description.trim(),
-      price: priceNum,
+      price: priceValue,
       status,
       mainImageUrl: mainImageUrl.trim() || undefined,
-      sections: validSections.map((s) => ({
-        title: s.title.trim(),
-        items: s.items
-          .filter((i) => i.title.trim())
-          .map((i) => ({
-            title: i.title.trim(),
-            kind: i.kind,
-            assetPath: i.kind === "svg" ? i.assetPath.trim() : "",
-            youtubeUrl: i.kind === "youtube" ? i.youtubeUrl.trim() : "",
+      sections: validSections.map((section) => ({
+        title: section.title.trim(),
+        items: section.items
+          .filter((item) => item.title.trim())
+          .map((item) => ({
+            title: item.title.trim(),
+            kind: item.kind,
+            assetPath: item.kind === "svg" ? item.assetPath.trim() : "",
+            youtubeUrl: item.kind === "youtube" ? item.youtubeUrl.trim() : "",
+            quiz:
+              item.kind === "quiz" && item.quiz
+                ? {
+                    questions: item.quiz.questions.map((question) => ({
+                      text: question.text.trim(),
+                      type: question.type,
+                      answers: question.answers.map((answer) => ({
+                        text: answer.text.trim(),
+                        isCorrect: answer.isCorrect,
+                      })),
+                    })),
+                  }
+                : null,
           })),
       })),
       ...(promotionPayload
-        ? {
-            promotionDiscountType: promotionPayload.promotionDiscountType,
-            promotionDiscountValue: promotionPayload.promotionDiscountValue,
-            promotionStartDate: promotionPayload.promotionStartDate,
-            promotionEndDate: promotionPayload.promotionEndDate,
-          }
+        ? promotionPayload
         : {
             promotionDiscountType: null,
             promotionDiscountValue: null,
@@ -300,45 +413,61 @@ export function CourseForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 p-2">
-      {formError && (
-        <div ref={formErrorRef} className="p-3 bg-red-50 border border-red-200 text-red-800 text-sm border-radius" role="alert">
+      {formError ? (
+        <div
+          ref={formErrorRef}
+          className="border-radius border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+          role="alert"
+        >
           {formError}
         </div>
-      )}
+      ) : null}
+
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-[var(--coffee-charcoal)] mb-1">
-          Tytuł
+        <label
+          htmlFor="title"
+          className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]"
+        >
+          Tytul
         </label>
         <input
           id="title"
           type="text"
           value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            handleChange();
+          onChange={(event) => {
+            setTitle(event.target.value);
+            notifyChange();
           }}
-          className="w-full border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white"
+          className="w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2"
           required
         />
       </div>
+
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-[var(--coffee-charcoal)] mb-1">
+        <label
+          htmlFor="description"
+          className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]"
+        >
           Opis
         </label>
         <textarea
           id="description"
           value={description}
-          onChange={(e) => {
-            setDescription(e.target.value);
-            handleChange();
+          onChange={(event) => {
+            setDescription(event.target.value);
+            notifyChange();
           }}
-          className="w-full border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white min-h-[80px]"
+          className="min-h-[80px] w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2"
           required
         />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div>
-          <label htmlFor="price" className="block text-sm font-medium text-[var(--coffee-charcoal)] mb-1">
+          <label
+            htmlFor="price"
+            className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]"
+          >
             Cena (PLN)
           </label>
           <input
@@ -346,26 +475,30 @@ export function CourseForm({
             type="text"
             inputMode="decimal"
             value={price}
-            onChange={(e) => {
-              setPrice(e.target.value);
-              handleChange();
+            onChange={(event) => {
+              setPrice(event.target.value);
+              notifyChange();
             }}
-            className="w-full border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:border-transparent h-10"
+            className="h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
             required
           />
         </div>
+
         <div>
-          <label htmlFor="status" className="block text-sm font-medium text-[var(--coffee-charcoal)] mb-1">
+          <label
+            htmlFor="status"
+            className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]"
+          >
             Status
           </label>
           <select
             id="status"
             value={status}
-            onChange={(e) => {
-              setStatus(e.target.value as "active" | "inactive");
-              handleChange();
+            onChange={(event) => {
+              setStatus(event.target.value as "active" | "inactive");
+              notifyChange();
             }}
-            className="w-full border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:border-transparent h-10"
+            className="h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
           >
             <option value="inactive">Nieaktywny</option>
             <option value="active">Aktywny</option>
@@ -374,283 +507,357 @@ export function CourseForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[var(--coffee-charcoal)] mb-1">
-          Zdjęcie główne kursu
+        <label className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]">
+          Zdjecie glowne kursu
         </label>
         <FileUpload
           value={mainImageUrl}
           onChange={(url) => {
             setMainImageUrl(url);
-            handleChange();
+            notifyChange();
           }}
           accept="image/*"
         />
         <p className="mt-1 text-sm text-[var(--coffee-espresso)]">
-          Przeciągnij i upuść zdjęcie kursu lub kliknij aby wybrać plik.
+          Przeciagnij i upusc zdjecie kursu lub kliknij aby wybrac plik.
         </p>
       </div>
 
       <div className="border-t border-[var(--coffee-cappuccino)] pt-6">
-        <h3 className="text-lg font-semibold text-[var(--coffee-charcoal)] mb-3">
+        <h3 className="mb-3 text-lg font-semibold text-[var(--coffee-charcoal)]">
           Promocja
         </h3>
-        <p className="text-sm text-[var(--coffee-espresso)] mb-4">
-          Opcjonalnie: ustaw datę rozpoczęcia, aby włączyć promocję. Data zakończenia pusta = bez końca.
+        <p className="mb-4 text-sm text-[var(--coffee-espresso)]">
+          Opcjonalnie: ustaw date rozpoczecia, aby wlaczyc promocje. Pusta data
+          zakonczenia oznacza promocje bez konca.
         </p>
+
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-[var(--coffee-charcoal)] whitespace-nowrap">
-              Typ zniżki
+            <label className="whitespace-nowrap text-sm font-medium text-[var(--coffee-charcoal)]">
+              Typ znizki
             </label>
             <select
               value={promotionDiscountType}
-              onChange={(e) => {
-                setPromotionDiscountType(e.target.value as "percentage" | "fixed");
-                handleChange();
+              onChange={(event) => {
+                setPromotionDiscountType(
+                  event.target.value as "percentage" | "fixed",
+                );
+                notifyChange();
               }}
-              className="border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:border-transparent h-10"
+              className="h-10 border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
             >
               <option value="percentage">Procent (%)</option>
               <option value="fixed">Kwota (PLN)</option>
             </select>
           </div>
+
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-[var(--coffee-charcoal)] whitespace-nowrap">
+            <label className="whitespace-nowrap text-sm font-medium text-[var(--coffee-charcoal)]">
               {promotionDiscountType === "percentage"
-                ? "Wartość (%)"
-                : "Wartość (PLN)"}
+                ? "Wartosc (%)"
+                : "Wartosc (PLN)"}
             </label>
             <input
               type="text"
               inputMode="decimal"
               value={promotionDiscountValue}
-              onChange={(e) => {
-                setPromotionDiscountValue(e.target.value);
-                handleChange();
+              onChange={(event) => {
+                setPromotionDiscountValue(event.target.value);
+                notifyChange();
               }}
-              placeholder={promotionDiscountType === "percentage" ? "np. 20" : "np. 29.99"}
-              className="w-28 border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:border-transparent h-10"
+              placeholder={
+                promotionDiscountType === "percentage" ? "np. 20" : "np. 29.99"
+              }
+              className="h-10 w-28 border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
             />
           </div>
+
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-[var(--coffee-charcoal)] whitespace-nowrap">
+            <label className="whitespace-nowrap text-sm font-medium text-[var(--coffee-charcoal)]">
               Data od
             </label>
             <input
               type="date"
               value={promotionStartDate}
-              onChange={(e) => {
-                setPromotionStartDate(e.target.value);
-                handleChange();
+              onChange={(event) => {
+                setPromotionStartDate(event.target.value);
+                notifyChange();
               }}
-              className="border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:border-transparent h-10"
+              className="h-10 border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
             />
           </div>
+
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-[var(--coffee-charcoal)] whitespace-nowrap">
+            <label className="whitespace-nowrap text-sm font-medium text-[var(--coffee-charcoal)]">
               Data do (opcjonalnie)
             </label>
             <input
               type="date"
               value={promotionEndDate}
-              onChange={(e) => {
-                setPromotionEndDate(e.target.value);
-                handleChange();
+              onChange={(event) => {
+                setPromotionEndDate(event.target.value);
+                notifyChange();
               }}
-              className="border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:border-transparent h-10"
+              className="h-10 border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
             />
           </div>
         </div>
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-[var(--coffee-charcoal)]">
-            Sekcje i materiały
+            Sekcje i elementy lekcji
           </h3>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={addSection}
-          >
-            + Dodaj sekcję
+          <Button type="button" variant="secondary" size="sm" onClick={addSection}>
+            + Dodaj sekcje
           </Button>
         </div>
+
         <div className="space-y-6">
-          {sections.map((section, sIdx) => {
-            const isCollapsed = collapsedSections.has(sIdx);
+          {sections.map((section, sectionIndex) => {
+            const isCollapsed = collapsedSections.has(sectionIndex);
+
             return (
-            <Card key={sIdx} variant="elevated" className="overflow-hidden">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-2 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => toggleSectionCollapsed(sIdx)}
-                    aria-expanded={!isCollapsed}
-                    className="shrink-0 p-1 text-[var(--coffee-charcoal)] hover:bg-[var(--coffee-cream)] border-radius"
-                  >
-                    {isCollapsed ? (
-                      <FiChevronDown className="w-5 h-5" aria-hidden />
-                    ) : (
-                      <FiChevronUp className="w-5 h-5" aria-hidden />
-                    )}
-                  </button>
-                  <input
-                    type="text"
-                    placeholder="Tytuł sekcji"
-                    value={section.title}
-                    onChange={(e) => setSectionTitle(sIdx, e.target.value)}
-                    className="flex-1 min-w-0 border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:border-transparent h-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="danger"
-                    size="sm"
-                    onClick={() => removeSection(sIdx)}
-                  >
-                    Usuń sekcję
-                  </Button>
-                </div>
-
-                {!isCollapsed && (
-                <div className="space-y-4">
-                  {section.items.map((item, iIdx) => (
-                    <Card key={iIdx} variant="default" className="border border-[var(--coffee-cappuccino)]">
-                      <CardContent className="p-4">
-                        <div className="space-y-3">
-                          <input
-                            type="text"
-                            placeholder="Tytuł elementu"
-                            value={item.title}
-                            onChange={(e) =>
-                              setItem(sIdx, iIdx, { title: e.target.value })
-                            }
-                            className="w-full border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:border-transparent h-10"
-                          />
-                          
-                          <div className="flex flex-wrap gap-4 items-center">
-                            <div className="flex gap-3">
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="radio"
-                                  name={`kind-${sIdx}-${iIdx}`}
-                                  checked={item.kind === "svg"}
-                                  onChange={() =>
-                                    setItem(sIdx, iIdx, {
-                                      kind: "svg",
-                                      assetPath: "",
-                                      youtubeUrl: "",
-                                    })
-                                  }
-                                  className="text-[var(--coffee-mocha)] focus:ring-[var(--coffee-macchiato)]"
-                                />
-                                <span className="text-sm font-medium">SVG</span>
-                              </label>
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="radio"
-                                  name={`kind-${sIdx}-${iIdx}`}
-                                  checked={item.kind === "youtube"}
-                                  onChange={() =>
-                                    setItem(sIdx, iIdx, {
-                                      kind: "youtube",
-                                      assetPath: "",
-                                      youtubeUrl: "",
-                                    })
-                                  }
-                                  className="text-[var(--coffee-mocha)] focus:ring-[var(--coffee-macchiato)]"
-                                />
-                                <span className="text-sm font-medium">YouTube</span>
-                              </label>
-                            </div>
-                            
-                          </div>
-                          
-                          {item.kind === "svg" ? (
-                            <FileUpload
-                              value={item.assetPath}
-                              onChange={(url) => setItem(sIdx, iIdx, { assetPath: url })}
-                              accept=".svg,image/svg+xml"
-                              className="w-full"
-                            />
-                          ) : (
-                            <input
-                              type="url"
-                              placeholder="URL YouTube (np. https://youtube.com/watch?v=...)"
-                              value={item.youtubeUrl}
-                              onChange={(e) =>
-                                setItem(sIdx, iIdx, { youtubeUrl: e.target.value })
-                              }
-                              className="w-full border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:border-transparent h-10"
-                            />
-                          )}
-
-                          <div className="flex justify-end">
-                            <Button
-                              type="button"
-                              variant="danger"
-                              size="sm"
-                              onClick={() => removeItem(sIdx, iIdx)}
-                            >
-                              Usuń element
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  
-                  <div className="flex gap-3 pt-2">
+              <Card key={sectionIndex} variant="elevated" className="overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="mb-4 flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionCollapsed(sectionIndex)}
+                      aria-expanded={!isCollapsed}
+                      className="shrink-0 border-radius p-1 text-[var(--coffee-charcoal)] hover:bg-[var(--coffee-cream)]"
+                    >
+                      {isCollapsed ? (
+                        <FiChevronDown className="h-5 w-5" aria-hidden />
+                      ) : (
+                        <FiChevronUp className="h-5 w-5" aria-hidden />
+                      )}
+                    </button>
+                    <input
+                      type="text"
+                      placeholder="Tytul sekcji"
+                      value={section.title}
+                      onChange={(event) =>
+                        setSectionTitle(sectionIndex, event.target.value)
+                      }
+                      className="h-10 min-w-0 flex-1 border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
+                    />
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="danger"
                       size="sm"
-                      onClick={() => addItem(sIdx, "svg")}
+                      onClick={() => removeSection(sectionIndex)}
                     >
-                      + Element SVG
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addItem(sIdx, "youtube")}
-                    >
-                      + Element YouTube
+                      Usun sekcje
                     </Button>
                   </div>
-                </div>
-                )}
-              </CardContent>
-            </Card>
-          );
+
+                  {isCollapsed ? null : (
+                    <div className="space-y-4">
+                      {section.items.map((item, itemIndex) => (
+                        <Card
+                          key={itemIndex}
+                          variant="default"
+                          className="border border-[var(--coffee-cappuccino)]"
+                        >
+                          <CardContent className="space-y-4 p-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <label className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]">
+                                  Tytul elementu
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Tytul elementu"
+                                  value={item.title}
+                                  onChange={(event) =>
+                                    setItem(sectionIndex, itemIndex, {
+                                      title: event.target.value,
+                                    })
+                                  }
+                                  className="h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
+                                />
+                              </div>
+                              <div className="rounded bg-[var(--coffee-latte)] px-3 py-2 text-sm font-medium text-[var(--coffee-espresso)]">
+                                {getItemKindLabel(item.kind)}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-4">
+                              <label className="flex items-center gap-2 text-sm font-medium text-[var(--coffee-charcoal)]">
+                                <input
+                                  type="radio"
+                                  name={`kind-${sectionIndex}-${itemIndex}`}
+                                  checked={item.kind === "svg"}
+                                  onChange={() =>
+                                    setItem(sectionIndex, itemIndex, {
+                                      kind: "svg",
+                                      assetPath: item.assetPath,
+                                      youtubeUrl: "",
+                                      quiz: null,
+                                    })
+                                  }
+                                />
+                                Tekst
+                              </label>
+                              <label className="flex items-center gap-2 text-sm font-medium text-[var(--coffee-charcoal)]">
+                                <input
+                                  type="radio"
+                                  name={`kind-${sectionIndex}-${itemIndex}`}
+                                  checked={item.kind === "youtube"}
+                                  onChange={() =>
+                                    setItem(sectionIndex, itemIndex, {
+                                      kind: "youtube",
+                                      assetPath: "",
+                                      youtubeUrl: item.youtubeUrl,
+                                      quiz: null,
+                                    })
+                                  }
+                                />
+                                Video
+                              </label>
+                              <label className="flex items-center gap-2 text-sm font-medium text-[var(--coffee-charcoal)]">
+                                <input
+                                  type="radio"
+                                  name={`kind-${sectionIndex}-${itemIndex}`}
+                                  checked={item.kind === "quiz"}
+                                  onChange={() =>
+                                    setItem(sectionIndex, itemIndex, {
+                                      kind: "quiz",
+                                      assetPath: "",
+                                      youtubeUrl: "",
+                                      quiz: normalizeQuiz(item.quiz),
+                                    })
+                                  }
+                                />
+                                Quiz
+                              </label>
+                            </div>
+
+                            {item.kind === "svg" ? (
+                              <div>
+                                <label className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]">
+                                  Plik SVG
+                                </label>
+                                <FileUpload
+                                  value={item.assetPath}
+                                  onChange={(url) =>
+                                    setItem(sectionIndex, itemIndex, {
+                                      assetPath: url,
+                                    })
+                                  }
+                                  accept=".svg,image/svg+xml"
+                                  className="w-full"
+                                />
+                              </div>
+                            ) : null}
+
+                            {item.kind === "youtube" ? (
+                              <div>
+                                <label className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]">
+                                  URL video
+                                </label>
+                                <input
+                                  type="url"
+                                  placeholder="URL YouTube (np. https://youtube.com/watch?v=...)"
+                                  value={item.youtubeUrl}
+                                  onChange={(event) =>
+                                    setItem(sectionIndex, itemIndex, {
+                                      youtubeUrl: event.target.value,
+                                    })
+                                  }
+                                  className="h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
+                                />
+                              </div>
+                            ) : null}
+
+                            {item.kind === "quiz" ? (
+                              <div className="space-y-3">
+                                <div>
+                                  <div className="text-sm font-medium text-[var(--coffee-charcoal)]">
+                                    Kreator quizu
+                                  </div>
+                                  <div className="text-sm text-[var(--coffee-espresso)]">
+                                    Dodaj pytania, odpowiedzi i zaznacz poprawne
+                                    odpowiedzi.
+                                  </div>
+                                </div>
+                                <CourseQuizBuilder
+                                  value={normalizeQuiz(item.quiz)}
+                                  onChange={(quiz) =>
+                                    setItem(sectionIndex, itemIndex, { quiz })
+                                  }
+                                />
+                              </div>
+                            ) : null}
+
+                            <div className="flex justify-end">
+                              <Button
+                                type="button"
+                                variant="danger"
+                                size="sm"
+                                onClick={() => removeItem(sectionIndex, itemIndex)}
+                              >
+                                Usun element
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+
+                      <div className="rounded border border-dashed border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] p-4">
+                        <div className="mb-3 text-sm font-medium text-[var(--coffee-charcoal)]">
+                          + Dodaj element
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addItem(sectionIndex, "youtube")}
+                          >
+                            Video
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addItem(sectionIndex, "svg")}
+                          >
+                            Tekst
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addItem(sectionIndex, "quiz")}
+                          >
+                            Quiz
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
           })}
         </div>
 
         <div className="mt-4">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={addSection}
-          >
-            + Dodaj sekcję
+          <Button type="button" variant="secondary" size="sm" onClick={addSection}>
+            + Dodaj sekcje
           </Button>
         </div>
       </div>
 
-      <div className="flex gap-3 justify-end pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-        >
+      <div className="flex justify-end gap-3 pt-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
           Anuluj
         </Button>
-        <Button
-          type="submit"
-          variant="primary"
-        >
+        <Button type="submit" variant="primary">
           Zapisz
         </Button>
       </div>

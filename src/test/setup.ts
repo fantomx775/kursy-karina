@@ -18,3 +18,7 @@ vi.mock('next/navigation', () => ({
 
 // Mock environment variables
 vi.stubEnv('NODE_ENV', 'test')
+
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = vi.fn()
+}

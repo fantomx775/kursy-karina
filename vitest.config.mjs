@@ -10,6 +10,7 @@ export default defineConfig({
     pool: 'vmThreads',
     testTimeout: 30000,
     hookTimeout: 30000,
+    exclude: ['tests/e2e/**', 'node_modules/**', '.next/**'],
   },
   resolve: {
     alias: {

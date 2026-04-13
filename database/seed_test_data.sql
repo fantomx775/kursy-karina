@@ -99,11 +99,42 @@ VALUES
   ('b0000003-0001-4000-8000-000000000002', 'a0000001-0001-4000-8000-000000000003', 'Server i Client Components', 1)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO course_items (section_id, title, kind, asset_path, youtube_url, position, is_preview)
+INSERT INTO course_items (section_id, title, kind, asset_path, youtube_url, quiz_data, position, is_preview)
 VALUES
-  ('b0000003-0001-4000-8000-000000000001', 'Struktura projektu', 'svg', 'next/structure.svg', NULL, 0, true),
-  ('b0000003-0001-4000-8000-000000000001', 'Routing i layouty', 'youtube', NULL, 'https://www.youtube.com/watch?v=dGcsHMXbSOA', 1, false),
-  ('b0000003-0001-4000-8000-000000000002', 'Kiedy Server, kiedy Client', 'svg', 'next/server-client.svg', NULL, 0, false)
+  ('b0000003-0001-4000-8000-000000000001', 'Struktura projektu', 'svg', 'next/structure.svg', NULL, NULL, 0, true),
+  ('b0000003-0001-4000-8000-000000000001', 'Routing i layouty', 'youtube', NULL, 'https://www.youtube.com/watch?v=dGcsHMXbSOA', NULL, 1, false),
+  ('b0000003-0001-4000-8000-000000000002', 'Kiedy Server, kiedy Client', 'svg', 'next/server-client.svg', NULL, NULL, 0, false),
+  (
+    'b0000003-0001-4000-8000-000000000002',
+    'Quiz podsumowujacy App Router',
+    'quiz',
+    NULL,
+    NULL,
+    '{
+      "questions": [
+        {
+          "text": "Ktory katalog odpowiada za routing w App Router?",
+          "type": "single",
+          "answers": [
+            { "text": "app", "isCorrect": true },
+            { "text": "pages", "isCorrect": false },
+            { "text": "routes", "isCorrect": false }
+          ]
+        },
+        {
+          "text": "Ktore elementy sa standardem App Router?",
+          "type": "multiple",
+          "answers": [
+            { "text": "layout.tsx", "isCorrect": true },
+            { "text": "page.tsx", "isCorrect": true },
+            { "text": "getServerSideProps", "isCorrect": false }
+          ]
+        }
+      ]
+    }'::jsonb,
+    1,
+    false
+  )
 ON CONFLICT (section_id, position) DO NOTHING;
 
 -- Kurs 4: CSS i design system (nieaktywny – do testów filtra)

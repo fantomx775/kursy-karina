@@ -7,7 +7,7 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { CourseFormData } from "@/features/admin/CourseForm";
+import type { CourseFormData } from "@/features/admin/course-form-types";
 
 export default function CreateCoursePage() {
   const router = useRouter();

@@ -1,6 +1,6 @@
 import type { Course } from "@/types/course";
 import type { Coupon } from "@/types/coupon";
-import type { CourseFormData } from "../CourseForm";
+import type { CourseFormData } from "../course-form-types";
 import type { CouponFormData } from "../CouponForm";
 import { slugify } from "@/lib/utils";
 
@@ -19,6 +19,7 @@ export function useAdminActions() {
           kind: item.kind,
           assetPath: item.kind === "svg" ? item.assetPath : undefined,
           youtubeUrl: item.kind === "youtube" ? item.youtubeUrl : undefined,
+          quizData: item.kind === "quiz" ? item.quiz : undefined,
           position: itemIndex,
           isPreview: false,
         })),

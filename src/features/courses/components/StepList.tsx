@@ -10,6 +10,17 @@ type Props = {
   onRequestClose?: () => void;
 };
 
+function getBadgeLabel(kind: CourseItem["kind"]): string {
+  switch (kind) {
+    case "youtube":
+      return "Video";
+    case "quiz":
+      return "Quiz";
+    default:
+      return "Tekst";
+  }
+}
+
 export function StepList({
   items,
   activeItemId,
@@ -18,7 +29,7 @@ export function StepList({
   onRequestClose,
 }: Props) {
   const completedCount = items.reduce(
-    (acc, item) => acc + (completedIds[item.id] ? 1 : 0),
+    (accumulator, item) => accumulator + (completedIds[item.id] ? 1 : 0),
     0,
   );
 
@@ -29,7 +40,7 @@ export function StepList({
     >
       <div className="flex shrink-0 items-center justify-between border-b border-[var(--coffee-cappuccino)] bg-white px-3 py-2">
         <div className="text-sm font-semibold text-[var(--coffee-charcoal)]">
-          Zawartość kursu
+          Zawartosc kursu
         </div>
         <div className="flex items-center gap-2">
           <div className="text-xs text-[var(--coffee-espresso)]">
@@ -42,7 +53,7 @@ export function StepList({
               className="inline-flex h-8 w-8 items-center justify-center border-radius border border-[var(--coffee-cappuccino)] bg-white text-sm text-[var(--coffee-espresso)] hover:bg-[var(--coffee-cream)]"
               aria-label="Zamknij kroki"
             >
-              ✕
+              x
             </button>
           ) : null}
         </div>
@@ -50,50 +61,50 @@ export function StepList({
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <ul className="grid grid-cols-1 gap-2 p-2 sm:grid-cols-2 md:flex md:flex-col">
-        {items.map((item, index) => {
-          const isActive = item.id === activeItemId;
-          const isDone = Boolean(completedIds[item.id]);
-          const badge = item.kind === "svg" ? "SVG" : "YouTube";
+          {items.map((item, index) => {
+            const isActive = item.id === activeItemId;
+            const isDone = Boolean(completedIds[item.id]);
+            const badge = getBadgeLabel(item.kind);
 
-          return (
-            <li key={item.id} className="min-w-0">
-              <button
-                type="button"
-                onClick={() => onSelectItem(item.id)}
-                className={[
-                  "group flex w-full items-center gap-3 border-radius border px-3 py-2 text-left transition-colors",
-                  isActive
-                    ? "border-[var(--coffee-mocha)] bg-[var(--coffee-cream)]"
-                    : "border-[var(--coffee-cappuccino)] bg-white hover:bg-[var(--coffee-cream)]",
-                ].join(" ")}
-              >
-                <div
+            return (
+              <li key={item.id} className="min-w-0">
+                <button
+                  type="button"
+                  onClick={() => onSelectItem(item.id)}
                   className={[
-                    "flex h-7 w-7 items-center justify-center border-radius text-xs font-semibold",
-                    isDone
-                      ? "bg-emerald-100 text-emerald-800"
-                      : "bg-[var(--coffee-latte)] text-[var(--coffee-espresso)]",
+                    "group flex w-full items-center gap-3 border-radius border px-3 py-2 text-left transition-colors",
+                    isActive
+                      ? "border-[var(--coffee-mocha)] bg-[var(--coffee-cream)]"
+                      : "border-[var(--coffee-cappuccino)] bg-white hover:bg-[var(--coffee-cream)]",
                   ].join(" ")}
                 >
-                  {isDone ? "✓" : index + 1}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-[var(--coffee-charcoal)]">
-                    {item.title}
+                  <div
+                    className={[
+                      "flex h-7 w-7 items-center justify-center border-radius text-xs font-semibold",
+                      isDone
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-[var(--coffee-latte)] text-[var(--coffee-espresso)]",
+                    ].join(" ")}
+                  >
+                    {isDone ? "OK" : index + 1}
                   </div>
-                  <div className="text-xs text-[var(--coffee-espresso)]">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-[var(--coffee-charcoal)]">
+                      {item.title}
+                    </div>
+                    <div className="text-xs text-[var(--coffee-espresso)]">
+                      {badge}
+                      {isDone ? " • Ukonczone" : ""}
+                    </div>
+                  </div>
+                  <div className="border-radius-sm bg-[var(--coffee-latte)] px-2 py-1 text-[11px] font-semibold text-[var(--coffee-espresso)]">
                     {badge}
-                    {isDone ? " • Ukończone" : ""}
                   </div>
-                </div>
-                <div className="border-radius-sm bg-[var(--coffee-latte)] px-2 py-1 text-[11px] font-semibold text-[var(--coffee-espresso)]">
-                  {badge}
-                </div>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </nav>
   );

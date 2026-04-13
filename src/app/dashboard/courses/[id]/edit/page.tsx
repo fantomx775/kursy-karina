@@ -8,8 +8,11 @@ import { useAdminActions } from "@/features/admin/hooks/useAdminActions";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
-import type { Course } from "@/types/course";
-import type { CourseFormData, CourseFormSection } from "@/features/admin/CourseForm";
+import type { Course, CourseQuiz } from "@/types/course";
+import type {
+  CourseFormData,
+  CourseFormSection,
+} from "@/features/admin/course-form-types";
 
 function mapApiSectionsToForm(
   sections: Array<{
@@ -19,6 +22,7 @@ function mapApiSectionsToForm(
       kind: string;
       asset_path?: string | null;
       youtube_url?: string | null;
+      quiz_data?: CourseQuiz | null;
     }>;
   }>
 ): CourseFormSection[] {
@@ -26,9 +30,10 @@ function mapApiSectionsToForm(
     title: section.title,
     items: (section.items ?? []).map((item) => ({
       title: item.title,
-      kind: item.kind as "svg" | "youtube",
+      kind: item.kind as "svg" | "youtube" | "quiz",
       assetPath: item.asset_path ?? "",
       youtubeUrl: item.youtube_url ?? "",
+      quiz: item.kind === "quiz" ? item.quiz_data ?? null : null,
     })),
   }));
 }

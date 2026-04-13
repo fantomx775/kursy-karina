@@ -52,7 +52,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TYPE user_role AS ENUM ('admin', 'student');
 CREATE TYPE course_status AS ENUM ('active', 'inactive');
 CREATE TYPE discount_type AS ENUM ('percentage', 'fixed');
-CREATE TYPE course_item_kind AS ENUM ('svg', 'youtube');
+CREATE TYPE course_item_kind AS ENUM ('svg', 'youtube', 'quiz');
 
 -- ================================
 -- FUNCTIONS
@@ -172,16 +172,37 @@ CREATE TABLE course_items (
   kind course_item_kind NOT NULL,
   asset_path TEXT,
   youtube_url TEXT,
+  quiz_data JSONB,
   position INTEGER NOT NULL,
   is_preview BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(section_id, position),
-  CHECK (
-    (kind = 'svg' AND asset_path IS NOT NULL AND youtube_url IS NULL)
-    OR (kind = 'youtube' AND youtube_url IS NOT NULL AND asset_path IS NULL)
+  CONSTRAINT course_items_kind_payload_check CHECK (
+    (
+      kind = 'svg'
+      AND asset_path IS NOT NULL
+      AND youtube_url IS NULL
+      AND quiz_data IS NULL
+    )
+    OR (
+      kind = 'youtube'
+      AND youtube_url IS NOT NULL
+      AND asset_path IS NULL
+      AND quiz_data IS NULL
+    )
+    OR (
+      kind = 'quiz'
+      AND quiz_data IS NOT NULL
+      AND asset_path IS NULL
+      AND youtube_url IS NULL
+      AND jsonb_typeof(quiz_data) = 'object'
+      AND jsonb_typeof(COALESCE(quiz_data -> 'questions', '[]'::jsonb)) = 'array'
+    )
   )
 );
+
+COMMENT ON COLUMN course_items.quiz_data IS 'Quiz definition stored inline for lesson items';
 
 CREATE TABLE course_progress (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -469,6 +490,7 @@ BEGIN
         kind,
         asset_path,
         youtube_url,
+        quiz_data,
         position,
         is_preview
       )
@@ -482,6 +504,10 @@ BEGIN
         END,
         CASE WHEN v_item_data ->> 'kind' = 'youtube'
              THEN v_item_data ->> 'youtubeUrl'
+             ELSE NULL
+        END,
+        CASE WHEN v_item_data ->> 'kind' = 'quiz'
+             THEN v_item_data -> 'quizData'
              ELSE NULL
         END,
         v_item_index,
@@ -593,6 +619,7 @@ BEGIN
         kind,
         asset_path,
         youtube_url,
+        quiz_data,
         position,
         is_preview
       )
@@ -606,6 +633,10 @@ BEGIN
         END,
         CASE WHEN v_item_data ->> 'kind' = 'youtube'
              THEN v_item_data ->> 'youtubeUrl'
+             ELSE NULL
+        END,
+        CASE WHEN v_item_data ->> 'kind' = 'quiz'
+             THEN v_item_data -> 'quizData'
              ELSE NULL
         END,
         v_item_index,

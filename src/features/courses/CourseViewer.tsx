@@ -37,18 +37,23 @@ export function CourseViewer({ course, completedItemIds }: Props) {
   useEffect(() => {
     const elements = steps
       .map((step) => document.getElementById(step.id))
-      .filter((el): el is HTMLElement => Boolean(el));
+      .filter((element): element is HTMLElement => Boolean(element));
 
-    if (!elements.length) return;
+    if (!elements.length) {
+      return;
+    }
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = entries
+        const visibleEntries = entries
           .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0));
-        const top = visible[0]?.target as HTMLElement | undefined;
-        if (top?.dataset.stepId) {
-          setActiveItemId(top.dataset.stepId);
+          .sort(
+            (left, right) =>
+              (right.intersectionRatio ?? 0) - (left.intersectionRatio ?? 0),
+          );
+        const topElement = visibleEntries[0]?.target as HTMLElement | undefined;
+        if (topElement?.dataset.stepId) {
+          setActiveItemId(topElement.dataset.stepId);
         }
       },
       {
@@ -58,44 +63,76 @@ export function CourseViewer({ course, completedItemIds }: Props) {
       },
     );
 
-    elements.forEach((el) => observer.observe(el));
+    elements.forEach((element) => observer.observe(element));
     return () => observer.disconnect();
   }, [steps]);
 
-  const onSelectItem = (itemId: string) => {
-    const element = document.getElementById(itemId);
-    if (!element) return;
-    element.scrollIntoView({ behavior: "smooth", block: "start" });
-    setActiveItemId(itemId);
-  };
-
-  const onToggleCompleted = async (itemId: string) => {
-    if (!user) return;
-    const shouldComplete = !completedIds[itemId];
-
-    setCompletedIds((prev) => {
-      const next = { ...prev };
-      if (shouldComplete) next[itemId] = true;
-      else delete next[itemId];
-      return next;
-    });
+  const persistCompletion = async (itemId: string, completed: boolean) => {
+    if (!user) {
+      return;
+    }
 
     await supabase.from("course_progress").upsert(
       {
         user_id: user.id,
         course_id: course.id,
         item_id: itemId,
-        completed: shouldComplete,
+        completed,
         last_watched: new Date().toISOString(),
       },
       { onConflict: "user_id,item_id" },
     );
   };
 
+  const onSelectItem = (itemId: string) => {
+    const element = document.getElementById(itemId);
+    if (!element) {
+      return;
+    }
+
+    element.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActiveItemId(itemId);
+  };
+
+  const onToggleCompleted = async (itemId: string) => {
+    if (!user) {
+      return;
+    }
+
+    const shouldComplete = !completedIds[itemId];
+
+    setCompletedIds((previous) => {
+      const next = { ...previous };
+      if (shouldComplete) {
+        next[itemId] = true;
+      } else {
+        delete next[itemId];
+      }
+      return next;
+    });
+
+    await persistCompletion(itemId, shouldComplete);
+  };
+
+  const onQuizPassed = async (itemId: string) => {
+    if (!user || completedIds[itemId]) {
+      return;
+    }
+
+    setCompletedIds((previous) => ({
+      ...previous,
+      [itemId]: true,
+    }));
+
+    await persistCompletion(itemId, true);
+  };
+
   const completedCount = steps.reduce(
-    (acc, step) => acc + (completedIds[step.id] ? 1 : 0),
+    (accumulator, step) => accumulator + (completedIds[step.id] ? 1 : 0),
     0,
   );
+  const completionPercentage =
+    steps.length > 0 ? Math.round((completedCount / steps.length) * 100) : 0;
 
   return (
     <div className="min-h-dvh bg-[var(--coffee-cream)] text-[var(--coffee-charcoal)]">
@@ -104,24 +141,24 @@ export function CourseViewer({ course, completedItemIds }: Props) {
           <div>
             <Link
               href="/dashboard"
-              className="mb-2 inline-flex items-center gap-1.5 text-sm text-[var(--coffee-mocha)] hover:text-[var(--coffee-espresso)] transition-colors"
+              className="mb-2 inline-flex items-center gap-1.5 text-sm text-[var(--coffee-mocha)] transition-colors hover:text-[var(--coffee-espresso)]"
             >
               <FiChevronLeft className="h-4 w-4 shrink-0" aria-hidden />
-              Powrót do moich kursów
+              Powrot do moich kursow
             </Link>
             <h1 className="text-2xl font-semibold tracking-tight">{course.title}</h1>
             <p className="text-sm text-[var(--coffee-espresso)]">
-              Kontynuuj naukę krok po kroku. Postęp zapisuje się automatycznie.
+              Kontynuuj nauke krok po kroku. Postep zapisuje sie automatycznie.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <div className="border-radius border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 text-sm text-[var(--coffee-espresso)] shadow-sm">
-              Postęp:{" "}
+              Postep:{" "}
               <span className="font-semibold text-[var(--coffee-charcoal)]">
-                {completedCount}/{steps.length}
+                {completedCount}/{steps.length} ({completionPercentage}%)
               </span>
             </div>
-            {completedCount === steps.length && steps.length > 0 && (
+            {completedCount === steps.length && steps.length > 0 ? (
               <div className="flex flex-wrap items-center gap-2">
                 <a
                   href={`/api/courses/${course.slug}/certificate`}
@@ -136,10 +173,10 @@ export function CourseViewer({ course, completedItemIds }: Props) {
                   rel="noopener noreferrer"
                   className="inline-block border-radius border border-[var(--coffee-mocha)] bg-white px-4 py-2 text-sm font-medium text-[var(--coffee-mocha)] shadow-sm hover:bg-[var(--coffee-cream)]"
                 >
-                  Podgląd certyfikatu
+                  Podglad certyfikatu
                 </a>
               </div>
-            )}
+            ) : null}
           </div>
         </header>
 
@@ -156,7 +193,7 @@ export function CourseViewer({ course, completedItemIds }: Props) {
           </aside>
 
           <main>
-            <div className="md:hidden mb-4">
+            <div className="mb-4 md:hidden">
               <StepList
                 items={steps}
                 activeItemId={activeItemId}
@@ -164,10 +201,10 @@ export function CourseViewer({ course, completedItemIds }: Props) {
                 onSelectItem={onSelectItem}
               />
             </div>
-            <div className="mt-4 md:mt-0 space-y-6">
+            <div className="mt-4 space-y-6 md:mt-0">
               {steps.length === 0 ? (
                 <div className="border-radius border border-[var(--coffee-cappuccino)] bg-white p-6 text-[var(--coffee-espresso)]">
-                  Materiały kursu są w przygotowaniu.
+                  Materialy kursu sa w przygotowaniu.
                 </div>
               ) : (
                 course.sections.map((section) => (
@@ -181,6 +218,7 @@ export function CourseViewer({ course, completedItemIds }: Props) {
                         item={item}
                         isCompleted={Boolean(completedIds[item.id])}
                         onToggleCompleted={onToggleCompleted}
+                        onQuizPassed={onQuizPassed}
                       />
                     ))}
                   </div>
