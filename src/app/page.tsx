@@ -118,7 +118,7 @@ export default async function HomePage() {
               Szkolenia online
             </h1>
             <p className="text-[var(--coffee-espresso)] text-base sm:text-lg max-w-2xl mx-auto">
-              Profesjonalne kursy stylizacji brwi od Kariny Koziara
+              Karina Koziara
             </p>
           </div>
           <div className="grid gap-5 sm:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-3">
