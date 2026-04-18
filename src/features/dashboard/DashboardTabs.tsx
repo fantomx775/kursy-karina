@@ -39,7 +39,7 @@ const STUDENT_TABS: { key: TabId; label: string }[] = [
 ];
 
 const ADMIN_TABS: { key: TabId; label: string }[] = [
-  { key: "admin-courses", label: "Kursy" },
+  { key: "admin-courses", label: "Zarządzanie Kursami" },
   { key: "admin-students", label: "Uczniowie" },
   { key: "admin-coupons", label: "Kupony" },
   { key: "admin-stats", label: "Statystyki" },

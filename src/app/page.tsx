@@ -205,13 +205,23 @@ export default async function HomePage() {
                 </p>
               </div>
               <div className="relative order-first md:order-last flex justify-center md:justify-end">
-                <div className="relative w-full max-w-md aspect-[3/4] bg-[var(--coffee-cappuccino)] border-radius overflow-hidden shadow-[var(--shadow-lg)]">
+                <div className="relative w-full max-w-md bg-[var(--coffee-cappuccino)] border-radius overflow-hidden shadow-[var(--shadow-lg)]">
                   <Image
-                    src="/main.jpg"
+                    src="/main-mobile.jpg"
                     alt="Karina Koziara – stylistka brwi, wielokrotna zwyciężczyni mistrzostw"
-                    fill
-                    className="object-cover object-center"
-                    sizes="(max-width: 768px) 100vw, min(50vw, 420px)"
+                    width={3024}
+                    height={2431}
+                    className="block w-full h-auto md:hidden"
+                    sizes="100vw"
+                    priority
+                  />
+                  <Image
+                    src="/main.JPG"
+                    alt="Karina Koziara – stylistka brwi, wielokrotna zwyciężczyni mistrzostw"
+                    width={3024}
+                    height={4032}
+                    className="hidden md:block w-full h-auto"
+                    sizes="(min-width: 768px) min(50vw, 28rem), 0px"
                     priority
                   />
                 </div>
