@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getCertificateGrant } from "@/services/certificate";
 import { createServerSupabaseClient } from "@/services/supabase/server";
 import { authenticateUser } from "@/services/auth/server";
 import { getCourseWithContentBySlug } from "@/services/courses";
@@ -86,6 +87,16 @@ export default async function LearnPage({
     .eq("completed", true);
 
   const completedItemIds = progress?.map((item) => item.item_id) ?? [];
+  const certificateGrant = isAdmin
+    ? { granted: true, grantedAt: null }
+    : await getCertificateGrant(supabase, userId, course.id);
 
-  return <CourseViewer course={course} completedItemIds={completedItemIds} />;
+  return (
+    <CourseViewer
+      course={course}
+      completedItemIds={completedItemIds}
+      certificateGranted={certificateGrant.granted}
+      certificateGrantedAt={certificateGrant.grantedAt}
+    />
+  );
 }

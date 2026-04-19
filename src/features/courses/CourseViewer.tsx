@@ -4,17 +4,36 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { FiChevronLeft } from "react-icons/fi";
 import type { CourseWithContent } from "@/types/course";
-import { createBrowserSupabaseClient } from "@/services/supabase/browser";
 import { useAuth } from "@/features/auth/AuthContext";
+import { createBrowserSupabaseClient } from "@/services/supabase/browser";
 import { CourseStepCard } from "./components/CourseStepCard";
 import { StepList } from "./components/StepList";
 
 type Props = {
   course: CourseWithContent;
   completedItemIds: string[];
+  certificateGranted: boolean;
+  certificateGrantedAt: string | null;
 };
 
-export function CourseViewer({ course, completedItemIds }: Props) {
+function formatCertificateDate(iso: string | null): string {
+  if (!iso) {
+    return "Certyfikat jest juz dostepny.";
+  }
+
+  return `Certyfikat przyznano ${new Date(iso).toLocaleDateString("pl-PL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })}.`;
+}
+
+export function CourseViewer({
+  course,
+  completedItemIds,
+  certificateGranted,
+  certificateGrantedAt,
+}: Props) {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const { user } = useAuth();
   const steps = useMemo(
@@ -158,7 +177,7 @@ export function CourseViewer({ course, completedItemIds }: Props) {
                 {completedCount}/{steps.length} ({completionPercentage}%)
               </span>
             </div>
-            {completedCount === steps.length && steps.length > 0 ? (
+            {certificateGranted ? (
               <div className="flex flex-wrap items-center gap-2">
                 <a
                   href={`/api/courses/${course.slug}/certificate`}
@@ -179,6 +198,12 @@ export function CourseViewer({ course, completedItemIds }: Props) {
             ) : null}
           </div>
         </header>
+
+        <div className="mb-4 rounded-md border border-[var(--coffee-cappuccino)] bg-white px-4 py-3 text-sm text-[var(--coffee-espresso)] shadow-sm">
+          {certificateGranted
+            ? formatCertificateDate(certificateGrantedAt)
+            : "Certyfikat bedzie dostepny po decyzji administratora."}
+        </div>
 
         <div className="grid gap-4 md:grid-cols-[320px_1fr]">
           <aside className="sticky top-[calc(var(--sticky-top-offset)+0.75rem)] hidden self-start md:block">

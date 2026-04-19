@@ -1,4 +1,5 @@
 import { authenticateAdmin } from "@/services/auth/server";
+import { getCertificateGrants } from "@/services/certificate";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
 
 export async function GET(
@@ -46,6 +47,7 @@ export async function GET(
   const courseIds = Array.from(
     new Set(orderItems?.map((item) => item.course_id) ?? []),
   );
+  const certificateGrantsByCourse = await getCertificateGrants(admin, id, courseIds);
 
   const { data: sections } = await admin
     .from("course_sections")
@@ -91,6 +93,10 @@ export async function GET(
     const completedItems = completedByCourse.get(courseId) ?? 0;
     const completionPercentage =
       totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+    const certificateGrant = certificateGrantsByCourse[courseId] ?? {
+      granted: false,
+      grantedAt: null,
+    };
 
     return {
       courseId,
@@ -98,6 +104,8 @@ export async function GET(
       totalItems,
       completedItems,
       completionPercentage,
+      certificateGranted: certificateGrant.granted,
+      certificateGrantedAt: certificateGrant.grantedAt,
     };
   });
 

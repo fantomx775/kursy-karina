@@ -14,6 +14,7 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 -- Tabele (kolejność: najpierw zależne, na końcu niezależne)
 DROP TABLE IF EXISTS public.coupon_usage CASCADE;
 DROP TABLE IF EXISTS public.order_items CASCADE;
+DROP TABLE IF EXISTS public.course_certificates CASCADE;
 DROP TABLE IF EXISTS public.course_progress CASCADE;
 DROP TABLE IF EXISTS public.course_items CASCADE;
 DROP TABLE IF EXISTS public.course_sections CASCADE;
@@ -26,6 +27,7 @@ DROP TABLE IF EXISTS public.users CASCADE;
 DROP FUNCTION IF EXISTS public.create_course_with_content(TEXT, TEXT, TEXT, INTEGER, course_status, JSONB, discount_type, INTEGER, TIMESTAMPTZ, TIMESTAMPTZ);
 DROP FUNCTION IF EXISTS public.update_course_with_content(UUID, TEXT, TEXT, TEXT, INTEGER, course_status, JSONB, discount_type, INTEGER, TIMESTAMPTZ, TIMESTAMPTZ);
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DROP FUNCTION IF EXISTS public.current_user_role() CASCADE;
 DROP FUNCTION IF EXISTS public.update_timestamp() CASCADE;
 
 -- Typy enum (dopiero po usunięciu tabel i funkcji)
@@ -102,6 +104,16 @@ EXCEPTION
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION current_user_role()
+RETURNS public.user_role
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT role FROM public.users WHERE id = auth.uid() LIMIT 1;
+$$;
 
 -- ================================
 -- TABLES
@@ -216,6 +228,16 @@ CREATE TABLE course_progress (
   UNIQUE(user_id, item_id)
 );
 
+CREATE TABLE course_certificates (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  granted_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  granted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, course_id)
+);
+
 CREATE TABLE coupons (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
@@ -273,6 +295,8 @@ CREATE INDEX idx_course_sections_course_id ON course_sections(course_id);
 CREATE INDEX idx_course_items_section_id ON course_items(section_id);
 CREATE INDEX idx_course_progress_user_id ON course_progress(user_id);
 CREATE INDEX idx_course_progress_course_id ON course_progress(course_id);
+CREATE INDEX idx_course_certificates_user_id ON course_certificates(user_id);
+CREATE INDEX idx_course_certificates_course_id ON course_certificates(course_id);
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_order_items_course_id ON order_items(course_id);
@@ -330,28 +354,23 @@ ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE course_sections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE course_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE course_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE course_certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE coupon_usage ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view own profile" ON users
-  FOR SELECT USING (auth.uid() = id OR EXISTS (
-    SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-  ));
+  FOR SELECT USING (auth.uid() = id OR (SELECT current_user_role() = 'admin'));
 
 CREATE POLICY "Users can update own profile" ON users
-  FOR UPDATE USING (auth.uid() = id OR EXISTS (
-    SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-  ));
+  FOR UPDATE USING (auth.uid() = id OR (SELECT current_user_role() = 'admin'));
 
 CREATE POLICY "Courses are viewable by everyone" ON courses
   FOR SELECT USING (true);
 
 CREATE POLICY "Only admins can modify courses" ON courses
-  FOR ALL USING (EXISTS (
-    SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-  ));
+  FOR ALL USING ((SELECT current_user_role() = 'admin'));
 
 CREATE POLICY "Course sections viewable by everyone" ON course_sections
   FOR SELECT USING (true);
@@ -360,19 +379,13 @@ CREATE POLICY "Course items viewable by everyone" ON course_items
   FOR SELECT USING (true);
 
 CREATE POLICY "Only admins can modify course sections" ON course_sections
-  FOR ALL USING (EXISTS (
-    SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-  ));
+  FOR ALL USING ((SELECT current_user_role() = 'admin'));
 
 CREATE POLICY "Only admins can modify course items" ON course_items
-  FOR ALL USING (EXISTS (
-    SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-  ));
+  FOR ALL USING ((SELECT current_user_role() = 'admin'));
 
 CREATE POLICY "Users can view own orders" ON orders
-  FOR SELECT USING (auth.uid() = user_id OR EXISTS (
-    SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-  ));
+  FOR SELECT USING (auth.uid() = user_id OR (SELECT current_user_role() = 'admin'));
 
 CREATE POLICY "Users can create own orders" ON orders
   FOR INSERT WITH CHECK (auth.uid() = user_id);
@@ -380,27 +393,27 @@ CREATE POLICY "Users can create own orders" ON orders
 CREATE POLICY "Order items viewable by owner" ON order_items
   FOR SELECT USING (EXISTS (
     SELECT 1 FROM orders WHERE id = order_id AND user_id = auth.uid()
-  ) OR EXISTS (
-    SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-  ));
+  ) OR (SELECT current_user_role() = 'admin'));
 
 CREATE POLICY "Users can manage own progress" ON course_progress
-  FOR ALL USING (auth.uid() = user_id OR EXISTS (
-    SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-  ));
+  FOR ALL USING (auth.uid() = user_id OR (SELECT current_user_role() = 'admin'));
+
+CREATE POLICY "Course certificates viewable by owner or admin" ON course_certificates
+  FOR SELECT USING (auth.uid() = user_id OR (SELECT current_user_role() = 'admin'));
+
+CREATE POLICY "Only admins can modify course certificates" ON course_certificates
+  FOR ALL
+  USING ((SELECT current_user_role() = 'admin'))
+  WITH CHECK ((SELECT current_user_role() = 'admin'));
 
 CREATE POLICY "Coupons viewable by everyone" ON coupons
   FOR SELECT USING (true);
 
 CREATE POLICY "Only admins can modify coupons" ON coupons
-  FOR ALL USING (EXISTS (
-    SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-  ));
+  FOR ALL USING ((SELECT current_user_role() = 'admin'));
 
 CREATE POLICY "Coupon usage viewable by owner or admin" ON coupon_usage
-  FOR SELECT USING (auth.uid() = user_id OR EXISTS (
-    SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-  ));
+  FOR SELECT USING (auth.uid() = user_id OR (SELECT current_user_role() = 'admin'));
 
 CREATE POLICY "Coupon usage insert by owner" ON coupon_usage
   FOR INSERT WITH CHECK (auth.uid() = user_id);

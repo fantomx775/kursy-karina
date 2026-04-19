@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/services/supabase/server";
 import { authenticateUser } from "@/services/auth/server";
 import { getCourseBySlug } from "@/services/courses";
 import {
+  getCertificateGrant,
   getCourseCompletion,
   generateCertificatePdf,
 } from "@/services/certificate";
@@ -67,25 +68,36 @@ export async function GET(
       { status: 403 },
     );
   }
-  if (completion.completedItems !== completion.totalItems) {
+
+  const certificateGrant = isAdmin
+    ? { granted: true, grantedAt: null }
+    : await getCertificateGrant(supabase, userId, course.id);
+
+  if (!certificateGrant.granted) {
     return NextResponse.json(
-      { error: "Course must be completed 100% to download certificate" },
+      { error: "Certificate has not been granted by admin yet" },
       { status: 403 },
     );
   }
 
-  const { data: lastProgress } = await supabase
-    .from("course_progress")
-    .select("last_watched")
-    .eq("user_id", userId)
-    .eq("course_id", course.id)
-    .eq("completed", true)
-    .order("last_watched", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  let issuedAtSource = certificateGrant.grantedAt;
 
-  const completedAt = lastProgress?.last_watched
-    ? new Date(lastProgress.last_watched).toLocaleDateString("pl-PL", {
+  if (!issuedAtSource) {
+    const { data: lastProgress } = await supabase
+      .from("course_progress")
+      .select("last_watched")
+      .eq("user_id", userId)
+      .eq("course_id", course.id)
+      .eq("completed", true)
+      .order("last_watched", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    issuedAtSource = lastProgress?.last_watched ?? null;
+  }
+
+  const issuedAt = issuedAtSource
+    ? new Date(issuedAtSource).toLocaleDateString("pl-PL", {
         day: "2-digit",
         month: "long",
         year: "numeric",
@@ -100,7 +112,7 @@ export async function GET(
     firstName: authenticatedUser.profile.first_name,
     lastName: authenticatedUser.profile.last_name,
     courseTitle: course.title,
-    completedAt,
+    issuedAt,
   });
 
   const filename = `certyfikat-${slug}.pdf`;

@@ -2,27 +2,28 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Button, Spinner } from "@/components/ui";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/Toast";
+import type { StudentCourseProgress } from "@/types/student";
 import { CouponForm } from "./CouponForm";
 import { StudentDetailPanel } from "./StudentDetailPanel";
-import { CoursesTab } from "./components/CoursesTab";
-import { StudentsTab } from "./components/StudentsTab";
+import { getCertificateGrantConfirmationMessage } from "./certificateGrant";
 import { CouponsTab } from "./components/CouponsTab";
-import { CourseStatsTab } from "./components/CourseStatsTab";
+import { CoursesTab } from "./components/CoursesTab";
 import { CourseStatsDetailPanel } from "./components/CourseStatsDetailPanel";
+import { CourseStatsTab } from "./components/CourseStatsTab";
+import { StudentsTab } from "./components/StudentsTab";
 import { TabNavigation } from "./components/TabNavigation";
+import { useAdminActions } from "./hooks/useAdminActions";
 import { useAdminData } from "./hooks/useAdminData";
 import { useAdminModals } from "./hooks/useAdminModals";
-import { useAdminActions } from "./hooks/useAdminActions";
 
 export type AdminTabId = "courses" | "students" | "coupons" | "stats";
 
 type AdminDashboardProps = {
-  /** When true, render without outer page wrapper and title (e.g. inside dashboard tabs). */
   embedded?: boolean;
-  /** When embedded, the active tab is controlled by the parent. */
   activeAdminTab?: AdminTabId;
 };
 
@@ -31,9 +32,11 @@ export function AdminDashboard({
   activeAdminTab = "courses",
 }: AdminDashboardProps = {}) {
   const [activeTab, setActiveTab] = useState<AdminTabId>("courses");
+  const [pendingCertificateCourse, setPendingCertificateCourse] =
+    useState<StudentCourseProgress | null>(null);
+  const [grantingCertificateCourseId, setGrantingCertificateCourseId] =
+    useState<string | null>(null);
   const effectiveTab = embedded ? activeAdminTab : activeTab;
-  const [savingCoupon, setSavingCoupon] = useState(false);
-  const [deletingCoupon, setDeletingCoupon] = useState<string | null>(null);
   const { addToast } = useToast();
 
   const {
@@ -57,18 +60,19 @@ export function AdminDashboard({
     editingCoupon,
     studentDetail,
     courseStatsDetail,
+    studentDetailLoading,
+    studentDetailError,
     openCouponModal,
     closeCouponModal,
     openStudentModal,
     closeStudentModal,
     openCourseStatsDetail,
     closeCourseStatsDetail,
+    markCertificateGranted,
   } = useAdminModals();
 
   const { handleSaveCoupon, handleDeleteCoupon } = useAdminActions();
 
-  // Load data when switching to a tab. Stats refetch every time; others only when list is empty to avoid repeated requests / loops.
-  // Dependency array must stay fixed size (React requirement); lengths are read inside the effect, not used as deps.
   useEffect(() => {
     if (effectiveTab === "courses" && courses.length === 0) {
       loadCourses();
@@ -82,68 +86,127 @@ export function AdminDashboard({
   }, [effectiveTab, loadCourses, loadStudents, loadCoupons, loadCourseStats]);
 
   const handleSaveCouponWithRefresh = async (data: any) => {
-    setSavingCoupon(true);
     const result = await handleSaveCoupon(data, editingCoupon);
     if (result.success) {
       addToast({
         type: "success",
         title: editingCoupon ? "Kupon zaktualizowany" : "Kupon dodany",
-        message: editingCoupon 
-          ? "Kupon został pomyślnie zaktualizowany." 
-          : "Nowy kupon został pomyślnie dodany.",
+        message: editingCoupon
+          ? "Kupon zostal pomyslnie zaktualizowany."
+          : "Nowy kupon zostal pomyslnie dodany.",
       });
       closeCouponModal();
       await loadCoupons();
     } else {
       addToast({
         type: "error",
-        title: "Błąd zapisu kuponu",
+        title: "Blad zapisu kuponu",
         message: result.error,
       });
     }
-    setSavingCoupon(false);
   };
 
   const handleDeleteCouponWithRefresh = async (couponId: string) => {
-    setDeletingCoupon(couponId);
     const result = await handleDeleteCoupon(couponId);
     if (result.success) {
       addToast({
         type: "success",
-        title: "Kupon usunięty",
-        message: "Kupon został pomyślnie usunięty.",
+        title: "Kupon usuniety",
+        message: "Kupon zostal pomyslnie usuniety.",
       });
       await loadCoupons();
     } else {
       addToast({
         type: "error",
-        title: "Błąd usuwania kuponu",
+        title: "Blad usuwania kuponu",
         message: result.error,
       });
     }
-    setDeletingCoupon(null);
+  };
+
+  const handleCloseStudentModal = () => {
+    setPendingCertificateCourse(null);
+    closeStudentModal();
+  };
+
+  const handleRequestCertificateGrant = (course: StudentCourseProgress) => {
+    setPendingCertificateCourse(course);
+  };
+
+  const handleConfirmCertificateGrant = async () => {
+    if (!studentDetail || !pendingCertificateCourse) {
+      return;
+    }
+
+    setGrantingCertificateCourseId(pendingCertificateCourse.courseId);
+
+    try {
+      const response = await fetch(
+        `/api/admin/students/${studentDetail.id}/certificates`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ courseId: pendingCertificateCourse.courseId }),
+        },
+      );
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(data?.error ?? "Nie udalo sie przyznac certyfikatu.");
+      }
+
+      markCertificateGranted(
+        pendingCertificateCourse.courseId,
+        data?.certificateGrantedAt ?? null,
+      );
+      setPendingCertificateCourse(null);
+
+      addToast({
+        type: "success",
+        title: data?.alreadyGranted
+          ? "Certyfikat juz przyznany"
+          : "Certyfikat przyznany",
+        message: data?.alreadyGranted
+          ? "Ten kursant ma juz aktywny certyfikat dla tego kursu."
+          : "Kursant moze juz odebrac certyfikat.",
+      });
+    } catch (error) {
+      addToast({
+        type: "error",
+        title: "Blad przyznawania certyfikatu",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Nie udalo sie przyznac certyfikatu.",
+      });
+    } finally {
+      setGrantingCertificateCourseId(null);
+    }
   };
 
   const getAddButton = () => {
     if (effectiveTab === "courses") {
       return (
-        <Link href="/dashboard/courses/create" target="_blank" rel="noopener noreferrer">
-          <Button variant="primary">
-            Dodaj kurs
-          </Button>
+        <Link
+          href="/dashboard/courses/create"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button variant="primary">Dodaj kurs</Button>
         </Link>
       );
     }
+
     if (effectiveTab === "coupons") {
       return (
-        <Button
-          variant="primary"
-          onClick={() => openCouponModal()}
-        >
+        <Button variant="primary" onClick={() => openCouponModal()}>
           Dodaj kupon
         </Button>
       );
     }
+
     return null;
   };
 
@@ -156,7 +219,7 @@ export function AdminDashboard({
               Panel administracyjny
             </h1>
             <p className="text-[var(--coffee-espresso)]">
-              Zarządzaj kursami, kursantami i kuponami rabatowymi.
+              Zarzadzaj kursami, kursantami i kuponami rabatowymi.
             </p>
           </div>
           {getAddButton()}
@@ -172,45 +235,45 @@ export function AdminDashboard({
       )}
 
       {error ? (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 mb-4">
-            {error}
-            <button
-              onClick={clearError}
-              className="ml-4 text-red-600 hover:text-red-800 underline"
-            >
-              Zamknij
-            </button>
-          </div>
-        ) : null}
+        <div className="mb-4 border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+          {error}
+          <button
+            onClick={clearError}
+            className="ml-4 text-red-600 underline hover:text-red-800"
+          >
+            Zamknij
+          </button>
+        </div>
+      ) : null}
 
-        {effectiveTab === "courses" && (
-          <CoursesTab courses={courses} loading={loading} />
-        )}
+      {effectiveTab === "courses" && (
+        <CoursesTab courses={courses} loading={loading} />
+      )}
 
-        {effectiveTab === "students" && (
-          <StudentsTab
-            students={students}
-            loading={loading}
-            onViewStudent={openStudentModal}
-          />
-        )}
+      {effectiveTab === "students" && (
+        <StudentsTab
+          students={students}
+          loading={loading}
+          onViewStudent={openStudentModal}
+        />
+      )}
 
-        {effectiveTab === "coupons" && (
-          <CouponsTab
-            coupons={coupons}
-            loading={loading}
-            onEditCoupon={openCouponModal}
-            onDeleteCoupon={handleDeleteCouponWithRefresh}
-          />
-        )}
+      {effectiveTab === "coupons" && (
+        <CouponsTab
+          coupons={coupons}
+          loading={loading}
+          onEditCoupon={openCouponModal}
+          onDeleteCoupon={handleDeleteCouponWithRefresh}
+        />
+      )}
 
-        {effectiveTab === "stats" && (
-          <CourseStatsTab
-            courseStats={courseStats}
-            loading={loading}
-            onViewDetails={openCourseStatsDetail}
-          />
-        )}
+      {effectiveTab === "stats" && (
+        <CourseStatsTab
+          courseStats={courseStats}
+          loading={loading}
+          onViewDetails={openCourseStatsDetail}
+        />
+      )}
     </>
   );
 
@@ -231,15 +294,30 @@ export function AdminDashboard({
 
       <Modal
         isOpen={studentModalOpen}
-        onClose={closeStudentModal}
-        title="Szczegóły kursanta"
+        onClose={handleCloseStudentModal}
+        title="Szczegoly kursanta"
         size="lg"
       >
-        {studentDetail ? (
-          <StudentDetailPanel student={studentDetail} />
+        {studentDetailLoading ? (
+          <div className="flex min-h-64 flex-col items-center justify-center gap-3 py-10">
+            <Spinner size="lg" />
+            <p className="text-sm text-[var(--coffee-espresso)]">
+              Trwa ladowanie danych kursanta...
+            </p>
+          </div>
+        ) : studentDetailError ? (
+          <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {studentDetailError}
+          </div>
+        ) : studentDetail ? (
+          <StudentDetailPanel
+            student={studentDetail}
+            onGrantCertificate={handleRequestCertificateGrant}
+            grantingCourseId={grantingCertificateCourseId}
+          />
         ) : (
           <div className="p-6 text-sm text-[var(--coffee-espresso)]">
-            Ładowanie danych kursanta...
+            Nie znaleziono danych kursanta.
           </div>
         )}
       </Modal>
@@ -254,10 +332,31 @@ export function AdminDashboard({
           <CourseStatsDetailPanel detail={courseStatsDetail} />
         ) : (
           <div className="p-6 text-sm text-[var(--coffee-espresso)]">
-            Ładowanie szczegółów...
+            Ladowanie szczegolow...
           </div>
         )}
       </Modal>
+
+      <ConfirmModal
+        isOpen={pendingCertificateCourse !== null}
+        onClose={() => {
+          if (!grantingCertificateCourseId) {
+            setPendingCertificateCourse(null);
+          }
+        }}
+        onConfirm={handleConfirmCertificateGrant}
+        title="Potwierdz przyznanie certyfikatu"
+        message={
+          pendingCertificateCourse
+            ? getCertificateGrantConfirmationMessage(pendingCertificateCourse)
+            : ""
+        }
+        confirmText="Przyznaj certyfikat"
+        cancelText="Anuluj"
+        variant="warning"
+        loading={grantingCertificateCourseId !== null}
+        closeOnConfirm={false}
+      />
     </>
   );
 
@@ -272,10 +371,7 @@ export function AdminDashboard({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--coffee-cream)] to-[var(--coffee-latte)]">
-      <div className="page-width py-10">
-        {content}
-      </div>
-
+      <div className="page-width py-10">{content}</div>
       {modals}
     </div>
   );

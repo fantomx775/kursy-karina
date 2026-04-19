@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Badge, Button } from "@/components/ui";
-import { AccountForm } from "./AccountForm";
 import { AdminDashboard, type AdminTabId } from "@/features/admin/AdminDashboard";
-import type { UserProfile } from "@/types/user";
 import type { CourseStatus } from "@/types/course";
+import type { UserProfile } from "@/types/user";
+import { AccountForm } from "./AccountForm";
 
 export type CourseCard = {
   id: string;
@@ -16,6 +16,8 @@ export type CourseCard = {
   status: CourseStatus;
   adminAccess: boolean;
   completionPercentage: number;
+  certificateGranted: boolean;
+  certificateGrantedAt: string | null;
 };
 
 type Props = {
@@ -39,8 +41,8 @@ const STUDENT_TABS: { key: TabId; label: string }[] = [
 ];
 
 const ADMIN_TABS: { key: TabId; label: string }[] = [
-  { key: "admin-courses", label: "Zarządzanie Kursami" },
-  { key: "admin-students", label: "Uczniowie" },
+  { key: "admin-courses", label: "Zarzadzanie kursami" },
+  { key: "admin-students", label: "Kursanci" },
   { key: "admin-coupons", label: "Kupony" },
   { key: "admin-stats", label: "Statystyki" },
 ];
@@ -58,6 +60,18 @@ function getAdminTabId(tab: TabId): AdminTabId | null {
     default:
       return null;
   }
+}
+
+function formatCertificateDate(iso: string | null): string {
+  if (!iso) {
+    return "Certyfikat przyznany przez administratora.";
+  }
+
+  return `Certyfikat przyznany: ${new Date(iso).toLocaleDateString("pl-PL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })}`;
 }
 
 export function DashboardTabs({
@@ -98,14 +112,14 @@ export function DashboardTabs({
             <div className="bg-white border border-[var(--table-border)] border-radius overflow-hidden">
               <div className="p-6 sm:p-8 text-center">
                 <h2 className="text-lg font-semibold text-[var(--coffee-charcoal)] mb-2">
-                  Brak zakupionych kursów
+                  Brak zakupionych kursow
                 </h2>
                 <p className="text-[var(--coffee-espresso)] mb-4 text-sm">
-                  Dodaj kursy do koszyka i rozpocznij naukę.
+                  Dodaj kursy do koszyka i rozpocznij nauke.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link href="/courses">
-                    <Button variant="primary">Przeglądaj kursy</Button>
+                    <Button variant="primary">Przegladaj kursy</Button>
                   </Link>
                 </div>
               </div>
@@ -131,7 +145,7 @@ export function DashboardTabs({
                       </Badge>
                       {course.adminAccess ? (
                         <Badge rounded={false} variant="secondary" size="sm">
-                          Dostęp admina
+                          Dostep admina
                         </Badge>
                       ) : null}
                     </div>
@@ -145,16 +159,20 @@ export function DashboardTabs({
                       style={{ width: `${course.completionPercentage}%` }}
                     />
                   </div>
-                  <div className="text-xs text-[var(--coffee-espresso)] mt-2">
-                    Ukończono: {course.completionPercentage}%
+                  <div className="mt-2 text-xs text-[var(--coffee-espresso)]">
+                    Ukonczono: {course.completionPercentage}%
+                  </div>
+                  <div className="mt-3 rounded-md border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] px-3 py-2 text-sm text-[var(--coffee-espresso)]">
+                    {course.certificateGranted
+                      ? formatCertificateDate(course.certificateGrantedAt)
+                      : course.completionPercentage === 100
+                        ? "Ukonczyles 100% kursu. Certyfikat bedzie dostepny po decyzji administratora."
+                        : "Certyfikat bedzie dostepny po decyzji administratora."}
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3">
-                    {course.completionPercentage === 100 ? (
+                    {course.certificateGranted ? (
                       <>
-                        <a
-                          href={`/api/courses/${course.slug}/certificate`}
-                          download
-                        >
+                        <a href={`/api/courses/${course.slug}/certificate`} download>
                           <Button variant="primary">Pobierz certyfikat</Button>
                         </a>
                         <a
@@ -162,10 +180,10 @@ export function DashboardTabs({
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <Button variant="outline">Podgląd certyfikatu</Button>
+                          <Button variant="outline">Podglad certyfikatu</Button>
                         </a>
                         <Link href={`/learn/${course.slug}`}>
-                          <Button variant="outline">Otwórz kurs</Button>
+                          <Button variant="outline">Otworz kurs</Button>
                         </Link>
                         {isAdmin ? (
                           <Link href={`/dashboard/courses/${course.id}/edit`}>
@@ -176,7 +194,11 @@ export function DashboardTabs({
                     ) : (
                       <>
                         <Link href={`/learn/${course.slug}`}>
-                          <Button variant="primary">Kontynuuj naukę</Button>
+                          <Button variant="primary">
+                            {course.completionPercentage === 100
+                              ? "Otworz kurs"
+                              : "Kontynuuj nauke"}
+                          </Button>
                         </Link>
                         {isAdmin ? (
                           <Link href={`/dashboard/courses/${course.id}/edit`}>
@@ -200,10 +222,7 @@ export function DashboardTabs({
       )}
 
       {isAdmin && getAdminTabId(activeTab) !== null && (
-        <AdminDashboard
-          embedded
-          activeAdminTab={getAdminTabId(activeTab)!}
-        />
+        <AdminDashboard embedded activeAdminTab={getAdminTabId(activeTab)!} />
       )}
     </>
   );

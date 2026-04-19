@@ -1,16 +1,18 @@
-import React from 'react';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
+import React from "react";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 
 interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   title: string;
   message: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'danger' | 'warning' | 'info';
+  variant?: "danger" | "warning" | "info";
+  loading?: boolean;
+  closeOnConfirm?: boolean;
 }
 
 export function ConfirmModal({
@@ -19,37 +21,32 @@ export function ConfirmModal({
   onConfirm,
   title,
   message,
-  confirmText = 'Potwierdź',
-  cancelText = 'Anuluj',
-  variant = 'warning',
+  confirmText = "Potwierdz",
+  cancelText = "Anuluj",
+  variant = "warning",
+  loading = false,
+  closeOnConfirm = true,
 }: ConfirmModalProps) {
-  const handleConfirm = () => {
-    onConfirm();
-    onClose();
+  const handleConfirm = async () => {
+    await onConfirm();
+    if (closeOnConfirm) {
+      onClose();
+    }
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={title}
-      size="sm"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
       <div className="space-y-6">
-        <p className="text-[var(--coffee-espresso)]">
-          {message}
-        </p>
-        
+        <p className="text-[var(--coffee-espresso)]">{message}</p>
+
         <div className="flex justify-end gap-3">
-          <Button
-            variant="secondary"
-            onClick={onClose}
-          >
+          <Button variant="secondary" onClick={onClose} disabled={loading}>
             {cancelText}
           </Button>
           <Button
-            variant={variant === 'danger' ? 'danger' : 'primary'}
+            variant={variant === "danger" ? "danger" : "primary"}
             onClick={handleConfirm}
+            loading={loading}
           >
             {confirmText}
           </Button>

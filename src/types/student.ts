@@ -13,6 +13,8 @@ export type StudentCourseProgress = {
   totalItems: number;
   completedItems: number;
   completionPercentage: number;
+  certificateGranted: boolean;
+  certificateGrantedAt: string | null;
 };
 
 export type StudentDetail = {

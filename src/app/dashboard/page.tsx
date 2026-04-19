@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/services/supabase/server";
 import { authenticateUser } from "@/services/auth/server";
-import { getCoursesCompletion } from "@/services/certificate";
+import { getCertificateGrants, getCoursesCompletion } from "@/services/certificate";
 import { DashboardTabs } from "@/features/dashboard/DashboardTabs";
 import type { CourseCard } from "@/features/dashboard/DashboardTabs";
 
@@ -187,6 +187,11 @@ export default async function DashboardPage() {
       userId,
       courseIds,
     );
+    const certificateGrantsByCourse = await getCertificateGrants(
+      supabase,
+      userId,
+      courseIds,
+    );
 
     courseCards = courseIds.map((courseId) => {
       const course = courses?.find((item) => item.id === courseId);
@@ -195,6 +200,10 @@ export default async function DashboardPage() {
         totalItems: 0,
         completedItems: 0,
         percentage: 0,
+      };
+      const certificateGrant = certificateGrantsByCourse[courseId] ?? {
+        granted: false,
+        grantedAt: null,
       };
 
       return {
@@ -205,6 +214,8 @@ export default async function DashboardPage() {
         status: course?.status ?? "inactive",
         adminAccess: isAdmin,
         completionPercentage: completion.percentage,
+        certificateGranted: certificateGrant.granted,
+        certificateGrantedAt: certificateGrant.grantedAt,
       };
     });
   }
