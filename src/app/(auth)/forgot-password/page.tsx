@@ -3,18 +3,32 @@
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
+import { Input } from "@/components/ui";
 
 export default function ForgotPasswordPage() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
+    setEmailError("");
     setSuccess("");
+
+    if (!email.trim()) {
+      setEmailError("Podaj email.");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError("Podaj poprawny adres email.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(
@@ -54,19 +68,18 @@ export default function ForgotPasswordPage() {
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm text-[var(--coffee-charcoal)] mb-1">
-            Email
-          </label>
-          <input
-            type="email"
-            className="w-full border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white text-[var(--coffee-charcoal)]"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <Input
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            setEmailError("");
+          }}
+          error={emailError}
+          required
+        />
         <button
           type="submit"
           disabled={isSubmitting}
@@ -77,7 +90,10 @@ export default function ForgotPasswordPage() {
       </form>
 
       <div className="mt-4 text-sm text-center text-[var(--coffee-espresso)]">
-        <Link href="/login" className="text-[var(--coffee-mocha)] hover:underline">
+        <Link
+          href="/login"
+          className="text-[var(--coffee-mocha)] hover:underline"
+        >
           Wróć do logowania
         </Link>
       </div>

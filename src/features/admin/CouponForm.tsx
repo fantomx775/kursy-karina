@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { Input } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import type { Coupon } from "@/types/coupon";
 
 export type CouponFormData = {
@@ -21,6 +22,18 @@ type Props = {
   onCancel: () => void;
   onSave: (data: CouponFormData) => void;
 };
+
+type CouponFieldErrors = Partial<
+  Record<
+    | "name"
+    | "code"
+    | "discountValue"
+    | "startDate"
+    | "usageLimit"
+    | "usageLimitPerUser",
+    string
+  >
+>;
 
 function toFormDate(iso: string | undefined | null): string {
   if (!iso) return "";
@@ -51,12 +64,81 @@ export function CouponForm({ initial, onCancel, onSave }: Props) {
     initial?.usageLimitPerUser != null ? String(initial.usageLimitPerUser) : "",
   );
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
+  const [fieldErrors, setFieldErrors] = useState<CouponFieldErrors>({});
+
+  const hintEndDate = "Puste = brak daty końcowej";
+  const hintLimit = "Puste lub 0 = brak limitu";
+  const labelClass =
+    "block text-sm font-medium text-[var(--coffee-charcoal)] mb-1";
+  const hintClass = "text-xs text-[var(--coffee-espresso)] mb-1";
+  const inputClass =
+    "border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white border-radius w-full";
+  const labelBlockClass = "min-h-[2.75rem]"; // etykieta + opcjonalna linia hintu
+
+  const clearFieldError = (field: keyof CouponFieldErrors) => {
+    setFieldErrors((previous) => {
+      if (!previous[field]) return previous;
+      const next = { ...previous };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const getInputClass = (field: keyof CouponFieldErrors, className?: string) =>
+    cn(
+      inputClass,
+      fieldErrors[field] &&
+        "input-border input-border-error focus:outline-none focus:border-[var(--error)] focus:ring-2 focus:ring-[var(--error)]",
+      className,
+    );
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    const nextErrors: CouponFieldErrors = {};
+
+    if (!name.trim()) {
+      nextErrors.name = "Podaj nazwe kuponu.";
+    }
+
+    if (!code.trim()) {
+      nextErrors.code = "Podaj kod kuponu.";
+    }
+
     const valueNum = parseFloat(discountValue.replace(",", "."));
-    if (Number.isNaN(valueNum) || valueNum <= 0) return;
-    if (discountType === "percentage" && valueNum > 100) return;
+    if (Number.isNaN(valueNum) || valueNum <= 0) {
+      nextErrors.discountValue = "Podaj wartosc znizki wieksza niz 0.";
+    } else if (discountType === "percentage" && valueNum > 100) {
+      nextErrors.discountValue =
+        "Znizka procentowa nie moze byc wieksza niz 100.";
+    }
+
+    if (!startDate.trim()) {
+      nextErrors.startDate = "Podaj date rozpoczecia.";
+    }
+
+    const usageLimitValue = parseInt(usageLimit, 10);
+    if (
+      usageLimit.trim() &&
+      (Number.isNaN(usageLimitValue) || usageLimitValue < 1)
+    ) {
+      nextErrors.usageLimit = "Limit musi byc pusty albo wiekszy niz 0.";
+    }
+
+    const usageLimitPerUserValue = parseInt(usageLimitPerUser, 10);
+    if (
+      usageLimitPerUser.trim() &&
+      (Number.isNaN(usageLimitPerUserValue) || usageLimitPerUserValue < 1)
+    ) {
+      nextErrors.usageLimitPerUser =
+        "Limit na uzytkownika musi byc pusty albo wiekszy niz 0.";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
+      return;
+    }
+
+    setFieldErrors({});
     onSave({
       name: name.trim(),
       code: code.trim(),
@@ -74,28 +156,27 @@ export function CouponForm({ initial, onCancel, onSave }: Props) {
     });
   };
 
-  const hintEndDate = "Puste = brak daty końcowej";
-  const hintLimit = "Puste lub 0 = brak limitu";
-  const labelClass =
-    "block text-sm font-medium text-[var(--coffee-charcoal)] mb-1";
-  const hintClass = "text-xs text-[var(--coffee-espresso)] mb-1";
-  const inputClass =
-    "border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white border-radius w-full";
-  const labelBlockClass = "min-h-[2.75rem]"; // etykieta + opcjonalna linia hintu
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-2">
+    <form onSubmit={handleSubmit} className="space-y-4 p-2" noValidate>
       <div className="grid grid-cols-2 gap-4">
         <Input
           label="Nazwa"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value);
+            clearFieldError("name");
+          }}
+          error={fieldErrors.name}
           required
         />
         <Input
           label="Kod kuponu"
           value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          onChange={(e) => {
+            setCode(e.target.value.toUpperCase());
+            clearFieldError("code");
+          }}
+          error={fieldErrors.code}
           required
           className="uppercase"
         />
@@ -122,10 +203,27 @@ export function CouponForm({ initial, onCancel, onSave }: Props) {
             type="text"
             inputMode="decimal"
             value={discountValue}
-            onChange={(e) => setDiscountValue(e.target.value)}
-            className={`${inputClass} w-28`}
+            onChange={(e) => {
+              setDiscountValue(e.target.value);
+              clearFieldError("discountValue");
+            }}
+            className={getInputClass("discountValue", "w-28")}
+            aria-invalid={fieldErrors.discountValue ? "true" : "false"}
+            aria-describedby={
+              fieldErrors.discountValue
+                ? "coupon-discount-value-error"
+                : undefined
+            }
             required
           />
+          {fieldErrors.discountValue ? (
+            <p
+              id="coupon-discount-value-error"
+              className="mt-1 text-sm text-[var(--error)]"
+            >
+              {fieldErrors.discountValue}
+            </p>
+          ) : null}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
@@ -136,10 +234,25 @@ export function CouponForm({ initial, onCancel, onSave }: Props) {
           <input
             type="date"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className={inputClass}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              clearFieldError("startDate");
+            }}
+            className={getInputClass("startDate")}
+            aria-invalid={fieldErrors.startDate ? "true" : "false"}
+            aria-describedby={
+              fieldErrors.startDate ? "coupon-start-date-error" : undefined
+            }
             required
           />
+          {fieldErrors.startDate ? (
+            <p
+              id="coupon-start-date-error"
+              className="mt-1 text-sm text-[var(--error)]"
+            >
+              {fieldErrors.startDate}
+            </p>
+          ) : null}
         </div>
         <div>
           <label className={labelClass}>Data zakończenia (opcjonalnie)</label>
@@ -160,22 +273,56 @@ export function CouponForm({ initial, onCancel, onSave }: Props) {
             type="number"
             min={0}
             value={usageLimit}
-            onChange={(e) => setUsageLimit(e.target.value)}
-            className={`${inputClass} w-28`}
+            onChange={(e) => {
+              setUsageLimit(e.target.value);
+              clearFieldError("usageLimit");
+            }}
+            className={getInputClass("usageLimit", "w-28")}
+            aria-invalid={fieldErrors.usageLimit ? "true" : "false"}
+            aria-describedby={
+              fieldErrors.usageLimit ? "coupon-usage-limit-error" : undefined
+            }
             placeholder="—"
           />
+          {fieldErrors.usageLimit ? (
+            <p
+              id="coupon-usage-limit-error"
+              className="mt-1 text-sm text-[var(--error)]"
+            >
+              {fieldErrors.usageLimit}
+            </p>
+          ) : null}
         </div>
         <div>
-          <label className={labelClass}>Limit na użytkownika (opcjonalnie)</label>
+          <label className={labelClass}>
+            Limit na użytkownika (opcjonalnie)
+          </label>
           <p className={hintClass}>{hintLimit}</p>
           <input
             type="number"
             min={0}
             value={usageLimitPerUser}
-            onChange={(e) => setUsageLimitPerUser(e.target.value)}
-            className={`${inputClass} w-28`}
+            onChange={(e) => {
+              setUsageLimitPerUser(e.target.value);
+              clearFieldError("usageLimitPerUser");
+            }}
+            className={getInputClass("usageLimitPerUser", "w-28")}
+            aria-invalid={fieldErrors.usageLimitPerUser ? "true" : "false"}
+            aria-describedby={
+              fieldErrors.usageLimitPerUser
+                ? "coupon-usage-limit-per-user-error"
+                : undefined
+            }
             placeholder="—"
           />
+          {fieldErrors.usageLimitPerUser ? (
+            <p
+              id="coupon-usage-limit-per-user-error"
+              className="mt-1 text-sm text-[var(--error)]"
+            >
+              {fieldErrors.usageLimitPerUser}
+            </p>
+          ) : null}
         </div>
       </div>
       <div>

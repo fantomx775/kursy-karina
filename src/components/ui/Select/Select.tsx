@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { cn } from '@/lib/utils';
-import { FiChevronDown, FiCheck } from 'react-icons/fi';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { cn } from "@/lib/utils";
+import { FiChevronDown, FiCheck } from "react-icons/fi";
 
 export interface SelectOption {
   value: string;
@@ -12,7 +12,10 @@ export interface SelectOption {
   description?: string;
 }
 
-export interface SelectProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange'> {
+export interface SelectProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "onChange"
+> {
   options: SelectOption[];
   value?: string;
   placeholder?: string;
@@ -26,124 +29,153 @@ export interface SelectProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonE
 }
 
 const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
-  ({
-    options = [],
-    value,
-    placeholder = 'Select an option',
-    disabled = false,
-    error,
-    helperText,
-    searchable = false,
-    clearable = false,
-    maxHeight = 240,
-    onChange,
-    className,
-    ...props
-  }, ref) => {
+  (
+    {
+      options = [],
+      value,
+      placeholder = "Select an option",
+      disabled = false,
+      error,
+      helperText,
+      searchable = false,
+      clearable = false,
+      maxHeight = 240,
+      onChange,
+      className,
+      id,
+      ...props
+    },
+    ref,
+  ) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState("");
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const buttonRef = useRef<HTMLButtonElement>(null);
     const listRef = useRef<HTMLUListElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const generatedId = React.useId();
+    const buttonId = id || generatedId;
+    const descriptionId =
+      error || helperText ? `${buttonId}-description` : undefined;
 
-    const selectedOption = options.find(option => option.value === value);
+    const selectedOption = options.find((option) => option.value === value);
 
-    const filteredOptions = options.filter(option => {
+    const filteredOptions = options.filter((option) => {
       if (!searchable) return true;
-      const label = typeof option.label === 'string' ? option.label : '';
+      const label = typeof option.label === "string" ? option.label : "";
       return label.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
     const handleToggle = useCallback(() => {
       if (disabled) return;
       setIsOpen(!isOpen);
-      setSearchTerm('');
+      setSearchTerm("");
       setHighlightedIndex(-1);
     }, [disabled, isOpen]);
 
-    const handleSelect = useCallback((optionValue: string) => {
-      const option = options.find(opt => opt.value === optionValue);
-      if (option?.disabled) return;
-      
-      onChange?.(optionValue);
-      setIsOpen(false);
-      setSearchTerm('');
-      setHighlightedIndex(-1);
-    }, [options, onChange]);
+    const handleSelect = useCallback(
+      (optionValue: string) => {
+        const option = options.find((opt) => opt.value === optionValue);
+        if (option?.disabled) return;
 
-    const handleClear = useCallback((e: React.MouseEvent) => {
-      e.stopPropagation();
-      onChange?.('');
-      setIsOpen(false);
-      setSearchTerm('');
-    }, [onChange]);
+        onChange?.(optionValue);
+        setIsOpen(false);
+        setSearchTerm("");
+        setHighlightedIndex(-1);
+      },
+      [options, onChange],
+    );
 
-    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-      if (disabled) return;
+    const handleClear = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onChange?.("");
+        setIsOpen(false);
+        setSearchTerm("");
+      },
+      [onChange],
+    );
 
-      switch (e.key) {
-        case 'Enter':
-        case ' ':
-          e.preventDefault();
-          if (isOpen && highlightedIndex >= 0) {
-            const option = filteredOptions[highlightedIndex];
-            if (option && !option.disabled) {
-              handleSelect(option.value);
+    const handleKeyDown = useCallback(
+      (e: React.KeyboardEvent) => {
+        if (disabled) return;
+
+        switch (e.key) {
+          case "Enter":
+          case " ":
+            e.preventDefault();
+            if (isOpen && highlightedIndex >= 0) {
+              const option = filteredOptions[highlightedIndex];
+              if (option && !option.disabled) {
+                handleSelect(option.value);
+              }
+            } else {
+              handleToggle();
             }
-          } else {
-            handleToggle();
-          }
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          if (!isOpen) {
-            setIsOpen(true);
-          } else {
-            setHighlightedIndex(prev => {
-              const next = prev + 1;
-              return next < filteredOptions.length ? next : 0;
-            });
-          }
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          if (!isOpen) {
-            setIsOpen(true);
-          } else {
-            setHighlightedIndex(prev => {
-              const next = prev - 1;
-              return next >= 0 ? next : filteredOptions.length - 1;
-            });
-          }
-          break;
-        case 'Escape':
-          e.preventDefault();
-          setIsOpen(false);
-          setHighlightedIndex(-1);
-          setSearchTerm('');
-          buttonRef.current?.focus();
-          break;
-        case 'Tab':
-          setIsOpen(false);
-          setHighlightedIndex(-1);
-          break;
-      }
-    }, [disabled, isOpen, highlightedIndex, filteredOptions, handleSelect, handleToggle]);
+            break;
+          case "ArrowDown":
+            e.preventDefault();
+            if (!isOpen) {
+              setIsOpen(true);
+            } else {
+              setHighlightedIndex((prev) => {
+                const next = prev + 1;
+                return next < filteredOptions.length ? next : 0;
+              });
+            }
+            break;
+          case "ArrowUp":
+            e.preventDefault();
+            if (!isOpen) {
+              setIsOpen(true);
+            } else {
+              setHighlightedIndex((prev) => {
+                const next = prev - 1;
+                return next >= 0 ? next : filteredOptions.length - 1;
+              });
+            }
+            break;
+          case "Escape":
+            e.preventDefault();
+            setIsOpen(false);
+            setHighlightedIndex(-1);
+            setSearchTerm("");
+            buttonRef.current?.focus();
+            break;
+          case "Tab":
+            setIsOpen(false);
+            setHighlightedIndex(-1);
+            break;
+        }
+      },
+      [
+        disabled,
+        isOpen,
+        highlightedIndex,
+        filteredOptions,
+        handleSelect,
+        handleToggle,
+      ],
+    );
 
     // Close on outside click
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
-        if (buttonRef.current && !buttonRef.current.contains(event.target as Node) &&
-            listRef.current && !listRef.current.contains(event.target as Node)) {
+        if (
+          buttonRef.current &&
+          !buttonRef.current.contains(event.target as Node) &&
+          listRef.current &&
+          !listRef.current.contains(event.target as Node)
+        ) {
           setIsOpen(false);
           setHighlightedIndex(-1);
-          setSearchTerm('');
+          setSearchTerm("");
         }
       };
 
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     // Focus search input when opened
@@ -156,9 +188,11 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
     // Scroll highlighted option into view
     useEffect(() => {
       if (highlightedIndex >= 0 && listRef.current) {
-        const highlightedElement = listRef.current.children[highlightedIndex] as HTMLElement;
+        const highlightedElement = listRef.current.children[
+          highlightedIndex
+        ] as HTMLElement;
         if (highlightedElement) {
-          highlightedElement.scrollIntoView({ block: 'nearest' });
+          highlightedElement.scrollIntoView({ block: "nearest" });
         }
       }
     }, [highlightedIndex]);
@@ -168,28 +202,33 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
         <button
           ref={buttonRef}
           type="button"
+          id={buttonId}
           onClick={handleToggle}
           onKeyDown={handleKeyDown}
           disabled={disabled}
           className={cn(
-            'w-full px-4 py-2 text-left bg-white border border-radius shadow-sm',
-            'focus:outline-none focus:ring-2 focus:ring-[var(--coffee-mocha)] focus:ring-offset-2',
-            'transition-colors duration-200',
-            'flex items-center justify-between gap-2',
-            disabled && 'opacity-50 cursor-not-allowed',
-            error && 'border-red-500 focus:ring-red-500',
-            !error && 'border-[var(--coffee-cappuccino)] hover:border-[var(--coffee-mocha)]',
-            className
+            "w-full px-4 py-2 text-left bg-white border border-radius shadow-sm",
+            "focus:outline-none focus:ring-2 focus:ring-[var(--coffee-mocha)] focus:ring-offset-2",
+            "transition-colors duration-200",
+            "flex items-center justify-between gap-2",
+            disabled && "opacity-50 cursor-not-allowed",
+            error && "border-red-500 focus:ring-red-500",
+            !error &&
+              "border-[var(--coffee-cappuccino)] hover:border-[var(--coffee-mocha)]",
+            className,
           )}
           aria-haspopup="listbox"
           aria-expanded={isOpen}
-          aria-labelledby={props.id}
+          aria-invalid={error ? "true" : "false"}
+          aria-describedby={descriptionId}
           {...props}
         >
-          <span className={cn(
-            'truncate flex-1',
-            !selectedOption && 'text-gray-500'
-          )}>
+          <span
+            className={cn(
+              "truncate flex-1",
+              !selectedOption && "text-gray-500",
+            )}
+          >
             {selectedOption ? (
               <span className="flex items-center gap-2">
                 {selectedOption.icon}
@@ -199,7 +238,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
               placeholder
             )}
           </span>
-          
+
           <div className="flex items-center gap-1">
             {clearable && selectedOption && (
               <button
@@ -211,10 +250,10 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                 <FiCheck className="w-3 h-3 rotate-45" />
               </button>
             )}
-            <FiChevronDown 
+            <FiChevronDown
               className={cn(
-                'w-4 h-4 text-gray-400 transition-transform duration-200',
-                isOpen && 'rotate-180'
+                "w-4 h-4 text-gray-400 transition-transform duration-200",
+                isOpen && "rotate-180",
               )}
             />
           </div>
@@ -234,7 +273,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                 />
               </div>
             )}
-            
+
             <ul
               ref={listRef}
               role="listbox"
@@ -252,12 +291,14 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                     role="option"
                     aria-selected={option.value === value}
                     className={cn(
-                      'px-4 py-2 text-sm cursor-pointer transition-colors duration-150',
-                      'flex items-center gap-2',
-                      option.disabled && 'opacity-50 cursor-not-allowed',
-                      !option.disabled && 'hover:bg-[var(--coffee-cream)]',
-                      option.value === value && 'bg-[var(--coffee-cream)] text-[var(--coffee-mocha)]',
-                      highlightedIndex === index && 'bg-[var(--coffee-macchiato)]',
+                      "px-4 py-2 text-sm cursor-pointer transition-colors duration-150",
+                      "flex items-center gap-2",
+                      option.disabled && "opacity-50 cursor-not-allowed",
+                      !option.disabled && "hover:bg-[var(--coffee-cream)]",
+                      option.value === value &&
+                        "bg-[var(--coffee-cream)] text-[var(--coffee-mocha)]",
+                      highlightedIndex === index &&
+                        "bg-[var(--coffee-macchiato)]",
                     )}
                     onClick={() => handleSelect(option.value)}
                   >
@@ -265,7 +306,9 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                     <div className="flex-1">
                       <div>{option.label}</div>
                       {option.description && (
-                        <div className="text-xs text-gray-500">{option.description}</div>
+                        <div className="text-xs text-gray-500">
+                          {option.description}
+                        </div>
                       )}
                     </div>
                     {option.value === value && (
@@ -278,19 +321,22 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           </div>
         )}
 
-        {helperText && (
-          <p className={cn(
-            'mt-1 text-sm',
-            error ? 'text-red-600' : 'text-gray-600'
-          )}>
-            {helperText}
+        {(error || helperText) && (
+          <p
+            className={cn(
+              "mt-1 text-sm",
+              error ? "text-red-600" : "text-gray-600",
+            )}
+            id={descriptionId}
+          >
+            {error || helperText}
           </p>
         )}
       </div>
     );
-  }
+  },
 );
 
-Select.displayName = 'Select';
+Select.displayName = "Select";
 
 export { Select };

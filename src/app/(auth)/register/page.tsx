@@ -7,6 +7,13 @@ import { createBrowserSupabaseClient } from "@/services/supabase/browser";
 import { useAuth } from "@/features/auth/AuthContext";
 import { Input, PasswordInput } from "@/components/ui";
 
+type RegisterFieldErrors = Partial<
+  Record<
+    "firstName" | "lastName" | "email" | "password" | "confirmPassword",
+    string
+  >
+>;
+
 export default function RegisterPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
@@ -17,6 +24,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -29,20 +37,41 @@ export default function RegisterPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
+    setFieldErrors({});
     setSuccess("");
 
+    const nextErrors: RegisterFieldErrors = {};
+    if (!firstName.trim()) {
+      nextErrors.firstName = "Podaj imię.";
+    }
+
+    if (!lastName.trim()) {
+      nextErrors.lastName = "Podaj nazwisko.";
+    }
+
+    if (!email.trim()) {
+      nextErrors.email = "Podaj email.";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      nextErrors.email = "Podaj poprawny adres email.";
+    }
+
     if (password.length < 6) {
-      setError("Hasło musi mieć co najmniej 6 znaków.");
-      return;
+      nextErrors.password = "Hasło musi mieć co najmniej 6 znaków.";
     }
 
     if (password !== confirmPassword) {
-      setError("Hasła nie są identyczne.");
+      nextErrors.confirmPassword = "Hasła nie są identyczne.";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
       return;
     }
 
     setIsSubmitting(true);
-    const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
+    const fullName = [firstName.trim(), lastName.trim()]
+      .filter(Boolean)
+      .join(" ");
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -82,13 +111,20 @@ export default function RegisterPage() {
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Imię"
             type="text"
             value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            onChange={(e) => {
+              setFirstName(e.target.value);
+              setFieldErrors((previous) => ({
+                ...previous,
+                firstName: undefined,
+              }));
+            }}
+            error={fieldErrors.firstName}
             required
             className="border-radius"
           />
@@ -96,33 +132,53 @@ export default function RegisterPage() {
             label="Nazwisko"
             type="text"
             value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            onChange={(e) => {
+              setLastName(e.target.value);
+              setFieldErrors((previous) => ({
+                ...previous,
+                lastName: undefined,
+              }));
+            }}
+            error={fieldErrors.lastName}
             required
             className="border-radius"
           />
         </div>
-        <div>
-          <label className="block text-sm text-[var(--coffee-charcoal)] mb-1">
-            Email
-          </label>
-          <input
-            type="email"
-            className="w-full border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white text-[var(--coffee-charcoal)]"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
-        </div>
+        <Input
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            setFieldErrors((previous) => ({ ...previous, email: undefined }));
+          }}
+          error={fieldErrors.email}
+          required
+        />
         <PasswordInput
           label="Hasło"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={(event) => {
+            setPassword(event.target.value);
+            setFieldErrors((previous) => ({
+              ...previous,
+              password: undefined,
+            }));
+          }}
+          error={fieldErrors.password}
           required
         />
         <PasswordInput
           label="Powtórz hasło"
           value={confirmPassword}
-          onChange={(event) => setConfirmPassword(event.target.value)}
+          onChange={(event) => {
+            setConfirmPassword(event.target.value);
+            setFieldErrors((previous) => ({
+              ...previous,
+              confirmPassword: undefined,
+            }));
+          }}
+          error={fieldErrors.confirmPassword}
           required
         />
         <button
@@ -136,7 +192,10 @@ export default function RegisterPage() {
 
       <div className="mt-4 text-sm text-center text-[var(--coffee-espresso)]">
         Masz już konto?{" "}
-        <Link href="/login" className="text-[var(--coffee-mocha)] hover:underline">
+        <Link
+          href="/login"
+          className="text-[var(--coffee-mocha)] hover:underline"
+        >
           Zaloguj się
         </Link>
       </div>

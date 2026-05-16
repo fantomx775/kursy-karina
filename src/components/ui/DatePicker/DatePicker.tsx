@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { cn } from '@/lib/utils';
-import { FiCalendar, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
-export interface DatePickerProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+export interface DatePickerProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "onChange"
+> {
   value?: string;
   placeholder?: string;
   disabled?: boolean;
@@ -17,26 +20,34 @@ export interface DatePickerProps extends Omit<React.InputHTMLAttributes<HTMLInpu
 }
 
 const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
-  ({
-    value,
-    placeholder = 'Select date',
-    disabled = false,
-    error,
-    helperText,
-    format = 'YYYY-MM-DD',
-    minDate,
-    maxDate,
-    onChange,
-    className,
-    ...props
-  }, ref) => {
+  (
+    {
+      value,
+      placeholder = "Select date",
+      disabled = false,
+      error,
+      helperText,
+      format = "YYYY-MM-DD",
+      minDate,
+      maxDate,
+      onChange,
+      className,
+      ...props
+    },
+    ref,
+  ) => {
     const [isOpen, setIsOpen] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(
-      value ? new Date(value) : null
+      value ? new Date(value) : null,
     );
     const inputRef = useRef<HTMLInputElement>(null);
     const calendarRef = useRef<HTMLDivElement>(null);
+    const generatedId = React.useId();
+    const descriptionId =
+      error || helperText
+        ? `${props.id || generatedId}-description`
+        : undefined;
 
     const getDaysInMonth = (date: Date) => {
       const year = date.getFullYear();
@@ -47,24 +58,24 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
       const startingDayOfWeek = firstDay.getDay();
 
       const days = [];
-      
+
       // Add empty cells for days before month starts
       for (let i = 0; i < startingDayOfWeek; i++) {
         days.push(null);
       }
-      
+
       // Add all days of the month
       for (let i = 1; i <= daysInMonth; i++) {
         days.push(new Date(year, month, i));
       }
-      
+
       return days;
     };
 
     const formatDate = (date: Date) => {
       const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
     };
 
@@ -92,36 +103,46 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
       );
     };
 
-    const handleDateSelect = useCallback((date: Date) => {
-      if (isDateDisabled(date)) return;
-      
-      setSelectedDate(date);
-      setIsOpen(false);
-      onChange?.(formatDate(date));
-    }, [selectedDate, onChange]);
+    const handleDateSelect = useCallback(
+      (date: Date) => {
+        if (isDateDisabled(date)) return;
+
+        setSelectedDate(date);
+        setIsOpen(false);
+        onChange?.(formatDate(date));
+      },
+      [selectedDate, onChange],
+    );
 
     const handlePrevMonth = useCallback(() => {
-      setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1));
+      setCurrentMonth(
+        (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1),
+      );
     }, []);
 
     const handleNextMonth = useCallback(() => {
-      setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1));
+      setCurrentMonth(
+        (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1),
+      );
     }, []);
 
-    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      onChange?.(value);
-      
-      if (value) {
-        const date = new Date(value);
-        if (!isNaN(date.getTime())) {
-          setSelectedDate(date);
-          setCurrentMonth(date);
+    const handleInputChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        onChange?.(value);
+
+        if (value) {
+          const date = new Date(value);
+          if (!isNaN(date.getTime())) {
+            setSelectedDate(date);
+            setCurrentMonth(date);
+          }
+        } else {
+          setSelectedDate(null);
         }
-      } else {
-        setSelectedDate(null);
-      }
-    }, [onChange]);
+      },
+      [onChange],
+    );
 
     const handleToggle = useCallback(() => {
       if (disabled) return;
@@ -132,23 +153,36 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
         if (
-          inputRef.current && !inputRef.current.contains(event.target as Node) &&
-          calendarRef.current && !calendarRef.current.contains(event.target as Node)
+          inputRef.current &&
+          !inputRef.current.contains(event.target as Node) &&
+          calendarRef.current &&
+          !calendarRef.current.contains(event.target as Node)
         ) {
           setIsOpen(false);
         }
       };
 
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
 
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
     const days = getDaysInMonth(currentMonth);
 
@@ -158,24 +192,27 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
           <input
             ref={inputRef}
             type="text"
-            value={value || ''}
+            value={value || ""}
             placeholder={placeholder}
             disabled={disabled}
             onChange={handleInputChange}
             onClick={handleToggle}
+            aria-invalid={error ? "true" : "false"}
+            aria-describedby={descriptionId}
             className={cn(
-              'w-full px-4 py-2 bg-white border border-radius shadow-sm',
-              'focus:outline-none focus:ring-2 focus:ring-[var(--coffee-mocha)] focus:ring-offset-2',
-              'transition-colors duration-200',
-              'pr-10', // Space for calendar icon
-              disabled && 'opacity-50 cursor-not-allowed',
-              error && 'border-red-500 focus:ring-red-500',
-              !error && 'border-[var(--coffee-cappuccino)] hover:border-[var(--coffee-mocha)]',
-              className
+              "w-full px-4 py-2 bg-white border border-radius shadow-sm",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--coffee-mocha)] focus:ring-offset-2",
+              "transition-colors duration-200",
+              "pr-10", // Space for calendar icon
+              disabled && "opacity-50 cursor-not-allowed",
+              error && "border-red-500 focus:ring-red-500",
+              !error &&
+                "border-[var(--coffee-cappuccino)] hover:border-[var(--coffee-mocha)]",
+              className,
             )}
             {...props}
           />
-          
+
           <button
             type="button"
             onClick={handleToggle}
@@ -191,7 +228,7 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
           <div
             ref={calendarRef}
             className="absolute z-50 mt-1 bg-white border border-[var(--coffee-cappuccino)] border-radius shadow-lg p-4"
-            style={{ minWidth: '320px' }}
+            style={{ minWidth: "320px" }}
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
@@ -203,11 +240,12 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
               >
                 <FiChevronLeft className="w-4 h-4" />
               </button>
-              
+
               <div className="text-lg font-semibold text-[var(--coffee-charcoal)]">
-                {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                {monthNames[currentMonth.getMonth()]}{" "}
+                {currentMonth.getFullYear()}
               </div>
-              
+
               <button
                 type="button"
                 onClick={handleNextMonth}
@@ -220,7 +258,7 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
 
             {/* Week days */}
             <div className="grid grid-cols-7 gap-1 mb-2">
-              {weekDays.map(day => (
+              {weekDays.map((day) => (
                 <div
                   key={day}
                   className="text-xs font-medium text-gray-600 text-center py-2"
@@ -239,13 +277,22 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
                   disabled={!date || isDateDisabled(date)}
                   onClick={() => date && handleDateSelect(date)}
                   className={cn(
-                    'h-8 w-8 text-sm border-radius transition-colors duration-150',
-                    'flex items-center justify-center',
-                    !date && 'invisible',
-                    date && !isDateDisabled(date) && 'hover:bg-[var(--coffee-cream)] cursor-pointer',
-                    date && isDateDisabled(date) && 'text-gray-400 cursor-not-allowed',
-                    date && isSelected(date) && 'bg-[var(--coffee-mocha)] text-white hover:bg-[var(--coffee-mocha)]',
-                    date && isToday(date) && !isSelected(date) && 'bg-[var(--coffee-cream)] font-semibold'
+                    "h-8 w-8 text-sm border-radius transition-colors duration-150",
+                    "flex items-center justify-center",
+                    !date && "invisible",
+                    date &&
+                      !isDateDisabled(date) &&
+                      "hover:bg-[var(--coffee-cream)] cursor-pointer",
+                    date &&
+                      isDateDisabled(date) &&
+                      "text-gray-400 cursor-not-allowed",
+                    date &&
+                      isSelected(date) &&
+                      "bg-[var(--coffee-mocha)] text-white hover:bg-[var(--coffee-mocha)]",
+                    date &&
+                      isToday(date) &&
+                      !isSelected(date) &&
+                      "bg-[var(--coffee-cream)] font-semibold",
                   )}
                 >
                   {date?.getDate()}
@@ -255,19 +302,22 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
           </div>
         )}
 
-        {helperText && (
-          <p className={cn(
-            'mt-1 text-sm',
-            error ? 'text-red-600' : 'text-gray-600'
-          )}>
-            {helperText}
+        {(error || helperText) && (
+          <p
+            id={descriptionId}
+            className={cn(
+              "mt-1 text-sm",
+              error ? "text-red-600" : "text-gray-600",
+            )}
+          >
+            {error || helperText}
           </p>
         )}
       </div>
     );
-  }
+  },
 );
 
-DatePicker.displayName = 'DatePicker';
+DatePicker.displayName = "DatePicker";
 
 export { DatePicker };

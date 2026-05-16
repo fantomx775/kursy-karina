@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useCart } from "@/features/cart/CartContext";
 import { useAuth } from "@/features/auth/AuthContext";
 import { TrashIcon } from "@/components/ui/Icon";
+import { cn } from "@/lib/utils";
 
 export default function CartPage() {
   const router = useRouter();
@@ -13,20 +14,28 @@ export default function CartPage() {
   const { user } = useAuth();
   const [couponCode, setCouponCode] = useState("");
   const [discountAmount, setDiscountAmount] = useState(0);
-  const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null);
+  const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(
+    null,
+  );
   const [applyError, setApplyError] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [isApplying, setIsApplying] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [hydratedImageUrls, setHydratedImageUrls] = useState<Record<string, string | null>>({});
+  const [hydratedImageUrls, setHydratedImageUrls] = useState<
+    Record<string, string | null>
+  >({});
 
   useEffect(() => {
-    const missingIds = cart.filter((item) => !item.imageUrl).map((item) => item.id);
+    const missingIds = cart
+      .filter((item) => !item.imageUrl)
+      .map((item) => item.id);
     if (missingIds.length === 0) return;
     const ids = missingIds.join(",");
     fetch(`/api/courses/images?ids=${encodeURIComponent(ids)}`)
       .then((res) => res.json())
-      .then((map: Record<string, string | null>) => setHydratedImageUrls((prev) => ({ ...prev, ...map })))
+      .then((map: Record<string, string | null>) =>
+        setHydratedImageUrls((prev) => ({ ...prev, ...map })),
+      )
       .catch(() => {});
   }, [cart]);
 
@@ -43,7 +52,10 @@ export default function CartPage() {
   const total = subtotal - discountAmount;
 
   const handleApplyCoupon = async () => {
-    if (!couponCode) return;
+    if (!couponCode.trim()) {
+      setApplyError("Wpisz kod kuponu.");
+      return;
+    }
     if (!user) {
       router.push("/login");
       return;
@@ -131,175 +143,195 @@ export default function CartPage() {
         </h1>
         <div className="grid gap-6 lg:gap-8 lg:grid-cols-[2fr_1fr]">
           <div className="space-y-4">
-          {cart.map((item) => {
-            const onPromo = item.originalPrice > item.price;
-            return (
-              <div
-                key={item.id}
-                className="bg-white border border-[var(--coffee-cappuccino)] p-4 sm:p-5 flex items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-[var(--coffee-cappuccino)] overflow-hidden border-radius">
-                    {(item.imageUrl ?? hydratedImageUrls[item.id]) ? (
-                      <Image
-                        src={item.imageUrl ?? hydratedImageUrls[item.id] ?? ""}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        sizes="80px"
-                      />
-                    ) : (
-                      <span className="absolute inset-0 flex items-center justify-center text-[var(--coffee-espresso)] text-xs">
-                        Kurs
-                      </span>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-semibold text-[var(--coffee-charcoal)]">
-                      {item.title}
+            {cart.map((item) => {
+              const onPromo = item.originalPrice > item.price;
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white border border-[var(--coffee-cappuccino)] p-4 sm:p-5 flex items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-[var(--coffee-cappuccino)] overflow-hidden border-radius">
+                      {(item.imageUrl ?? hydratedImageUrls[item.id]) ? (
+                        <Image
+                          src={
+                            item.imageUrl ?? hydratedImageUrls[item.id] ?? ""
+                          }
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="80px"
+                        />
+                      ) : (
+                        <span className="absolute inset-0 flex items-center justify-center text-[var(--coffee-espresso)] text-xs">
+                          Kurs
+                        </span>
+                      )}
                     </div>
-                    <div className="text-sm text-[var(--coffee-espresso)] flex flex-wrap items-baseline gap-1.5">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-[var(--coffee-charcoal)]">
+                        {item.title}
+                      </div>
+                      <div className="text-sm text-[var(--coffee-espresso)] flex flex-wrap items-baseline gap-1.5">
+                        {onPromo ? (
+                          <>
+                            <span className="line-through">
+                              {(item.originalPrice / 100).toFixed(2)} PLN
+                            </span>
+                            <span className="font-medium text-[var(--coffee-charcoal)]">
+                              {(item.price / 100).toFixed(2)} PLN
+                            </span>
+                          </>
+                        ) : (
+                          <span>{(item.price / 100).toFixed(2)} PLN</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="text-red-600 hover:text-red-800 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0"
+                    onClick={() => removeFromCart(item.id)}
+                    aria-label="Usuń z koszyka"
+                  >
+                    <TrashIcon size="xl" className="text-current" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="bg-white border border-[var(--coffee-cappuccino)] p-5 sm:p-6 space-y-4">
+            <h2 className="text-xl font-semibold text-[var(--coffee-charcoal)]">
+              Podsumowanie
+            </h2>
+
+            <div className="space-y-2 border-b border-[var(--coffee-cappuccino)] pb-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-[var(--coffee-espresso)]">
+                Pozycje
+              </p>
+              {cart.map((item) => {
+                const onPromo = item.originalPrice > item.price;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-start justify-between gap-2 text-sm"
+                  >
+                    <span className="text-[var(--coffee-charcoal)] line-clamp-2 min-w-0">
+                      {item.title}
+                    </span>
+                    <span className="flex-shrink-0 text-right">
                       {onPromo ? (
                         <>
-                          <span className="line-through">
-                            {(item.originalPrice / 100).toFixed(2)} PLN
+                          <span className="line-through text-[var(--coffee-espresso)] mr-1">
+                            {(item.originalPrice / 100).toFixed(2)}
                           </span>
                           <span className="font-medium text-[var(--coffee-charcoal)]">
                             {(item.price / 100).toFixed(2)} PLN
                           </span>
                         </>
                       ) : (
-                        <span>{(item.price / 100).toFixed(2)} PLN</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="text-red-600 hover:text-red-800 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0"
-                  onClick={() => removeFromCart(item.id)}
-                  aria-label="Usuń z koszyka"
-                >
-                  <TrashIcon size="xl" className="text-current" />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="bg-white border border-[var(--coffee-cappuccino)] p-5 sm:p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-[var(--coffee-charcoal)]">
-            Podsumowanie
-          </h2>
-
-          <div className="space-y-2 border-b border-[var(--coffee-cappuccino)] pb-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-[var(--coffee-espresso)]">
-              Pozycje
-            </p>
-            {cart.map((item) => {
-              const onPromo = item.originalPrice > item.price;
-              return (
-                <div
-                  key={item.id}
-                  className="flex items-start justify-between gap-2 text-sm"
-                >
-                  <span className="text-[var(--coffee-charcoal)] line-clamp-2 min-w-0">
-                    {item.title}
-                  </span>
-                  <span className="flex-shrink-0 text-right">
-                    {onPromo ? (
-                      <>
-                        <span className="line-through text-[var(--coffee-espresso)] mr-1">
-                          {(item.originalPrice / 100).toFixed(2)}
-                        </span>
-                        <span className="font-medium text-[var(--coffee-charcoal)]">
+                        <span className="text-[var(--coffee-charcoal)]">
                           {(item.price / 100).toFixed(2)} PLN
                         </span>
-                      </>
-                    ) : (
-                      <span className="text-[var(--coffee-charcoal)]">
-                        {(item.price / 100).toFixed(2)} PLN
-                      </span>
-                    )}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
 
-          <div className="flex items-center justify-between text-sm text-[var(--coffee-espresso)]">
-            <span>Suma</span>
-            <span>{(sumOriginal / 100).toFixed(2)} PLN</span>
-          </div>
-          {promotionDiscount > 0 ? (
             <div className="flex items-center justify-between text-sm text-[var(--coffee-espresso)]">
-              <span>Promocja</span>
-              <span className="text-[var(--success-dark)]">-{(promotionDiscount / 100).toFixed(2)} PLN</span>
+              <span>Suma</span>
+              <span>{(sumOriginal / 100).toFixed(2)} PLN</span>
             </div>
-          ) : null}
-          {discountAmount > 0 ? (
-            <div className="flex items-center justify-between text-sm text-[var(--coffee-espresso)]">
-              <span>Kupon</span>
-              <span className="text-[var(--success-dark)]">-{(discountAmount / 100).toFixed(2)} PLN</span>
-            </div>
-          ) : null}
-          <div className="flex items-center justify-between text-lg font-semibold text-[var(--coffee-charcoal)]">
-            <span>Razem</span>
-            <span>{(total / 100).toFixed(2)} PLN</span>
-          </div>
-
-          {totalDiscount > 0 ? (
-            <p className="text-sm text-[var(--success-dark)] font-medium">
-              Oszczędzasz: {(totalDiscount / 100).toFixed(2)} PLN
-            </p>
-          ) : null}
-
-          {appliedCouponCode ? (
-            <div
-              className="border-radius flex items-center gap-2 border border-[var(--coffee-cappuccino)] bg-[var(--coffee-latte)] px-3 py-2.5 text-sm text-[var(--coffee-charcoal)]"
-              role="status"
-              aria-live="polite"
-            >
-              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--success)] text-white text-xs font-bold" aria-hidden>
-                ✓
-              </span>
-              <span>
-                Kod <strong>{appliedCouponCode}</strong> został zastosowany.
-              </span>
-            </div>
-          ) : null}
-
-          <div className="space-y-2">
-            <input
-              className="w-full border border-[var(--coffee-cappuccino)] px-3 py-2.5 text-sm min-h-[44px]"
-              placeholder="Kod kuponu"
-              value={couponCode}
-              onChange={(event) => setCouponCode(event.target.value)}
-            />
-            <button
-              className="w-full border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] py-2.5 text-sm hover:bg-[var(--coffee-mocha)] hover:text-white transition-colors min-h-[44px] disabled:opacity-50"
-              onClick={handleApplyCoupon}
-              disabled={isApplying}
-            >
-              {isApplying ? "Sprawdzanie..." : "Zastosuj kupon"}
-            </button>
-            {applyError ? (
-              <div className="text-xs text-red-600">{applyError}</div>
+            {promotionDiscount > 0 ? (
+              <div className="flex items-center justify-between text-sm text-[var(--coffee-espresso)]">
+                <span>Promocja</span>
+                <span className="text-[var(--success-dark)]">
+                  -{(promotionDiscount / 100).toFixed(2)} PLN
+                </span>
+              </div>
             ) : null}
+            {discountAmount > 0 ? (
+              <div className="flex items-center justify-between text-sm text-[var(--coffee-espresso)]">
+                <span>Kupon</span>
+                <span className="text-[var(--success-dark)]">
+                  -{(discountAmount / 100).toFixed(2)} PLN
+                </span>
+              </div>
+            ) : null}
+            <div className="flex items-center justify-between text-lg font-semibold text-[var(--coffee-charcoal)]">
+              <span>Razem</span>
+              <span>{(total / 100).toFixed(2)} PLN</span>
+            </div>
+
+            {totalDiscount > 0 ? (
+              <p className="text-sm text-[var(--success-dark)] font-medium">
+                Oszczędzasz: {(totalDiscount / 100).toFixed(2)} PLN
+              </p>
+            ) : null}
+
+            {appliedCouponCode ? (
+              <div
+                className="border-radius flex items-center gap-2 border border-[var(--coffee-cappuccino)] bg-[var(--coffee-latte)] px-3 py-2.5 text-sm text-[var(--coffee-charcoal)]"
+                role="status"
+                aria-live="polite"
+              >
+                <span
+                  className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--success)] text-white text-xs font-bold"
+                  aria-hidden
+                >
+                  ✓
+                </span>
+                <span>
+                  Kod <strong>{appliedCouponCode}</strong> został zastosowany.
+                </span>
+              </div>
+            ) : null}
+
+            <div className="space-y-2">
+              <input
+                className={cn(
+                  "w-full border border-[var(--coffee-cappuccino)] px-3 py-2.5 text-sm min-h-[44px] input-border focus:outline-none focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]",
+                  applyError &&
+                    "input-border-error focus:border-[var(--error)] focus:ring-[var(--error)]",
+                )}
+                placeholder="Kod kuponu"
+                value={couponCode}
+                onChange={(event) => {
+                  setCouponCode(event.target.value);
+                  setApplyError(null);
+                }}
+                aria-invalid={applyError ? "true" : "false"}
+                aria-describedby={applyError ? "coupon-code-error" : undefined}
+              />
+              <button
+                className="w-full border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] py-2.5 text-sm hover:bg-[var(--coffee-mocha)] hover:text-white transition-colors min-h-[44px] disabled:opacity-50"
+                onClick={handleApplyCoupon}
+                disabled={isApplying}
+              >
+                {isApplying ? "Sprawdzanie..." : "Zastosuj kupon"}
+              </button>
+              {applyError ? (
+                <div id="coupon-code-error" className="text-xs text-red-600">
+                  {applyError}
+                </div>
+              ) : null}
+            </div>
+
+            {checkoutError ? (
+              <div className="text-sm text-red-600">{checkoutError}</div>
+            ) : null}
+
+            <button
+              className="w-full bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white py-3 text-sm font-medium transition-colors min-h-[48px] disabled:opacity-50"
+              onClick={handleCheckout}
+              disabled={isCheckingOut}
+            >
+              {isCheckingOut ? "Przekierowanie..." : "Przejdź do płatności"}
+            </button>
           </div>
-
-          {checkoutError ? (
-            <div className="text-sm text-red-600">{checkoutError}</div>
-          ) : null}
-
-          <button
-            className="w-full bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white py-3 text-sm font-medium transition-colors min-h-[48px] disabled:opacity-50"
-            onClick={handleCheckout}
-            disabled={isCheckingOut}
-          >
-            {isCheckingOut ? "Przekierowanie..." : "Przejdź do płatności"}
-          </button>
-        </div>
         </div>
       </div>
     </div>

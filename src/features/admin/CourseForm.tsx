@@ -4,6 +4,7 @@ import React from "react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { Button, Card, CardContent, FileUpload } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import type { Course } from "@/types/course";
 import { CourseQuizBuilder, createEmptyQuiz } from "./CourseQuizBuilder";
 import type {
@@ -25,6 +26,65 @@ const emptySection: CourseFormSection = {
   title: "",
   items: [],
 };
+
+type CourseFieldErrors = Record<string, string>;
+
+type IndexedCourseSection = {
+  section: CourseFormSection;
+  sectionIndex: number;
+};
+
+type CourseValidationResult = {
+  message: string;
+  fieldErrors: CourseFieldErrors;
+  firstField: string;
+  sectionIndex?: number;
+};
+
+const fieldNames = {
+  title: "title",
+  description: "description",
+  price: "price",
+  promotionDiscountValue: "promotionDiscountValue",
+  sectionTitle: (sectionIndex: number) => `section-${sectionIndex}-title`,
+  itemTitle: (sectionIndex: number, itemIndex: number) =>
+    `section-${sectionIndex}-item-${itemIndex}-title`,
+  itemAsset: (sectionIndex: number, itemIndex: number) =>
+    `section-${sectionIndex}-item-${itemIndex}-asset`,
+  itemYoutube: (sectionIndex: number, itemIndex: number) =>
+    `section-${sectionIndex}-item-${itemIndex}-youtube`,
+  quizQuestion: (
+    sectionIndex: number,
+    itemIndex: number,
+    questionIndex: number,
+  ) => `section-${sectionIndex}-item-${itemIndex}-question-${questionIndex}`,
+  quizAnswer: (
+    sectionIndex: number,
+    itemIndex: number,
+    questionIndex: number,
+    answerIndex: number,
+  ) =>
+    `section-${sectionIndex}-item-${itemIndex}-question-${questionIndex}-answer-${answerIndex}`,
+  quizCorrect: (
+    sectionIndex: number,
+    itemIndex: number,
+    questionIndex: number,
+  ) =>
+    `section-${sectionIndex}-item-${itemIndex}-question-${questionIndex}-correct`,
+};
+
+function createFieldValidationError(
+  field: string,
+  message: string,
+  sectionIndex?: number,
+): CourseValidationResult {
+  return {
+    message,
+    fieldErrors: { [field]: message },
+    firstField: field,
+    sectionIndex,
+  };
+}
 
 function createEmptyItem(kind: CourseFormItem["kind"]): CourseFormItem {
   return {
@@ -72,16 +132,22 @@ function hasQuizDraftContent(quiz: CourseFormQuiz | null): boolean {
   );
 }
 
-function getCourseValidationError(sections: CourseFormSection[]): string | null {
-  for (const section of sections) {
-    for (const item of section.items) {
+function getCourseValidationError(
+  sections: IndexedCourseSection[],
+): CourseValidationResult | null {
+  for (const { section, sectionIndex } of sections) {
+    for (const [itemIndex, item] of section.items.entries()) {
       const hasKindSpecificContent =
         item.assetPath.trim() !== "" ||
         item.youtubeUrl.trim() !== "" ||
         hasQuizDraftContent(item.quiz);
 
       if (!item.title.trim() && hasKindSpecificContent) {
-        return "Kazdy element lekcji musi miec tytul.";
+        return createFieldValidationError(
+          fieldNames.itemTitle(sectionIndex, itemIndex),
+          "Kazdy element lekcji musi miec tytul.",
+          sectionIndex,
+        );
       }
 
       if (!item.title.trim()) {
@@ -89,11 +155,19 @@ function getCourseValidationError(sections: CourseFormSection[]): string | null 
       }
 
       if (item.kind === "svg" && !item.assetPath.trim()) {
-        return "Kazdy element typu Tekst musi miec dodany plik SVG.";
+        return createFieldValidationError(
+          fieldNames.itemAsset(sectionIndex, itemIndex),
+          "Kazdy element typu Tekst musi miec dodany plik SVG.",
+          sectionIndex,
+        );
       }
 
       if (item.kind === "youtube" && !item.youtubeUrl.trim()) {
-        return "Kazdy element typu Video musi miec podany adres URL.";
+        return createFieldValidationError(
+          fieldNames.itemYoutube(sectionIndex, itemIndex),
+          "Kazdy element typu Video musi miec podany adres URL.",
+          sectionIndex,
+        );
       }
 
       if (item.kind !== "quiz") {
@@ -101,20 +175,44 @@ function getCourseValidationError(sections: CourseFormSection[]): string | null 
       }
 
       if (!item.quiz || item.quiz.questions.length === 0) {
-        return "Quiz musi zawierac co najmniej jedno pytanie.";
+        return createFieldValidationError(
+          fieldNames.itemTitle(sectionIndex, itemIndex),
+          "Quiz musi zawierac co najmniej jedno pytanie.",
+          sectionIndex,
+        );
       }
 
-      for (const question of item.quiz.questions) {
+      for (const [questionIndex, question] of item.quiz.questions.entries()) {
         if (!question.text.trim()) {
-          return "Kazde pytanie quizu musi miec tresc.";
+          return createFieldValidationError(
+            fieldNames.quizQuestion(sectionIndex, itemIndex, questionIndex),
+            "Kazde pytanie quizu musi miec tresc.",
+            sectionIndex,
+          );
         }
 
         if (question.answers.length < 2) {
-          return "Kazde pytanie quizu musi miec minimum 2 odpowiedzi.";
+          return createFieldValidationError(
+            fieldNames.quizCorrect(sectionIndex, itemIndex, questionIndex),
+            "Kazde pytanie quizu musi miec minimum 2 odpowiedzi.",
+            sectionIndex,
+          );
         }
 
-        if (question.answers.some((answer) => !answer.text.trim())) {
-          return "Kazda odpowiedz w quizie musi miec tresc.";
+        const emptyAnswerIndex = question.answers.findIndex(
+          (answer) => !answer.text.trim(),
+        );
+        if (emptyAnswerIndex >= 0) {
+          return createFieldValidationError(
+            fieldNames.quizAnswer(
+              sectionIndex,
+              itemIndex,
+              questionIndex,
+              emptyAnswerIndex,
+            ),
+            "Kazda odpowiedz w quizie musi miec tresc.",
+            sectionIndex,
+          );
         }
 
         const correctAnswers = question.answers.filter(
@@ -122,17 +220,35 @@ function getCourseValidationError(sections: CourseFormSection[]): string | null 
         );
 
         if (correctAnswers.length === 0) {
-          return "Kazde pytanie quizu musi miec przynajmniej jedna poprawna odpowiedz.";
+          return createFieldValidationError(
+            fieldNames.quizCorrect(sectionIndex, itemIndex, questionIndex),
+            "Kazde pytanie quizu musi miec przynajmniej jedna poprawna odpowiedz.",
+            sectionIndex,
+          );
         }
 
         if (question.type === "single" && correctAnswers.length > 1) {
-          return "Pytanie jednokrotnego wyboru moze miec tylko jedna poprawna odpowiedz.";
+          return createFieldValidationError(
+            fieldNames.quizCorrect(sectionIndex, itemIndex, questionIndex),
+            "Pytanie jednokrotnego wyboru moze miec tylko jedna poprawna odpowiedz.",
+            sectionIndex,
+          );
         }
       }
     }
   }
 
   return null;
+}
+
+function FieldError({ field, message }: { field: string; message?: string }) {
+  if (!message) return null;
+
+  return (
+    <p id={`${field}-error`} className="mt-1 text-sm text-[var(--error)]">
+      {message}
+    </p>
+  );
 }
 
 export type { CourseFormData, CourseFormSection } from "./course-form-types";
@@ -152,11 +268,14 @@ export function CourseForm({
   const [status, setStatus] = useState<"active" | "inactive">(
     initial?.status ?? "inactive",
   );
-  const [mainImageUrl, setMainImageUrl] = useState(initial?.main_image_url ?? "");
+  const [mainImageUrl, setMainImageUrl] = useState(
+    initial?.main_image_url ?? "",
+  );
   const [promotionDiscountType, setPromotionDiscountType] = useState<
     "percentage" | "fixed"
   >(
-    (initial?.promotion_discount_type as "percentage" | "fixed") ?? "percentage",
+    (initial?.promotion_discount_type as "percentage" | "fixed") ??
+      "percentage",
   );
   const [promotionDiscountValue, setPromotionDiscountValue] = useState(
     initial?.promotion_discount_value != null
@@ -189,21 +308,85 @@ export function CourseForm({
     new Set(),
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<CourseFieldErrors>({});
+  const [firstErrorField, setFirstErrorField] = useState<string | null>(null);
   const formErrorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (firstErrorField) {
+      const field = document.querySelector<HTMLElement>(
+        `[data-validation-field="${firstErrorField}"]`,
+      );
+      field?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      const focusTarget =
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLTextAreaElement ||
+        field instanceof HTMLSelectElement ||
+        field instanceof HTMLButtonElement
+          ? field
+          : field?.querySelector<HTMLElement>(
+              "input, textarea, select, button",
+            );
+
+      focusTarget?.focus();
+      return;
+    }
+
     if (formError && formErrorRef.current) {
       formErrorRef.current.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
     }
-  }, [formError]);
+  }, [firstErrorField, formError]);
 
   const notifyChange = () => {
     setFormError(null);
+    setFieldErrors({});
+    setFirstErrorField(null);
     onChange?.();
   };
+
+  const setValidationResult = (result: CourseValidationResult) => {
+    setFormError(result.message);
+    setFieldErrors(result.fieldErrors);
+    setFirstErrorField(result.firstField);
+
+    if (result.sectionIndex != null) {
+      setCollapsedSections((previous) => {
+        if (!previous.has(result.sectionIndex!)) {
+          return previous;
+        }
+
+        const next = new Set(previous);
+        next.delete(result.sectionIndex!);
+        return next;
+      });
+    }
+  };
+
+  const getFieldError = (field: string) => fieldErrors[field];
+
+  const getFieldControlProps = (field: string) => {
+    const error = getFieldError(field);
+    return {
+      "data-validation-field": field,
+      "aria-invalid": error ? ("true" as const) : ("false" as const),
+      "aria-describedby": error ? `${field}-error` : undefined,
+    };
+  };
+
+  const getFieldControlClass = (field: string, className?: string) =>
+    cn(
+      "border-radius input-border focus:outline-none focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]",
+      getFieldError(field) &&
+        "input-border-error focus:ring-[var(--error)] focus:border-[var(--error)]",
+      className,
+    );
 
   const toggleSectionCollapsed = useCallback((index: number) => {
     setCollapsedSections((previous) => {
@@ -223,13 +406,16 @@ export function CourseForm({
   };
 
   const removeSection = (index: number) => {
-    setSections((previous) => previous.filter((_, current) => current !== index));
-    setCollapsedSections((previous) =>
-      new Set(
-        [...previous]
-          .filter((current) => current !== index)
-          .map((current) => (current > index ? current - 1 : current)),
-      ),
+    setSections((previous) =>
+      previous.filter((_, current) => current !== index),
+    );
+    setCollapsedSections(
+      (previous) =>
+        new Set(
+          [...previous]
+            .filter((current) => current !== index)
+            .map((current) => (current > index ? current - 1 : current)),
+        ),
     );
     notifyChange();
   };
@@ -263,7 +449,9 @@ export function CourseForm({
         current === sectionIndex
           ? {
               ...section,
-              items: section.items.filter((_, currentItem) => currentItem !== itemIndex),
+              items: section.items.filter(
+                (_, currentItem) => currentItem !== itemIndex,
+              ),
             }
           : section,
       ),
@@ -319,22 +507,51 @@ export function CourseForm({
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     setFormError(null);
+    setFieldErrors({});
+    setFirstErrorField(null);
 
-    const priceValue = parseFloat(price.replace(",", "."));
-    if (Number.isNaN(priceValue) || priceValue <= 0) {
-      setFormError("Podaj cene wieksza niz 0.");
+    if (!title.trim()) {
+      setValidationResult(
+        createFieldValidationError(fieldNames.title, "Podaj tytul kursu."),
+      );
       return;
     }
 
-    const validSections = sections.filter((section) => section.title.trim());
+    if (!description.trim()) {
+      setValidationResult(
+        createFieldValidationError(fieldNames.description, "Podaj opis kursu."),
+      );
+      return;
+    }
+
+    const priceValue = parseFloat(price.replace(",", "."));
+    if (Number.isNaN(priceValue) || priceValue <= 0) {
+      setValidationResult(
+        createFieldValidationError(
+          fieldNames.price,
+          "Podaj cene wieksza niz 0.",
+        ),
+      );
+      return;
+    }
+
+    const validSections = sections
+      .map((section, sectionIndex) => ({ section, sectionIndex }))
+      .filter(({ section }) => section.title.trim());
     if (validSections.length === 0) {
-      setFormError("Dodaj co najmniej jedna sekcje i podaj jej tytul.");
+      setValidationResult(
+        createFieldValidationError(
+          fieldNames.sectionTitle(0),
+          "Dodaj co najmniej jedna sekcje i podaj jej tytul.",
+          0,
+        ),
+      );
       return;
     }
 
     const contentValidationError = getCourseValidationError(validSections);
     if (contentValidationError) {
-      setFormError(contentValidationError);
+      setValidationResult(contentValidationError);
       return;
     }
 
@@ -351,12 +568,22 @@ export function CourseForm({
     if (hasPromo) {
       const value = parseFloat(promotionDiscountValue.replace(",", "."));
       if (Number.isNaN(value) || value <= 0) {
-        setFormError("Podaj prawidlowa wartosc znizki promocji.");
+        setValidationResult(
+          createFieldValidationError(
+            fieldNames.promotionDiscountValue,
+            "Podaj prawidlowa wartosc znizki promocji.",
+          ),
+        );
         return;
       }
 
       if (promotionDiscountType === "percentage" && value > 100) {
-        setFormError("Znizka procentowa nie moze byc wieksza niz 100.");
+        setValidationResult(
+          createFieldValidationError(
+            fieldNames.promotionDiscountValue,
+            "Znizka procentowa nie moze byc wieksza niz 100.",
+          ),
+        );
         return;
       }
 
@@ -376,7 +603,7 @@ export function CourseForm({
       price: priceValue,
       status,
       mainImageUrl: mainImageUrl.trim() || undefined,
-      sections: validSections.map((section) => ({
+      sections: validSections.map(({ section }) => ({
         title: section.title.trim(),
         items: section.items
           .filter((item) => item.title.trim())
@@ -412,7 +639,7 @@ export function CourseForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 p-2">
+    <form onSubmit={handleSubmit} className="space-y-6 p-2" noValidate>
       {formError ? (
         <div
           ref={formErrorRef}
@@ -438,8 +665,16 @@ export function CourseForm({
             setTitle(event.target.value);
             notifyChange();
           }}
-          className="w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2"
+          className={getFieldControlClass(
+            fieldNames.title,
+            "w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2",
+          )}
+          {...getFieldControlProps(fieldNames.title)}
           required
+        />
+        <FieldError
+          field={fieldNames.title}
+          message={getFieldError(fieldNames.title)}
         />
       </div>
 
@@ -457,8 +692,16 @@ export function CourseForm({
             setDescription(event.target.value);
             notifyChange();
           }}
-          className="min-h-[80px] w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2"
+          className={getFieldControlClass(
+            fieldNames.description,
+            "min-h-[80px] w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2",
+          )}
+          {...getFieldControlProps(fieldNames.description)}
           required
+        />
+        <FieldError
+          field={fieldNames.description}
+          message={getFieldError(fieldNames.description)}
         />
       </div>
 
@@ -479,8 +722,16 @@ export function CourseForm({
               setPrice(event.target.value);
               notifyChange();
             }}
-            className="h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
+            className={getFieldControlClass(
+              fieldNames.price,
+              "h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2",
+            )}
+            {...getFieldControlProps(fieldNames.price)}
             required
+          />
+          <FieldError
+            field={fieldNames.price}
+            message={getFieldError(fieldNames.price)}
           />
         </div>
 
@@ -552,25 +803,37 @@ export function CourseForm({
             </select>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-2">
             <label className="whitespace-nowrap text-sm font-medium text-[var(--coffee-charcoal)]">
               {promotionDiscountType === "percentage"
                 ? "Wartosc (%)"
                 : "Wartosc (PLN)"}
             </label>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={promotionDiscountValue}
-              onChange={(event) => {
-                setPromotionDiscountValue(event.target.value);
-                notifyChange();
-              }}
-              placeholder={
-                promotionDiscountType === "percentage" ? "np. 20" : "np. 29.99"
-              }
-              className="h-10 w-28 border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
-            />
+            <div>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={promotionDiscountValue}
+                onChange={(event) => {
+                  setPromotionDiscountValue(event.target.value);
+                  notifyChange();
+                }}
+                placeholder={
+                  promotionDiscountType === "percentage"
+                    ? "np. 20"
+                    : "np. 29.99"
+                }
+                className={getFieldControlClass(
+                  fieldNames.promotionDiscountValue,
+                  "h-10 w-28 border border-[var(--coffee-cappuccino)] bg-white px-3 py-2",
+                )}
+                {...getFieldControlProps(fieldNames.promotionDiscountValue)}
+              />
+              <FieldError
+                field={fieldNames.promotionDiscountValue}
+                message={getFieldError(fieldNames.promotionDiscountValue)}
+              />
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -610,7 +873,12 @@ export function CourseForm({
           <h3 className="text-lg font-semibold text-[var(--coffee-charcoal)]">
             Sekcje i elementy lekcji
           </h3>
-          <Button type="button" variant="secondary" size="sm" onClick={addSection}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={addSection}
+          >
             + Dodaj sekcje
           </Button>
         </div>
@@ -618,9 +886,14 @@ export function CourseForm({
         <div className="space-y-6">
           {sections.map((section, sectionIndex) => {
             const isCollapsed = collapsedSections.has(sectionIndex);
+            const sectionTitleField = fieldNames.sectionTitle(sectionIndex);
 
             return (
-              <Card key={sectionIndex} variant="elevated" className="overflow-hidden">
+              <Card
+                key={sectionIndex}
+                variant="elevated"
+                className="overflow-hidden"
+              >
                 <CardContent className="p-4">
                   <div className="mb-4 flex items-center justify-between gap-2">
                     <button
@@ -635,15 +908,25 @@ export function CourseForm({
                         <FiChevronUp className="h-5 w-5" aria-hidden />
                       )}
                     </button>
-                    <input
-                      type="text"
-                      placeholder="Tytul sekcji"
-                      value={section.title}
-                      onChange={(event) =>
-                        setSectionTitle(sectionIndex, event.target.value)
-                      }
-                      className="h-10 min-w-0 flex-1 border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
-                    />
+                    <div className="min-w-0 flex-1">
+                      <input
+                        type="text"
+                        placeholder="Tytul sekcji"
+                        value={section.title}
+                        onChange={(event) =>
+                          setSectionTitle(sectionIndex, event.target.value)
+                        }
+                        className={getFieldControlClass(
+                          sectionTitleField,
+                          "h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2",
+                        )}
+                        {...getFieldControlProps(sectionTitleField)}
+                      />
+                      <FieldError
+                        field={sectionTitleField}
+                        message={getFieldError(sectionTitleField)}
+                      />
+                    </div>
                     <Button
                       type="button"
                       variant="danger"
@@ -656,156 +939,200 @@ export function CourseForm({
 
                   {isCollapsed ? null : (
                     <div className="space-y-4">
-                      {section.items.map((item, itemIndex) => (
-                        <Card
-                          key={itemIndex}
-                          variant="default"
-                          className="border border-[var(--coffee-cappuccino)]"
-                        >
-                          <CardContent className="space-y-4 p-4">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <div className="min-w-0 flex-1">
-                                <label className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]">
-                                  Tytul elementu
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Tytul elementu"
-                                  value={item.title}
-                                  onChange={(event) =>
-                                    setItem(sectionIndex, itemIndex, {
-                                      title: event.target.value,
-                                    })
-                                  }
-                                  className="h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
-                                />
-                              </div>
-                              <div className="rounded bg-[var(--coffee-latte)] px-3 py-2 text-sm font-medium text-[var(--coffee-espresso)]">
-                                {getItemKindLabel(item.kind)}
-                              </div>
-                            </div>
+                      {section.items.map((item, itemIndex) => {
+                        const itemTitleField = fieldNames.itemTitle(
+                          sectionIndex,
+                          itemIndex,
+                        );
+                        const itemAssetField = fieldNames.itemAsset(
+                          sectionIndex,
+                          itemIndex,
+                        );
+                        const itemYoutubeField = fieldNames.itemYoutube(
+                          sectionIndex,
+                          itemIndex,
+                        );
 
-                            <div className="flex flex-wrap gap-4">
-                              <label className="flex items-center gap-2 text-sm font-medium text-[var(--coffee-charcoal)]">
-                                <input
-                                  type="radio"
-                                  name={`kind-${sectionIndex}-${itemIndex}`}
-                                  checked={item.kind === "svg"}
-                                  onChange={() =>
-                                    setItem(sectionIndex, itemIndex, {
-                                      kind: "svg",
-                                      assetPath: item.assetPath,
-                                      youtubeUrl: "",
-                                      quiz: null,
-                                    })
-                                  }
-                                />
-                                Tekst
-                              </label>
-                              <label className="flex items-center gap-2 text-sm font-medium text-[var(--coffee-charcoal)]">
-                                <input
-                                  type="radio"
-                                  name={`kind-${sectionIndex}-${itemIndex}`}
-                                  checked={item.kind === "youtube"}
-                                  onChange={() =>
-                                    setItem(sectionIndex, itemIndex, {
-                                      kind: "youtube",
-                                      assetPath: "",
-                                      youtubeUrl: item.youtubeUrl,
-                                      quiz: null,
-                                    })
-                                  }
-                                />
-                                Video
-                              </label>
-                              <label className="flex items-center gap-2 text-sm font-medium text-[var(--coffee-charcoal)]">
-                                <input
-                                  type="radio"
-                                  name={`kind-${sectionIndex}-${itemIndex}`}
-                                  checked={item.kind === "quiz"}
-                                  onChange={() =>
-                                    setItem(sectionIndex, itemIndex, {
-                                      kind: "quiz",
-                                      assetPath: "",
-                                      youtubeUrl: "",
-                                      quiz: normalizeQuiz(item.quiz),
-                                    })
-                                  }
-                                />
-                                Quiz
-                              </label>
-                            </div>
-
-                            {item.kind === "svg" ? (
-                              <div>
-                                <label className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]">
-                                  Plik SVG
-                                </label>
-                                <FileUpload
-                                  value={item.assetPath}
-                                  onChange={(url) =>
-                                    setItem(sectionIndex, itemIndex, {
-                                      assetPath: url,
-                                    })
-                                  }
-                                  accept=".svg,image/svg+xml"
-                                  className="w-full"
-                                />
-                              </div>
-                            ) : null}
-
-                            {item.kind === "youtube" ? (
-                              <div>
-                                <label className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]">
-                                  URL video
-                                </label>
-                                <input
-                                  type="url"
-                                  placeholder="URL YouTube (np. https://youtube.com/watch?v=...)"
-                                  value={item.youtubeUrl}
-                                  onChange={(event) =>
-                                    setItem(sectionIndex, itemIndex, {
-                                      youtubeUrl: event.target.value,
-                                    })
-                                  }
-                                  className="h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
-                                />
-                              </div>
-                            ) : null}
-
-                            {item.kind === "quiz" ? (
-                              <div className="space-y-3">
-                                <div>
-                                  <div className="text-sm font-medium text-[var(--coffee-charcoal)]">
-                                    Kreator quizu
-                                  </div>
-                                  <div className="text-sm text-[var(--coffee-espresso)]">
-                                    Dodaj pytania, odpowiedzi i zaznacz poprawne
-                                    odpowiedzi.
-                                  </div>
+                        return (
+                          <Card
+                            key={itemIndex}
+                            variant="default"
+                            className="border border-[var(--coffee-cappuccino)]"
+                          >
+                            <CardContent className="space-y-4 p-4">
+                              <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div className="min-w-0 flex-1">
+                                  <label className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]">
+                                    Tytul elementu
+                                  </label>
+                                  <input
+                                    type="text"
+                                    placeholder="Tytul elementu"
+                                    value={item.title}
+                                    onChange={(event) =>
+                                      setItem(sectionIndex, itemIndex, {
+                                        title: event.target.value,
+                                      })
+                                    }
+                                    className={getFieldControlClass(
+                                      itemTitleField,
+                                      "h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2",
+                                    )}
+                                    {...getFieldControlProps(itemTitleField)}
+                                  />
+                                  <FieldError
+                                    field={itemTitleField}
+                                    message={getFieldError(itemTitleField)}
+                                  />
                                 </div>
-                                <CourseQuizBuilder
-                                  value={normalizeQuiz(item.quiz)}
-                                  onChange={(quiz) =>
-                                    setItem(sectionIndex, itemIndex, { quiz })
-                                  }
-                                />
+                                <div className="rounded bg-[var(--coffee-latte)] px-3 py-2 text-sm font-medium text-[var(--coffee-espresso)]">
+                                  {getItemKindLabel(item.kind)}
+                                </div>
                               </div>
-                            ) : null}
 
-                            <div className="flex justify-end">
-                              <Button
-                                type="button"
-                                variant="danger"
-                                size="sm"
-                                onClick={() => removeItem(sectionIndex, itemIndex)}
-                              >
-                                Usun element
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                              <div className="flex flex-wrap gap-4">
+                                <label className="flex items-center gap-2 text-sm font-medium text-[var(--coffee-charcoal)]">
+                                  <input
+                                    type="radio"
+                                    name={`kind-${sectionIndex}-${itemIndex}`}
+                                    checked={item.kind === "svg"}
+                                    onChange={() =>
+                                      setItem(sectionIndex, itemIndex, {
+                                        kind: "svg",
+                                        assetPath: item.assetPath,
+                                        youtubeUrl: "",
+                                        quiz: null,
+                                      })
+                                    }
+                                  />
+                                  Tekst
+                                </label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-[var(--coffee-charcoal)]">
+                                  <input
+                                    type="radio"
+                                    name={`kind-${sectionIndex}-${itemIndex}`}
+                                    checked={item.kind === "youtube"}
+                                    onChange={() =>
+                                      setItem(sectionIndex, itemIndex, {
+                                        kind: "youtube",
+                                        assetPath: "",
+                                        youtubeUrl: item.youtubeUrl,
+                                        quiz: null,
+                                      })
+                                    }
+                                  />
+                                  Video
+                                </label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-[var(--coffee-charcoal)]">
+                                  <input
+                                    type="radio"
+                                    name={`kind-${sectionIndex}-${itemIndex}`}
+                                    checked={item.kind === "quiz"}
+                                    onChange={() =>
+                                      setItem(sectionIndex, itemIndex, {
+                                        kind: "quiz",
+                                        assetPath: "",
+                                        youtubeUrl: "",
+                                        quiz: normalizeQuiz(item.quiz),
+                                      })
+                                    }
+                                  />
+                                  Quiz
+                                </label>
+                              </div>
+
+                              {item.kind === "svg" ? (
+                                <div
+                                  {...getFieldControlProps(itemAssetField)}
+                                  role="group"
+                                >
+                                  <label className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]">
+                                    Plik SVG
+                                  </label>
+                                  <FileUpload
+                                    value={item.assetPath}
+                                    onChange={(url) =>
+                                      setItem(sectionIndex, itemIndex, {
+                                        assetPath: url,
+                                      })
+                                    }
+                                    accept=".svg,image/svg+xml"
+                                    className="w-full"
+                                    error={getFieldError(itemAssetField)}
+                                    errorId={`${itemAssetField}-error`}
+                                  />
+                                </div>
+                              ) : null}
+
+                              {item.kind === "youtube" ? (
+                                <div>
+                                  <label className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]">
+                                    URL video
+                                  </label>
+                                  <input
+                                    type="url"
+                                    placeholder="URL YouTube (np. https://youtube.com/watch?v=...)"
+                                    value={item.youtubeUrl}
+                                    onChange={(event) =>
+                                      setItem(sectionIndex, itemIndex, {
+                                        youtubeUrl: event.target.value,
+                                      })
+                                    }
+                                    className={getFieldControlClass(
+                                      itemYoutubeField,
+                                      "h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2",
+                                    )}
+                                    {...getFieldControlProps(itemYoutubeField)}
+                                  />
+                                  <FieldError
+                                    field={itemYoutubeField}
+                                    message={getFieldError(itemYoutubeField)}
+                                  />
+                                </div>
+                              ) : null}
+
+                              {item.kind === "quiz" ? (
+                                <div className="space-y-3">
+                                  <div>
+                                    <div className="text-sm font-medium text-[var(--coffee-charcoal)]">
+                                      Kreator quizu
+                                    </div>
+                                    <div className="text-sm text-[var(--coffee-espresso)]">
+                                      Dodaj pytania, odpowiedzi i zaznacz
+                                      poprawne odpowiedzi.
+                                    </div>
+                                  </div>
+                                  <CourseQuizBuilder
+                                    value={normalizeQuiz(item.quiz)}
+                                    getFieldError={getFieldError}
+                                    getFieldControlClass={getFieldControlClass}
+                                    getFieldControlProps={getFieldControlProps}
+                                    fieldNames={fieldNames}
+                                    sectionIndex={sectionIndex}
+                                    itemIndex={itemIndex}
+                                    onChange={(quiz) =>
+                                      setItem(sectionIndex, itemIndex, { quiz })
+                                    }
+                                  />
+                                </div>
+                              ) : null}
+
+                              <div className="flex justify-end">
+                                <Button
+                                  type="button"
+                                  variant="danger"
+                                  size="sm"
+                                  onClick={() =>
+                                    removeItem(sectionIndex, itemIndex)
+                                  }
+                                >
+                                  Usun element
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
 
                       <div className="rounded border border-dashed border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] p-4">
                         <div className="mb-3 text-sm font-medium text-[var(--coffee-charcoal)]">
@@ -847,7 +1174,12 @@ export function CourseForm({
         </div>
 
         <div className="mt-4">
-          <Button type="button" variant="secondary" size="sm" onClick={addSection}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={addSection}
+          >
             + Dodaj sekcje
           </Button>
         </div>

@@ -4,8 +4,10 @@ import React, { useState } from "react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { cn } from "@/lib/utils";
 
-export interface PasswordInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {
+export interface PasswordInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "type"
+> {
   label?: string;
   error?: string;
 }
@@ -13,12 +15,14 @@ export interface PasswordInputProps
 const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
   ({ className, label, error, id, ...props }, ref) => {
     const [visible, setVisible] = useState(false);
-    const inputId = id || `password-${Math.random().toString(36).slice(2, 9)}`;
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
 
     const inputClasses = cn(
       "w-full border px-3 py-2 pr-10 bg-white text-[var(--coffee-charcoal)] placeholder-[var(--coffee-macchiato)] focus:outline-none focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:border-transparent border-radius input-border",
-      error && "input-border-error focus:ring-[var(--error)] focus:border-[var(--error)]",
-      className
+      error &&
+        "input-border-error focus:ring-[var(--error)] focus:border-[var(--error)]",
+      className,
     );
 
     return (
@@ -61,7 +65,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 PasswordInput.displayName = "PasswordInput";
