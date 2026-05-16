@@ -9,6 +9,11 @@ import type { UserProfile } from "@/types/user";
 const MAX_NAME_LENGTH = 100;
 const MIN_PASSWORD_LENGTH = 6;
 
+type ProfileFieldErrors = Partial<Record<"firstName" | "lastName", string>>;
+type PasswordFieldErrors = Partial<
+  Record<"newPassword" | "confirmPassword", string>
+>;
+
 type Props = {
   profile: UserProfile;
 };
@@ -20,30 +25,42 @@ export function AccountForm({ profile }: Props) {
   const [lastName, setLastName] = useState(profile.last_name);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
   const [success, setSuccess] = useState(false);
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordFieldErrors, setPasswordFieldErrors] =
+    useState<PasswordFieldErrors>({});
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
     setSuccess(false);
     const f = firstName.trim();
     const l = lastName.trim();
+    const nextErrors: ProfileFieldErrors = {};
     if (!f) {
-      setError("Imię jest wymagane.");
-      return;
+      nextErrors.firstName = "Imię jest wymagane.";
     }
     if (!l) {
-      setError("Nazwisko jest wymagane.");
-      return;
+      nextErrors.lastName = "Nazwisko jest wymagane.";
     }
-    if (f.length > MAX_NAME_LENGTH || l.length > MAX_NAME_LENGTH) {
-      setError(`Imię i nazwisko mogą mieć co najwyżej ${MAX_NAME_LENGTH} znaków.`);
+
+    if (f.length > MAX_NAME_LENGTH) {
+      nextErrors.firstName = `Imię może mieć co najwyżej ${MAX_NAME_LENGTH} znaków.`;
+    }
+
+    if (l.length > MAX_NAME_LENGTH) {
+      nextErrors.lastName = `Nazwisko może mieć co najwyżej ${MAX_NAME_LENGTH} znaków.`;
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
       return;
     }
     setSaving(true);
@@ -69,17 +86,24 @@ export function AccountForm({ profile }: Props) {
   const handlePasswordSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setPasswordError(null);
+    setPasswordFieldErrors({});
     setPasswordSuccess(false);
+    const nextErrors: PasswordFieldErrors = {};
     if (newPassword.length < MIN_PASSWORD_LENGTH) {
-      setPasswordError(`Hasło musi mieć co najmniej ${MIN_PASSWORD_LENGTH} znaków.`);
-      return;
+      nextErrors.newPassword = `Hasło musi mieć co najmniej ${MIN_PASSWORD_LENGTH} znaków.`;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError("Hasła nie są identyczne.");
+      nextErrors.confirmPassword = "Hasła nie są identyczne.";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setPasswordFieldErrors(nextErrors);
       return;
     }
     setPasswordSaving(true);
-    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
     if (updateError) {
       setPasswordError(updateError.message);
       setPasswordSaving(false);
@@ -93,22 +117,36 @@ export function AccountForm({ profile }: Props) {
 
   return (
     <div className="max-w-md space-y-8">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <Input
           label="Imię"
           value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
+          onChange={(e) => {
+            setFirstName(e.target.value);
+            setFieldErrors((previous) => ({
+              ...previous,
+              firstName: undefined,
+            }));
+          }}
           maxLength={MAX_NAME_LENGTH}
           disabled={saving}
+          error={fieldErrors.firstName}
           required
           className="border-radius"
         />
         <Input
           label="Nazwisko"
           value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
+          onChange={(e) => {
+            setLastName(e.target.value);
+            setFieldErrors((previous) => ({
+              ...previous,
+              lastName: undefined,
+            }));
+          }}
           maxLength={MAX_NAME_LENGTH}
           disabled={saving}
+          error={fieldErrors.lastName}
           required
           className="border-radius"
         />
@@ -151,22 +189,36 @@ export function AccountForm({ profile }: Props) {
         <h3 className="text-base font-semibold text-[var(--coffee-charcoal)] mb-4">
           Zmiana hasła
         </h3>
-        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+        <form onSubmit={handlePasswordSubmit} className="space-y-4" noValidate>
           <PasswordInput
             label="Nowe hasło"
             value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
+            onChange={(e) => {
+              setNewPassword(e.target.value);
+              setPasswordFieldErrors((previous) => ({
+                ...previous,
+                newPassword: undefined,
+              }));
+            }}
             minLength={MIN_PASSWORD_LENGTH}
             disabled={passwordSaving}
+            error={passwordFieldErrors.newPassword}
             placeholder="••••••••"
             className="border-radius"
           />
           <PasswordInput
             label="Powtórz nowe hasło"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              setPasswordFieldErrors((previous) => ({
+                ...previous,
+                confirmPassword: undefined,
+              }));
+            }}
             minLength={MIN_PASSWORD_LENGTH}
             disabled={passwordSaving}
+            error={passwordFieldErrors.confirmPassword}
             placeholder="••••••••"
             className="border-radius"
           />

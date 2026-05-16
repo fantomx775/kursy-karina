@@ -1,33 +1,44 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
+import React, { useState, useCallback, useRef } from "react";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
 
 export interface FileUploadProps {
   value?: string;
   onChange: (fileUrl: string) => void;
   accept?: string;
   className?: string;
+  error?: string;
+  errorId?: string;
 }
 
 export function FileUpload({
   value,
   onChange,
-  accept = 'image/*,.svg',
-  className = '',
+  accept = "image/*,.svg",
+  className = "",
+  error,
+  errorId,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const shownError = error || uploadError;
 
   const validateFile = (file: File): boolean => {
     const allowedTypes = [
-      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-      'image/svg+xml'
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "image/svg+xml",
     ];
-    
+
     if (!allowedTypes.includes(file.type)) {
-      setError('Nieprawidłowy format pliku. Dozwolone są: JPG, PNG, GIF, WebP, SVG');
+      setUploadError(
+        "Nieprawidłowy format pliku. Dozwolone są: JPG, PNG, GIF, WebP, SVG",
+      );
       return false;
     }
 
@@ -36,27 +47,27 @@ export function FileUpload({
 
   const uploadFile = async (file: File): Promise<string> => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
+      const response = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Wystąpił błąd podczas przesyłania pliku');
+        throw new Error("Wystąpił błąd podczas przesyłania pliku");
       }
 
       const data = await response.json();
       return data.url;
     } catch (error) {
-      throw new Error('Nie udało się przesłać pliku');
+      throw new Error("Nie udało się przesłać pliku");
     }
   };
 
   const handleFile = async (file: File) => {
-    setError(null);
+    setUploadError(null);
 
     if (!validateFile(file)) {
       return;
@@ -68,7 +79,9 @@ export function FileUpload({
       const fileUrl = await uploadFile(file);
       onChange(fileUrl);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Wystąpił nieznany błąd');
+      setUploadError(
+        error instanceof Error ? error.message : "Wystąpił nieznany błąd",
+      );
     } finally {
       setIsUploading(false);
     }
@@ -94,16 +107,19 @@ export function FileUpload({
     setIsDragging(false);
   }, []);
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFile(files[0]);
-    }
-  }, []);
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        handleFile(files[0]);
+      }
+    },
+    [],
+  );
 
   const handleRemove = () => {
-    onChange('');
-    setError(null);
+    onChange("");
+    setUploadError(null);
   };
 
   return (
@@ -116,8 +132,9 @@ export function FileUpload({
         className="hidden"
         aria-hidden
         disabled={isUploading}
+        aria-invalid={shownError ? "true" : "false"}
       />
-      
+
       {value ? (
         <Card variant="default" className="overflow-hidden">
           <CardContent className="p-4">
@@ -133,7 +150,7 @@ export function FileUpload({
               )}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-[var(--coffee-espresso)] truncate">
-                  {value.split('/').pop() || value}
+                  {value.split("/").pop() || value}
                 </span>
                 <Button
                   type="button"
@@ -149,11 +166,13 @@ export function FileUpload({
         </Card>
       ) : (
         <Card
-          variant={isDragging ? 'elevated' : 'default'}
+          variant={isDragging ? "elevated" : "default"}
           className={`border-2 transition-colors cursor-pointer ${
-            isDragging
-              ? 'border-[var(--coffee-mocha)] bg-[var(--coffee-latte)]'
-              : 'border-dashed border-[var(--coffee-cappuccino)] hover:border-[var(--coffee-macchiato)]'
+            shownError
+              ? "border-[var(--error)] bg-red-50"
+              : isDragging
+                ? "border-[var(--coffee-mocha)] bg-[var(--coffee-latte)]"
+                : "border-dashed border-[var(--coffee-cappuccino)] hover:border-[var(--coffee-macchiato)]"
           }`}
         >
           <CardContent className="p-8">
@@ -166,7 +185,9 @@ export function FileUpload({
               <div className="space-y-4">
                 <div>
                   <p className="text-[var(--coffee-charcoal)] font-medium mb-2">
-                    {isUploading ? 'Przesyłanie pliku...' : 'Przeciągnij i upuść plik tutaj'}
+                    {isUploading
+                      ? "Przesyłanie pliku..."
+                      : "Przeciągnij i upuść plik tutaj"}
                   </p>
                   <p className="text-sm text-[var(--coffee-espresso)] mb-4">
                     lub kliknij, aby wybrać plik
@@ -179,7 +200,7 @@ export function FileUpload({
                   onClick={() => inputRef.current?.click()}
                   disabled={isUploading}
                 >
-                  {isUploading ? 'Przesyłanie...' : 'Wybierz plik'}
+                  {isUploading ? "Przesyłanie..." : "Wybierz plik"}
                 </Button>
               </div>
             </div>
@@ -187,9 +208,12 @@ export function FileUpload({
         </Card>
       )}
 
-      {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-200 p-3">
-          {error}
+      {shownError && (
+        <div
+          id={errorId}
+          className="text-sm text-red-600 bg-red-50 border border-red-200 p-3"
+        >
+          {shownError}
         </div>
       )}
     </div>

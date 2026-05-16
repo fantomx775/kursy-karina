@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/AuthContext";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
-import { PasswordInput } from "@/components/ui/PasswordInput";
+import { Input, PasswordInput } from "@/components/ui";
+
+type LoginFieldErrors = Partial<Record<"email" | "password", string>>;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,6 +16,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -24,9 +27,26 @@ export default function LoginPage() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    setIsSubmitting(true);
     setError("");
+    setFieldErrors({});
 
+    const nextErrors: LoginFieldErrors = {};
+    if (!email.trim()) {
+      nextErrors.email = "Podaj email.";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      nextErrors.email = "Podaj poprawny adres email.";
+    }
+
+    if (!password) {
+      nextErrors.password = "Podaj hasło.";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -56,28 +76,31 @@ export default function LoginPage() {
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label
-            htmlFor="login-email"
-            className="block text-sm text-[var(--coffee-charcoal)] mb-1"
-          >
-            Email
-          </label>
-          <input
-            id="login-email"
-            type="email"
-            className="w-full border border-[var(--coffee-cappuccino)] px-3 py-2 bg-white text-[var(--coffee-charcoal)]"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <Input
+          id="login-email"
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            setFieldErrors((previous) => ({ ...previous, email: undefined }));
+          }}
+          error={fieldErrors.email}
+          required
+        />
         <PasswordInput
           label="Hasło"
           id="login-password"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={(event) => {
+            setPassword(event.target.value);
+            setFieldErrors((previous) => ({
+              ...previous,
+              password: undefined,
+            }));
+          }}
+          error={fieldErrors.password}
           required
         />
         <button
@@ -96,7 +119,10 @@ export default function LoginPage() {
       </div>
       <div className="mt-2 text-sm text-center text-[var(--coffee-espresso)]">
         Nie masz konta?{" "}
-        <Link href="/register" className="text-[var(--coffee-mocha)] hover:underline">
+        <Link
+          href="/register"
+          className="text-[var(--coffee-mocha)] hover:underline"
+        >
           Zarejestruj się
         </Link>
       </div>

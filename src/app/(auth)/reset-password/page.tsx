@@ -6,12 +6,17 @@ import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 
+type ResetPasswordFieldErrors = Partial<
+  Record<"password" | "confirmPassword", string>
+>;
+
 export default function ResetPasswordPage() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<ResetPasswordFieldErrors>({});
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
@@ -33,15 +38,20 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
+    setFieldErrors({});
     setSuccess("");
 
+    const nextErrors: ResetPasswordFieldErrors = {};
     if (password.length < 6) {
-      setError("Hasło musi mieć co najmniej 6 znaków.");
-      return;
+      nextErrors.password = "Hasło musi mieć co najmniej 6 znaków.";
     }
 
     if (password !== confirmPassword) {
-      setError("Hasła nie są identyczne.");
+      nextErrors.confirmPassword = "Hasła nie są identyczne.";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
       return;
     }
 
@@ -88,17 +98,31 @@ export default function ResetPasswordPage() {
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <PasswordInput
           label="Nowe hasło"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={(event) => {
+            setPassword(event.target.value);
+            setFieldErrors((previous) => ({
+              ...previous,
+              password: undefined,
+            }));
+          }}
+          error={fieldErrors.password}
           required
         />
         <PasswordInput
           label="Powtórz hasło"
           value={confirmPassword}
-          onChange={(event) => setConfirmPassword(event.target.value)}
+          onChange={(event) => {
+            setConfirmPassword(event.target.value);
+            setFieldErrors((previous) => ({
+              ...previous,
+              confirmPassword: undefined,
+            }));
+          }}
+          error={fieldErrors.confirmPassword}
           required
         />
         <button
@@ -111,7 +135,10 @@ export default function ResetPasswordPage() {
       </form>
 
       <div className="mt-4 text-sm text-center text-[var(--coffee-espresso)]">
-        <Link href="/login" className="text-[var(--coffee-mocha)] hover:underline">
+        <Link
+          href="/login"
+          className="text-[var(--coffee-mocha)] hover:underline"
+        >
           Wróć do logowania
         </Link>
       </div>
