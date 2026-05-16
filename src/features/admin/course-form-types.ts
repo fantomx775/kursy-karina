@@ -1,3 +1,4 @@
+import type { CertificateTemplateKey } from "@/lib/certificateTemplates";
 import type { CourseQuiz, CourseQuizQuestionType } from "@/types/course";
 
 export type CourseFormQuizAnswer = {
@@ -32,6 +33,7 @@ export type CourseFormData = {
   price: number;
   status: "active" | "inactive";
   mainImageUrl?: string;
+  certificateTemplateKey: CertificateTemplateKey;
   sections: CourseFormSection[];
   promotionDiscountType?: "percentage" | "fixed" | null;
   promotionDiscountValue?: number | null;

@@ -13,11 +13,13 @@ export async function GET(
   context: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await context.params;
-  const isPreview =
-    new URL(request.url).searchParams.get("preview") === "1";
+  const isPreview = new URL(request.url).searchParams.get("preview") === "1";
   const auth = await authenticateUser();
   if (!auth.success) {
-    return NextResponse.json({ error: auth.error }, { status: auth.statusCode });
+    return NextResponse.json(
+      { error: auth.error },
+      { status: auth.statusCode },
+    );
   }
 
   const authenticatedUser = auth.user;
@@ -50,9 +52,7 @@ export async function GET(
       .select("course_id")
       .in("order_id", orderIds);
 
-    const ownsCourse = orderItems?.some(
-      (item) => item.course_id === course.id,
-    );
+    const ownsCourse = orderItems?.some((item) => item.course_id === course.id);
     if (!ownsCourse) {
       return NextResponse.json(
         { error: "Course not purchased" },
@@ -113,6 +113,7 @@ export async function GET(
     lastName: authenticatedUser.profile.last_name,
     courseTitle: course.title,
     issuedAt,
+    templateKey: course.certificate_template_key,
   });
 
   const filename = `certyfikat-${slug}.pdf`;

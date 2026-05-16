@@ -5,6 +5,11 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { Button, Card, CardContent, FileUpload } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import {
+  CERTIFICATE_TEMPLATE_OPTIONS,
+  normalizeCertificateTemplateKey,
+  type CertificateTemplateKey,
+} from "@/lib/certificateTemplates";
 import type { Course } from "@/types/course";
 import { CourseQuizBuilder, createEmptyQuiz } from "./CourseQuizBuilder";
 import type {
@@ -271,6 +276,10 @@ export function CourseForm({
   const [mainImageUrl, setMainImageUrl] = useState(
     initial?.main_image_url ?? "",
   );
+  const [certificateTemplateKey, setCertificateTemplateKey] =
+    useState<CertificateTemplateKey>(
+      normalizeCertificateTemplateKey(initial?.certificate_template_key),
+    );
   const [promotionDiscountType, setPromotionDiscountType] = useState<
     "percentage" | "fixed"
   >(
@@ -603,6 +612,7 @@ export function CourseForm({
       price: priceValue,
       status,
       mainImageUrl: mainImageUrl.trim() || undefined,
+      certificateTemplateKey,
       sections: validSections.map(({ section }) => ({
         title: section.title.trim(),
         items: section.items
@@ -772,6 +782,47 @@ export function CourseForm({
         <p className="mt-1 text-sm text-[var(--coffee-espresso)]">
           Przeciagnij i upusc zdjecie kursu lub kliknij aby wybrac plik.
         </p>
+      </div>
+
+      <div className="border-t border-[var(--coffee-cappuccino)] pt-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div className="md:max-w-sm md:flex-1">
+            <label
+              htmlFor="certificate-template"
+              className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]"
+            >
+              Szablon certyfikatu
+            </label>
+            <select
+              id="certificate-template"
+              value={certificateTemplateKey}
+              onChange={(event) => {
+                setCertificateTemplateKey(
+                  event.target.value as CertificateTemplateKey,
+                );
+                notifyChange();
+              }}
+              className="h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
+            >
+              {CERTIFICATE_TEMPLATE_OPTIONS.map((option) => (
+                <option key={option.key} value={option.key}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {process.env.NODE_ENV !== "production" ? (
+            <a
+              href={`/api/dev/certificate-preview?template=${certificateTemplateKey}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-[2.5rem] items-center justify-center border-radius border border-[var(--coffee-cappuccino)] bg-transparent px-4 py-2 text-base font-medium text-[var(--coffee-charcoal)] transition-all duration-200 hover:bg-[var(--coffee-cream)] focus:outline-none focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:ring-offset-2"
+            >
+              Test PDF
+            </a>
+          ) : null}
+        </div>
       </div>
 
       <div className="border-t border-[var(--coffee-cappuccino)] pt-6">

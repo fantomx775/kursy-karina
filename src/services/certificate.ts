@@ -1,31 +1,92 @@
 "server-only";
 
-import { PDFDocument } from "pdf-lib";
+import path from "node:path";
+import { readFile } from "node:fs/promises";
+import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  DEFAULT_CERTIFICATE_TEMPLATE_KEY,
+  normalizeCertificateTemplateKey,
+  type CertificateTemplateKey,
+} from "@/lib/certificateTemplates";
 
-// Full TTF fonts (not subset) so all Latin + Latin Extended glyphs map correctly in pdf-lib.
-const OPEN_SANS_REGULAR_URL =
-  "https://cdn.jsdelivr.net/gh/googlefonts/opensans@main/fonts/ttf/OpenSans-Regular.ttf";
-const OPEN_SANS_BOLD_URL =
-  "https://cdn.jsdelivr.net/gh/googlefonts/opensans@main/fonts/ttf/OpenSans-Bold.ttf";
-
-const fontCache: { regular: Uint8Array | null; bold: Uint8Array | null } = {
-  regular: null,
-  bold: null,
+const CERTIFICATE_TEMPLATE_PATHS: Record<CertificateTemplateKey, string> = {
+  "certificate-1": "public/certificates/templates/certificate-1.pdf",
+  "certificate-2": "public/certificates/templates/certificate-2.pdf",
 };
 
-async function loadFont(
-  url: string,
-  key: "regular" | "bold",
-): Promise<Uint8Array> {
-  if (fontCache[key]) return fontCache[key]!;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to load font: ${res.status}`);
-  const ab = await res.arrayBuffer();
-  const bytes = new Uint8Array(ab);
-  fontCache[key] = bytes;
+const PRATA_FONT_PATH = "public/fonts/prata/Prata-Regular.ttf";
+
+const NAME_CENTER_X = 405;
+const NAME_FIRST_LINE_Y = 650;
+const NAME_SECOND_LINE_Y = 598;
+const NAME_SINGLE_LINE_Y = 624;
+const NAME_BASE_SIZE = 48;
+const NAME_MAX_WIDTH = 320;
+const DATE_CENTER_X = 123.5;
+const DATE_BASELINE_Y = 62;
+const DATE_BASE_SIZE = 12;
+const DATE_MAX_WIDTH = 126;
+const INK = rgb(0.02, 0.02, 0.02);
+
+type AccentKind = "acute" | "dot" | "ogonek" | "slash";
+
+const DIACRITICS: Record<
+  string,
+  { base: string; accent: AccentKind; uppercase: boolean }
+> = {
+  Ą: { base: "A", accent: "ogonek", uppercase: true },
+  Ć: { base: "C", accent: "acute", uppercase: true },
+  Ę: { base: "E", accent: "ogonek", uppercase: true },
+  Ł: { base: "L", accent: "slash", uppercase: true },
+  Ń: { base: "N", accent: "acute", uppercase: true },
+  Ó: { base: "O", accent: "acute", uppercase: true },
+  Ś: { base: "S", accent: "acute", uppercase: true },
+  Ź: { base: "Z", accent: "acute", uppercase: true },
+  Ż: { base: "Z", accent: "dot", uppercase: true },
+  ą: { base: "a", accent: "ogonek", uppercase: false },
+  ć: { base: "c", accent: "acute", uppercase: false },
+  ę: { base: "e", accent: "ogonek", uppercase: false },
+  ł: { base: "l", accent: "slash", uppercase: false },
+  ń: { base: "n", accent: "acute", uppercase: false },
+  ó: { base: "o", accent: "acute", uppercase: false },
+  ś: { base: "s", accent: "acute", uppercase: false },
+  ź: { base: "z", accent: "acute", uppercase: false },
+  ż: { base: "z", accent: "dot", uppercase: false },
+};
+
+const fileCache: {
+  prata: Uint8Array | null;
+  templates: Partial<Record<CertificateTemplateKey, Uint8Array>>;
+} = {
+  prata: null,
+  templates: {},
+};
+
+async function loadPublicFile(relativePath: string): Promise<Uint8Array> {
+  const bytes = await readFile(path.join(process.cwd(), relativePath));
   return bytes;
+}
+
+async function loadPrataFont(): Promise<Uint8Array> {
+  if (!fileCache.prata) {
+    fileCache.prata = await loadPublicFile(PRATA_FONT_PATH);
+  }
+
+  return fileCache.prata;
+}
+
+async function loadCertificateTemplate(
+  templateKey: CertificateTemplateKey,
+): Promise<Uint8Array> {
+  if (!fileCache.templates[templateKey]) {
+    fileCache.templates[templateKey] = await loadPublicFile(
+      CERTIFICATE_TEMPLATE_PATHS[templateKey],
+    );
+  }
+
+  return fileCache.templates[templateKey]!;
 }
 
 export type CourseCompletion = {
@@ -196,91 +257,241 @@ export type CertificateData = {
   lastName: string;
   courseTitle: string;
   issuedAt: string;
+  templateKey?: CertificateTemplateKey | null;
 };
 
-/**
- * Generates a simple certificate PDF. Template can be replaced later.
- * Uses Open Sans (latin-ext) so Polish characters render correctly in pdf-lib.
- */
+function fitFontSize(
+  text: string,
+  font: PDFFont,
+  baseSize: number,
+  maxWidth: number,
+): number {
+  const width = font.widthOfTextAtSize(toBaseText(text), baseSize);
+
+  if (width <= maxWidth) {
+    return baseSize;
+  }
+
+  return (maxWidth / width) * baseSize;
+}
+
+function toBaseText(text: string): string {
+  return Array.from(text)
+    .map((character) => DIACRITICS[character]?.base ?? character)
+    .join("");
+}
+
+function drawAccent({
+  page,
+  kind,
+  x,
+  y,
+  width,
+  size,
+  uppercase,
+}: {
+  page: PDFPage;
+  kind: AccentKind;
+  x: number;
+  y: number;
+  width: number;
+  size: number;
+  uppercase: boolean;
+}) {
+  const thickness = Math.max(0.35, size * 0.018);
+
+  if (kind === "slash") {
+    page.drawLine({
+      start: {
+        x: x + width * (uppercase ? 0.18 : 0.08),
+        y: y + size * (uppercase ? 0.34 : 0.28),
+      },
+      end: {
+        x: x + width * (uppercase ? 0.68 : 0.74),
+        y: y + size * (uppercase ? 0.49 : 0.46),
+      },
+      thickness: Math.max(0.55, size * 0.026),
+      color: INK,
+    });
+    return;
+  }
+
+  if (kind === "acute") {
+    page.drawLine({
+      start: {
+        x: x + width * 0.48,
+        y: y + size * (uppercase ? 0.96 : 0.68),
+      },
+      end: {
+        x: x + width * 0.72,
+        y: y + size * (uppercase ? 1.14 : 0.86),
+      },
+      thickness,
+      color: INK,
+    });
+    return;
+  }
+
+  if (kind === "dot") {
+    page.drawCircle({
+      x: x + width * 0.58,
+      y: y + size * (uppercase ? 1.05 : 0.78),
+      size: Math.max(0.9, size * 0.035),
+      color: INK,
+    });
+    return;
+  }
+
+  const startX = x + width * 0.72;
+  const startY = y + size * (uppercase ? -0.02 : -0.08);
+  page.drawLine({
+    start: { x: startX, y: startY },
+    end: { x: startX - size * 0.11, y: startY - size * 0.11 },
+    thickness,
+    color: INK,
+  });
+  page.drawLine({
+    start: { x: startX - size * 0.11, y: startY - size * 0.11 },
+    end: { x: startX - size * 0.02, y: startY - size * 0.18 },
+    thickness,
+    color: INK,
+  });
+}
+
+function drawPrataText(
+  page: PDFPage,
+  text: string,
+  x: number,
+  y: number,
+  size: number,
+  font: PDFFont,
+) {
+  const characters = Array.from(text);
+  const baseCharacters = characters.map(
+    (character) => DIACRITICS[character]?.base ?? character,
+  );
+  const baseText = baseCharacters.join("");
+
+  page.drawText(baseText, {
+    x,
+    y,
+    size,
+    font,
+    color: INK,
+  });
+
+  characters.forEach((character, index) => {
+    const diacritic = DIACRITICS[character];
+    if (!diacritic) {
+      return;
+    }
+
+    const prefix = baseCharacters.slice(0, index).join("");
+    const characterX = x + font.widthOfTextAtSize(prefix, size);
+    const characterWidth = font.widthOfTextAtSize(diacritic.base, size);
+
+    drawAccent({
+      page,
+      kind: diacritic.accent,
+      x: characterX,
+      y,
+      width: characterWidth,
+      size,
+      uppercase: diacritic.uppercase,
+    });
+  });
+}
+
+function drawCenteredText({
+  page,
+  font,
+  text,
+  centerX,
+  y,
+  baseSize,
+  maxWidth,
+}: {
+  page: PDFPage;
+  font: PDFFont;
+  text: string;
+  centerX: number;
+  y: number;
+  baseSize: number;
+  maxWidth: number;
+}) {
+  const size = fitFontSize(text, font, baseSize, maxWidth);
+  const width = font.widthOfTextAtSize(toBaseText(text), size);
+
+  drawPrataText(page, text, centerX - width / 2, y, size, font);
+}
+
+function formatNameLine(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toLocaleUpperCase("pl-PL");
+}
+
+function drawRecipientName(
+  page: PDFPage,
+  font: PDFFont,
+  firstName: string,
+  lastName: string,
+) {
+  const lines = [formatNameLine(firstName), formatNameLine(lastName)].filter(
+    Boolean,
+  );
+
+  if (lines.length === 0) {
+    return;
+  }
+
+  const yPositions =
+    lines.length === 1
+      ? [NAME_SINGLE_LINE_Y]
+      : [NAME_FIRST_LINE_Y, NAME_SECOND_LINE_Y];
+
+  lines.slice(0, 2).forEach((line, index) => {
+    drawCenteredText({
+      page,
+      font,
+      text: line,
+      centerX: NAME_CENTER_X,
+      y: yPositions[index],
+      baseSize: NAME_BASE_SIZE,
+      maxWidth: NAME_MAX_WIDTH,
+    });
+  });
+}
+
+function drawIssuedAt(page: PDFPage, font: PDFFont, issuedAt: string) {
+  drawCenteredText({
+    page,
+    font,
+    text: issuedAt,
+    centerX: DATE_CENTER_X,
+    y: DATE_BASELINE_Y,
+    baseSize: DATE_BASE_SIZE,
+    maxWidth: DATE_MAX_WIDTH,
+  });
+}
+
 export async function generateCertificatePdf(
   data: CertificateData,
 ): Promise<Uint8Array> {
-  const doc = await PDFDocument.create();
-  doc.registerFontkit(fontkit);
-
-  const [fontBytesRegular, fontBytesBold] = await Promise.all([
-    loadFont(OPEN_SANS_REGULAR_URL, "regular"),
-    loadFont(OPEN_SANS_BOLD_URL, "bold"),
+  const templateKey = normalizeCertificateTemplateKey(
+    data.templateKey ?? DEFAULT_CERTIFICATE_TEMPLATE_KEY,
+  );
+  const [templateBytes, fontBytes] = await Promise.all([
+    loadCertificateTemplate(templateKey),
+    loadPrataFont(),
   ]);
 
-  const font = await doc.embedFont(fontBytesRegular);
-  const fontBold = await doc.embedFont(fontBytesBold);
+  const doc = await PDFDocument.load(templateBytes);
+  doc.registerFontkit(fontkit);
 
-  const page = doc.addPage([595, 842]);
-  const { width, height } = page.getSize();
+  const prata = await doc.embedFont(fontBytes, { subset: false });
+  const page = doc.getPage(0);
 
-  const titleSize = 22;
-  const bodySize = 14;
-  const margin = 50;
-  let y = height - margin - 80;
-
-  const title = "Certyfikat kursu";
-  const titleWidth = fontBold.widthOfTextAtSize(title, titleSize);
-  page.drawText(title, {
-    x: (width - titleWidth) / 2,
-    y,
-    font: fontBold,
-    size: titleSize,
-  });
-  y -= 60;
-
-  const line1 = "Niniejszym potwierdza sie, ze";
-  const line1Width = font.widthOfTextAtSize(line1, bodySize);
-  page.drawText(line1, {
-    x: (width - line1Width) / 2,
-    y,
-    font,
-    size: bodySize,
-  });
-  y -= 28;
-
-  const fullName = `${data.firstName} ${data.lastName}`;
-  const nameWidth = fontBold.widthOfTextAtSize(fullName, 18);
-  page.drawText(fullName, {
-    x: (width - nameWidth) / 2,
-    y,
-    font: fontBold,
-    size: 18,
-  });
-  y -= 36;
-
-  const line2 = "otrzymuje certyfikat za kurs";
-  const line2Width = font.widthOfTextAtSize(line2, bodySize);
-  page.drawText(line2, {
-    x: (width - line2Width) / 2,
-    y,
-    font,
-    size: bodySize,
-  });
-  y -= 28;
-
-  const courseWidth = fontBold.widthOfTextAtSize(data.courseTitle, 16);
-  page.drawText(data.courseTitle, {
-    x: (width - courseWidth) / 2,
-    y,
-    font: fontBold,
-    size: 16,
-  });
-  y -= 40;
-
-  const dateLabel = `Data wydania: ${data.issuedAt}`;
-  const dateWidth = font.widthOfTextAtSize(dateLabel, bodySize);
-  page.drawText(dateLabel, {
-    x: (width - dateWidth) / 2,
-    y,
-    font,
-    size: bodySize,
-  });
+  drawRecipientName(page, prata, data.firstName, data.lastName);
+  drawIssuedAt(page, prata, data.issuedAt);
 
   return doc.save();
 }

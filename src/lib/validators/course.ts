@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  CERTIFICATE_TEMPLATE_KEYS,
+  DEFAULT_CERTIFICATE_TEMPLATE_KEY,
+} from "@/lib/certificateTemplates";
 
 export const quizAnswerInputSchema = z.object({
   text: z.string().min(1, "Answer text is required."),
@@ -14,7 +18,9 @@ export const quizQuestionInputSchema = z
       .min(2, "Question must have at least two answers."),
   })
   .superRefine((question, ctx) => {
-    const correctAnswers = question.answers.filter((answer) => answer.isCorrect);
+    const correctAnswers = question.answers.filter(
+      (answer) => answer.isCorrect,
+    );
 
     if (correctAnswers.length === 0) {
       ctx.addIssue({
@@ -84,14 +90,16 @@ export const courseInputSchema = z
     description: z.string().min(1),
     price: z.number().positive(),
     status: z.enum(["active", "inactive"]),
-    mainImageUrl: z
-      .string()
-      .url()
-      .max(2048)
+    mainImageUrl: z.string().url().max(2048).optional().nullable(),
+    certificateTemplateKey: z
+      .enum(CERTIFICATE_TEMPLATE_KEYS)
+      .optional()
+      .default(DEFAULT_CERTIFICATE_TEMPLATE_KEY),
+    sections: z.array(courseSectionInputSchema),
+    promotionDiscountType: z
+      .enum(["percentage", "fixed"])
       .optional()
       .nullable(),
-    sections: z.array(courseSectionInputSchema),
-    promotionDiscountType: z.enum(["percentage", "fixed"]).optional().nullable(),
     promotionDiscountValue: z.number().optional().nullable(),
     promotionStartDate: z.string().optional().nullable(),
     promotionEndDate: z.string().optional().nullable(),
@@ -111,8 +119,7 @@ export const courseInputSchema = z
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message:
-          "Promocja wymaga: typ zniżki, wartość i data rozpoczęcia.",
+        message: "Promocja wymaga: typ zniżki, wartość i data rozpoczęcia.",
         path: ["promotionStartDate"],
       });
       return;
