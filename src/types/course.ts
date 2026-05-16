@@ -1,3 +1,5 @@
+import type { CertificateTemplateKey } from "@/lib/certificateTemplates";
+
 export type CourseStatus = "active" | "inactive";
 export type CourseItemKind = "svg" | "youtube" | "quiz";
 export type CourseQuizQuestionType = "single" | "multiple";
@@ -27,6 +29,7 @@ export type Course = {
   price: number;
   status: CourseStatus;
   main_image_url?: string;
+  certificate_template_key?: CertificateTemplateKey | null;
   promotion_discount_type?: PromotionDiscountType | null;
   promotion_discount_value?: number | null;
   promotion_start_date?: string | null;

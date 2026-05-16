@@ -138,6 +138,7 @@ CREATE TABLE courses (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   main_image_url TEXT,
+  certificate_template_key TEXT NOT NULL DEFAULT 'certificate-1',
   promotion_discount_type discount_type,
   promotion_discount_value INTEGER,
   promotion_start_date TIMESTAMP WITH TIME ZONE,
@@ -158,10 +159,14 @@ CREATE TABLE courses (
         OR (promotion_discount_type = 'fixed' AND promotion_discount_value >= 0)
       )
     )
+  ),
+  CONSTRAINT courses_certificate_template_key_nonempty CHECK (
+    length(trim(certificate_template_key)) > 0
   )
 );
 
 COMMENT ON COLUMN courses.main_image_url IS 'URL of the main course image displayed on course cards and detail pages';
+COMMENT ON COLUMN courses.certificate_template_key IS 'Bundled certificate template key used for PDF generation';
 COMMENT ON COLUMN courses.promotion_discount_type IS 'Promotion discount type: percentage or fixed amount';
 COMMENT ON COLUMN courses.promotion_discount_value IS 'Promotion value: 1-100 for percentage, amount in grosze for fixed';
 COMMENT ON COLUMN courses.promotion_start_date IS 'Promotion valid from (inclusive)';

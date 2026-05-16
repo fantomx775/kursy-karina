@@ -73,6 +73,7 @@ export async function PUT(
     price,
     status,
     mainImageUrl,
+    certificateTemplateKey,
     sections,
     promotionDiscountType,
     promotionDiscountValue,
@@ -105,7 +106,10 @@ export async function PUT(
         : null,
   };
   // Use atomic RPC function for course update
-  const { data, error } = await admin.rpc("update_course_with_content", rpcPayload);
+  const { data, error } = await admin.rpc(
+    "update_course_with_content",
+    rpcPayload,
+  );
 
   if (error) {
     return Response.json({ error: error.message }, { status: 500 });
@@ -117,25 +121,30 @@ export async function PUT(
 
   const result = data[0];
   if (!result.success) {
-    const status = result.error_message?.includes("already exists") ? 409 : 
-                   result.error_message?.includes("not found") ? 404 : 400;
+    const status = result.error_message?.includes("already exists")
+      ? 409
+      : result.error_message?.includes("not found")
+        ? 404
+        : 400;
     return Response.json(
-      { 
+      {
         error: result.error_message || "Failed to update course",
-        field: result.error_message?.includes("slug") ? "slug" : undefined
-      }, 
-      { status }
+        field: result.error_message?.includes("slug") ? "slug" : undefined,
+      },
+      { status },
     );
   }
 
-  const normalizedMainImageUrl = mainImageUrl ?? null;
-  const { error: imageError } = await admin
+  const { error: metadataError } = await admin
     .from("courses")
-    .update({ main_image_url: normalizedMainImageUrl })
+    .update({
+      main_image_url: mainImageUrl ?? null,
+      certificate_template_key: certificateTemplateKey,
+    })
     .eq("id", result.course_id);
-  if (imageError) {
+  if (metadataError) {
     return Response.json(
-      { error: "Course updated, but failed to persist main image" },
+      { error: "Course updated, but failed to persist course metadata" },
       { status: 500 },
     );
   }
@@ -148,7 +157,10 @@ export async function PUT(
     .single();
 
   if (fetchError || !course) {
-    return Response.json({ error: "Course updated but failed to fetch details" }, { status: 500 });
+    return Response.json(
+      { error: "Course updated but failed to fetch details" },
+      { status: 500 },
+    );
   }
 
   return Response.json({ course });
