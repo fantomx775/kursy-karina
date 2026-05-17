@@ -1,15 +1,28 @@
+type AdminNavTab =
+  | "courses"
+  | "students"
+  | "certificates"
+  | "coupons"
+  | "stats";
+
 type TabNavigationProps = {
-  activeTab: "courses" | "students" | "coupons" | "stats";
-  onTabChange: (tab: "courses" | "students" | "coupons" | "stats") => void;
+  activeTab: AdminNavTab;
+  onTabChange: (tab: AdminNavTab) => void;
+  certificateActionCount?: number | null;
 };
 
-export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
-  const tabs = [
+export function TabNavigation({
+  activeTab,
+  onTabChange,
+  certificateActionCount,
+}: TabNavigationProps) {
+  const tabs: Array<{ key: AdminNavTab; label: string }> = [
     { key: "courses", label: "Kursy" },
     { key: "students", label: "Kursanci" },
+    { key: "certificates", label: "Certyfikaty" },
     { key: "coupons", label: "Kupony" },
-    { key: "stats", label: "Statystyki kursów" },
-  ] as const;
+    { key: "stats", label: "Statystyki kursow" },
+  ];
 
   return (
     <div className="mb-6 flex gap-3">
@@ -23,7 +36,16 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
           }`}
           onClick={() => onTabChange(tab.key)}
         >
-          {tab.label}
+          <span className="inline-flex items-center gap-2">
+            {tab.label}
+            {tab.key === "certificates" &&
+            certificateActionCount != null &&
+            certificateActionCount > 0 ? (
+              <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--coffee-mocha)] px-1.5 py-0.5 text-xs font-semibold text-white">
+                {certificateActionCount}
+              </span>
+            ) : null}
+          </span>
         </button>
       ))}
     </div>

@@ -5,6 +5,9 @@ type RequestBody = {
   courseId?: string;
 };
 
+const CERTIFICATE_SELECT =
+  "granted_at, generated_at, issued_at, regeneration_allowed, regeneration_allowed_at";
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -16,10 +19,7 @@ export async function POST(
 
   const body = (await request.json().catch(() => null)) as RequestBody | null;
   if (!body?.courseId) {
-    return Response.json(
-      { error: "Course ID is required" },
-      { status: 400 },
-    );
+    return Response.json({ error: "Course ID is required" }, { status: 400 });
   }
 
   const { id: studentId } = await params;
@@ -77,7 +77,7 @@ export async function POST(
 
   const { data: existingGrant } = await admin
     .from("course_certificates")
-    .select("granted_at")
+    .select(CERTIFICATE_SELECT)
     .eq("user_id", studentId)
     .eq("course_id", body.courseId)
     .maybeSingle();
@@ -87,6 +87,12 @@ export async function POST(
       success: true,
       alreadyGranted: true,
       certificateGrantedAt: existingGrant.granted_at,
+      certificateGenerated: Boolean(existingGrant.generated_at),
+      certificateGeneratedAt: existingGrant.generated_at,
+      certificateIssuedAt: existingGrant.issued_at,
+      certificateRegenerationAllowed: Boolean(
+        existingGrant.regeneration_allowed,
+      ),
     });
   }
 
@@ -97,7 +103,7 @@ export async function POST(
       course_id: body.courseId,
       granted_by: auth.user.id,
     })
-    .select("granted_at")
+    .select(CERTIFICATE_SELECT)
     .single();
 
   if (grantError || !createdGrant) {
@@ -110,5 +116,61 @@ export async function POST(
   return Response.json({
     success: true,
     certificateGrantedAt: createdGrant.granted_at,
+    certificateGenerated: false,
+    certificateGeneratedAt: null,
+    certificateIssuedAt: null,
+    certificateRegenerationAllowed: false,
+  });
+}
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const auth = await authenticateAdmin();
+  if (!auth.success) {
+    return Response.json({ error: auth.error }, { status: auth.statusCode });
+  }
+
+  const body = (await request.json().catch(() => null)) as RequestBody | null;
+  if (!body?.courseId) {
+    return Response.json({ error: "Course ID is required" }, { status: 400 });
+  }
+
+  const { id: studentId } = await params;
+  const admin = createAdminSupabaseClient();
+  const { data: updatedGrant, error } = await admin
+    .from("course_certificates")
+    .update({
+      regeneration_allowed: true,
+      regeneration_allowed_at: new Date().toISOString(),
+    })
+    .eq("user_id", studentId)
+    .eq("course_id", body.courseId)
+    .not("generated_at", "is", null)
+    .select(CERTIFICATE_SELECT)
+    .maybeSingle();
+
+  if (error) {
+    return Response.json(
+      { error: "Failed to allow certificate regeneration" },
+      { status: 500 },
+    );
+  }
+
+  if (!updatedGrant) {
+    return Response.json(
+      { error: "Generated certificate not found" },
+      { status: 404 },
+    );
+  }
+
+  return Response.json({
+    success: true,
+    certificateGrantedAt: updatedGrant.granted_at,
+    certificateGenerated: Boolean(updatedGrant.generated_at),
+    certificateGeneratedAt: updatedGrant.generated_at,
+    certificateIssuedAt: updatedGrant.issued_at,
+    certificateRegenerationAllowed: Boolean(updatedGrant.regeneration_allowed),
   });
 }

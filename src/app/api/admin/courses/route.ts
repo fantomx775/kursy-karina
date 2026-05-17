@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     price,
     status,
     mainImageUrl,
-    certificateTemplateKey,
+    certificateTemplateId,
     sections,
     promotionDiscountType,
     promotionDiscountValue,
@@ -104,7 +104,8 @@ export async function POST(request: Request) {
     .from("courses")
     .update({
       main_image_url: mainImageUrl ?? null,
-      certificate_template_key: certificateTemplateKey,
+      certificate_template_id: certificateTemplateId,
+      certificate_template_key: certificateTemplateId,
     })
     .eq("id", result.course_id);
   if (metadataError) {

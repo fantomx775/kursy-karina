@@ -3,12 +3,15 @@ import type { Course } from "@/types/course";
 import type { Coupon } from "@/types/coupon";
 import type { StudentSummary } from "@/types/student";
 import type { CourseStatsSummary } from "@/types/admin-stats";
+import type { CertificateAdminData } from "@/types/certificate";
 
 export function useAdminData() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [students, setStudents] = useState<StudentSummary[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [courseStats, setCourseStats] = useState<CourseStatsSummary[]>([]);
+  const [certificateData, setCertificateData] =
+    useState<CertificateAdminData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +26,9 @@ export function useAdminData() {
       const data = await response.json();
       setCourses(data.courses ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nie udało się pobrać kursów.");
+      setError(
+        err instanceof Error ? err.message : "Nie udało się pobrać kursów.",
+      );
     } finally {
       setLoading(false);
     }
@@ -40,7 +45,9 @@ export function useAdminData() {
       const data = await response.json();
       setStudents(data.students ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nie udało się pobrać kursantów.");
+      setError(
+        err instanceof Error ? err.message : "Nie udało się pobrać kursantów.",
+      );
     } finally {
       setLoading(false);
     }
@@ -57,7 +64,9 @@ export function useAdminData() {
       const data = await response.json();
       setCoupons(data.coupons ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nie udało się pobrać kuponów.");
+      setError(
+        err instanceof Error ? err.message : "Nie udało się pobrać kuponów.",
+      );
     } finally {
       setLoading(false);
     }
@@ -75,7 +84,30 @@ export function useAdminData() {
       setCourseStats(data.courseStats ?? []);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Nie udało się pobrać statystyk kursów.",
+        err instanceof Error
+          ? err.message
+          : "Nie udało się pobrać statystyk kursów.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadCertificates = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/admin/certificates");
+      if (!response.ok) {
+        throw new Error("Nie udalo sie pobrac certyfikatow.");
+      }
+      const data = await response.json();
+      setCertificateData(data ?? null);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Nie udalo sie pobrac certyfikatow.",
       );
     } finally {
       setLoading(false);
@@ -87,12 +119,14 @@ export function useAdminData() {
     students,
     coupons,
     courseStats,
+    certificateData,
     loading,
     error,
     loadCourses,
     loadStudents,
     loadCoupons,
     loadCourseStats,
+    loadCertificates,
     clearError: () => setError(null),
   };
 }

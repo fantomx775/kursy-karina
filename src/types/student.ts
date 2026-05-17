@@ -5,6 +5,7 @@ export type StudentSummary = {
   registrationDate: string;
   lastLogin: string | null;
   coursesEnrolled: number;
+  certificatesRedeemed: number;
 };
 
 export type StudentCourseProgress = {
@@ -15,6 +16,10 @@ export type StudentCourseProgress = {
   completionPercentage: number;
   certificateGranted: boolean;
   certificateGrantedAt: string | null;
+  certificateGenerated: boolean;
+  certificateGeneratedAt: string | null;
+  certificateIssuedAt: string | null;
+  certificateRegenerationAllowed: boolean;
 };
 
 export type StudentDetail = {

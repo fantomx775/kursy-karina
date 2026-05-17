@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  CERTIFICATE_TEMPLATE_KEYS,
-  DEFAULT_CERTIFICATE_TEMPLATE_KEY,
-} from "@/lib/certificateTemplates";
+import { DEFAULT_CERTIFICATE_TEMPLATE_ID } from "@/lib/certificateTemplates";
 
 export const quizAnswerInputSchema = z.object({
   text: z.string().min(1, "Answer text is required."),
@@ -91,10 +88,12 @@ export const courseInputSchema = z
     price: z.number().positive(),
     status: z.enum(["active", "inactive"]),
     mainImageUrl: z.string().url().max(2048).optional().nullable(),
-    certificateTemplateKey: z
-      .enum(CERTIFICATE_TEMPLATE_KEYS)
+    certificateTemplateId: z
+      .string()
+      .trim()
+      .min(1)
       .optional()
-      .default(DEFAULT_CERTIFICATE_TEMPLATE_KEY),
+      .default(DEFAULT_CERTIFICATE_TEMPLATE_ID),
     sections: z.array(courseSectionInputSchema),
     promotionDiscountType: z
       .enum(["percentage", "fixed"])

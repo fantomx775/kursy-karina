@@ -1,4 +1,7 @@
-import type { CertificateTemplateKey } from "@/lib/certificateTemplates";
+import type {
+  CertificateTemplateId,
+  CertificateTemplateKey,
+} from "@/lib/certificateTemplates";
 
 export type CourseStatus = "active" | "inactive";
 export type CourseItemKind = "svg" | "youtube" | "quiz";
@@ -30,6 +33,7 @@ export type Course = {
   status: CourseStatus;
   main_image_url?: string;
   certificate_template_key?: CertificateTemplateKey | null;
+  certificate_template_id?: CertificateTemplateId | null;
   promotion_discount_type?: PromotionDiscountType | null;
   promotion_discount_value?: number | null;
   promotion_start_date?: string | null;

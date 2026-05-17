@@ -7,8 +7,9 @@ import { Button, Card, CardContent, FileUpload } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import {
   CERTIFICATE_TEMPLATE_OPTIONS,
-  normalizeCertificateTemplateKey,
-  type CertificateTemplateKey,
+  DEFAULT_CERTIFICATE_TEMPLATE_ID,
+  normalizeCertificateTemplateId,
+  type CertificateTemplate,
 } from "@/lib/certificateTemplates";
 import type { Course } from "@/types/course";
 import { CourseQuizBuilder, createEmptyQuiz } from "./CourseQuizBuilder";
@@ -276,10 +277,16 @@ export function CourseForm({
   const [mainImageUrl, setMainImageUrl] = useState(
     initial?.main_image_url ?? "",
   );
-  const [certificateTemplateKey, setCertificateTemplateKey] =
-    useState<CertificateTemplateKey>(
-      normalizeCertificateTemplateKey(initial?.certificate_template_key),
-    );
+  const [certificateTemplates, setCertificateTemplates] = useState<
+    CertificateTemplate[]
+  >([]);
+  const [certificateTemplatesLoading, setCertificateTemplatesLoading] =
+    useState(false);
+  const [certificateTemplateId, setCertificateTemplateId] = useState(
+    normalizeCertificateTemplateId(
+      initial?.certificate_template_id ?? initial?.certificate_template_key,
+    ),
+  );
   const [promotionDiscountType, setPromotionDiscountType] = useState<
     "percentage" | "fixed"
   >(
@@ -320,6 +327,60 @@ export function CourseForm({
   const [fieldErrors, setFieldErrors] = useState<CourseFieldErrors>({});
   const [firstErrorField, setFirstErrorField] = useState<string | null>(null);
   const formErrorRef = useRef<HTMLDivElement>(null);
+  const fallbackCertificateTemplates: CertificateTemplate[] =
+    CERTIFICATE_TEMPLATE_OPTIONS.map((option) => ({
+      id: option.key,
+      name: option.label,
+      storageBucket: "certificates",
+      storagePath: `templates/${option.key}.pdf`,
+      isActive: true,
+      createdAt: null,
+      updatedAt: null,
+    }));
+  const availableCertificateTemplates =
+    certificateTemplates.length > 0
+      ? certificateTemplates
+      : fallbackCertificateTemplates;
+
+  useEffect(() => {
+    let active = true;
+
+    const loadCertificateTemplates = async () => {
+      setCertificateTemplatesLoading(true);
+      try {
+        const response = await fetch("/api/admin/certificate-templates");
+        const data = await response.json().catch(() => null);
+        if (!active || !response.ok) {
+          return;
+        }
+
+        const templates = (data?.templates ?? []) as CertificateTemplate[];
+        setCertificateTemplates(templates);
+        if (
+          templates.length > 0 &&
+          !templates.some((template) => template.id === certificateTemplateId)
+        ) {
+          setCertificateTemplateId(
+            templates.find(
+              (template) => template.id === DEFAULT_CERTIFICATE_TEMPLATE_ID,
+            )?.id ?? templates[0].id,
+          );
+        }
+      } catch {
+        // Keep bundled fallback options when the admin templates API is unavailable.
+      } finally {
+        if (active) {
+          setCertificateTemplatesLoading(false);
+        }
+      }
+    };
+
+    void loadCertificateTemplates();
+
+    return () => {
+      active = false;
+    };
+  }, [certificateTemplateId]);
 
   useEffect(() => {
     if (firstErrorField) {
@@ -612,7 +673,7 @@ export function CourseForm({
       price: priceValue,
       status,
       mainImageUrl: mainImageUrl.trim() || undefined,
-      certificateTemplateKey,
+      certificateTemplateId,
       sections: validSections.map(({ section }) => ({
         title: section.title.trim(),
         items: section.items
@@ -795,18 +856,17 @@ export function CourseForm({
             </label>
             <select
               id="certificate-template"
-              value={certificateTemplateKey}
+              value={certificateTemplateId}
               onChange={(event) => {
-                setCertificateTemplateKey(
-                  event.target.value as CertificateTemplateKey,
-                );
+                setCertificateTemplateId(event.target.value);
                 notifyChange();
               }}
+              disabled={certificateTemplatesLoading}
               className="h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
             >
-              {CERTIFICATE_TEMPLATE_OPTIONS.map((option) => (
-                <option key={option.key} value={option.key}>
-                  {option.label}
+              {availableCertificateTemplates.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
                 </option>
               ))}
             </select>
@@ -814,7 +874,7 @@ export function CourseForm({
 
           {process.env.NODE_ENV !== "production" ? (
             <a
-              href={`/api/dev/certificate-preview?template=${certificateTemplateKey}`}
+              href={`/api/admin/certificates/preview?templateId=${certificateTemplateId}`}
               target="_blank"
               rel="noreferrer"
               className="inline-flex min-h-[2.5rem] items-center justify-center border-radius border border-[var(--coffee-cappuccino)] bg-transparent px-4 py-2 text-base font-medium text-[var(--coffee-charcoal)] transition-all duration-200 hover:bg-[var(--coffee-cream)] focus:outline-none focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:ring-offset-2"

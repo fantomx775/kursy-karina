@@ -47,7 +47,11 @@ export async function GET(
   const courseIds = Array.from(
     new Set(orderItems?.map((item) => item.course_id) ?? []),
   );
-  const certificateGrantsByCourse = await getCertificateGrants(admin, id, courseIds);
+  const certificateGrantsByCourse = await getCertificateGrants(
+    admin,
+    id,
+    courseIds,
+  );
 
   const { data: sections } = await admin
     .from("course_sections")
@@ -106,6 +110,10 @@ export async function GET(
       completionPercentage,
       certificateGranted: certificateGrant.granted,
       certificateGrantedAt: certificateGrant.grantedAt,
+      certificateGenerated: certificateGrant.generated,
+      certificateGeneratedAt: certificateGrant.generatedAt,
+      certificateIssuedAt: certificateGrant.issuedAt,
+      certificateRegenerationAllowed: certificateGrant.regenerationAllowed,
     };
   });
 

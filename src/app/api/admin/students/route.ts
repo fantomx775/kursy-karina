@@ -15,20 +15,26 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return Response.json({ error: "Failed to fetch students" }, { status: 500 });
+    return Response.json(
+      { error: "Failed to fetch students" },
+      { status: 500 },
+    );
   }
 
   const studentIds = students?.map((student) => student.id) ?? [];
 
   const lastSignInMap: Record<string, string | null> = {};
   if (studentIds.length > 0) {
-    const { data: authData } = await admin.auth.admin.listUsers({ perPage: 1000 });
+    const { data: authData } = await admin.auth.admin.listUsers({
+      perPage: 1000,
+    });
     authData?.users?.forEach((u) => {
       lastSignInMap[u.id] = u.last_sign_in_at ?? null;
     });
   }
 
   let courseCounts: Record<string, number> = {};
+  let certificateCounts: Record<string, number> = {};
   if (studentIds.length > 0) {
     const { data: orders } = await admin
       .from("orders")
@@ -50,6 +56,17 @@ export async function GET() {
         courseCounts[key] = (courseCounts[key] ?? 0) + 1;
       });
     }
+
+    const { data: generatedCertificates } = await admin
+      .from("course_certificates")
+      .select("user_id")
+      .in("user_id", studentIds)
+      .not("generated_at", "is", null);
+
+    generatedCertificates?.forEach((certificate) => {
+      certificateCounts[certificate.user_id] =
+        (certificateCounts[certificate.user_id] ?? 0) + 1;
+    });
   }
 
   const result =
@@ -60,6 +77,7 @@ export async function GET() {
       registrationDate: student.created_at,
       lastLogin: lastSignInMap[student.id] ?? null,
       coursesEnrolled: courseCounts[student.id] ?? 0,
+      certificatesRedeemed: certificateCounts[student.id] ?? 0,
     })) ?? [];
 
   return Response.json({ students: result });

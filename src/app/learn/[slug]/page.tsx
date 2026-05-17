@@ -87,9 +87,11 @@ export default async function LearnPage({
     .eq("completed", true);
 
   const completedItemIds = progress?.map((item) => item.item_id) ?? [];
-  const certificateGrant = isAdmin
-    ? { granted: true, grantedAt: null }
-    : await getCertificateGrant(supabase, userId, course.id);
+  const certificateGrant = await getCertificateGrant(
+    supabase,
+    userId,
+    course.id,
+  );
 
   return (
     <CourseViewer
@@ -97,6 +99,12 @@ export default async function LearnPage({
       completedItemIds={completedItemIds}
       certificateGranted={certificateGrant.granted}
       certificateGrantedAt={certificateGrant.grantedAt}
+      certificateGenerated={certificateGrant.generated}
+      certificateGeneratedAt={certificateGrant.generatedAt}
+      certificateIssuedAt={certificateGrant.issuedAt}
+      certificateRegenerationAllowed={certificateGrant.regenerationAllowed}
+      certificateFirstName={authenticatedUser.profile.first_name}
+      certificateLastName={authenticatedUser.profile.last_name}
     />
   );
 }

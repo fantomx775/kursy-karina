@@ -9,11 +9,15 @@ export function useAdminModals() {
   const [statsDetailModalOpen, setStatsDetailModalOpen] = useState(false);
 
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
-  const [studentDetail, setStudentDetail] = useState<StudentDetail | null>(null);
+  const [studentDetail, setStudentDetail] = useState<StudentDetail | null>(
+    null,
+  );
   const [courseStatsDetail, setCourseStatsDetail] =
     useState<CourseStatsDetail | null>(null);
   const [studentDetailLoading, setStudentDetailLoading] = useState(false);
-  const [studentDetailError, setStudentDetailError] = useState<string | null>(null);
+  const [studentDetailError, setStudentDetailError] = useState<string | null>(
+    null,
+  );
   const [activeStudentId, setActiveStudentId] = useState<string | null>(null);
   const studentRequestIdRef = useRef(0);
 
@@ -84,7 +88,10 @@ export function useAdminModals() {
     setActiveStudentId(null);
   };
 
-  const markCertificateGranted = (courseId: string, grantedAt: string | null) => {
+  const markCertificateGranted = (
+    courseId: string,
+    grantedAt: string | null,
+  ) => {
     setStudentDetail((previous) => {
       if (!previous) {
         return previous;
@@ -98,6 +105,30 @@ export function useAdminModals() {
                 ...course,
                 certificateGranted: true,
                 certificateGrantedAt: grantedAt,
+                certificateGenerated: false,
+                certificateGeneratedAt: null,
+                certificateIssuedAt: null,
+                certificateRegenerationAllowed: false,
+              }
+            : course,
+        ),
+      };
+    });
+  };
+
+  const markCertificateRegenerationAllowed = (courseId: string) => {
+    setStudentDetail((previous) => {
+      if (!previous) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        courses: previous.courses.map((course) =>
+          course.courseId === courseId
+            ? {
+                ...course,
+                certificateRegenerationAllowed: true,
               }
             : course,
         ),
@@ -146,6 +177,7 @@ export function useAdminModals() {
     openCourseStatsDetail,
     closeCourseStatsDetail,
     markCertificateGranted,
+    markCertificateRegenerationAllowed,
     refreshStudentDetail,
   };
 }
