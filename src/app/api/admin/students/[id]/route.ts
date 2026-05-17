@@ -1,5 +1,9 @@
 import { authenticateAdmin } from "@/services/auth/server";
 import { getCertificateGrants } from "@/services/certificate";
+import {
+  resolveCourseAccessState,
+  type CourseAccessOrderItem,
+} from "@/services/courseAccess";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
 
 export async function GET(
@@ -41,7 +45,7 @@ export async function GET(
   const orderIds = orders?.map((order) => order.id) ?? [];
   const { data: orderItems } = await admin
     .from("order_items")
-    .select("order_id, course_id, title, price, quantity")
+    .select("order_id, course_id, title, price, quantity, access_expires_at")
     .in("order_id", orderIds);
 
   const courseIds = Array.from(
@@ -92,6 +96,9 @@ export async function GET(
     const courseItems = orderItems?.filter(
       (item) => item.course_id === courseId,
     );
+    const access = resolveCourseAccessState(
+      (courseItems ?? []) as CourseAccessOrderItem[],
+    );
     const courseTitle = courseItems?.[0]?.title ?? "Kurs";
     const totalItems = totalItemsByCourse.get(courseId) ?? 0;
     const completedItems = completedByCourse.get(courseId) ?? 0;
@@ -108,6 +115,8 @@ export async function GET(
       totalItems,
       completedItems,
       completionPercentage,
+      accessStatus: access.hasActiveAccess ? "active" : "expired",
+      accessExpiresAt: access.activeExpiresAt ?? access.lastExpiresAt,
       certificateGranted: certificateGrant.granted,
       certificateGrantedAt: certificateGrant.grantedAt,
       certificateGenerated: certificateGrant.generated,

@@ -5,6 +5,10 @@ import {
   getCertificateGrants,
   getCoursesCompletion,
 } from "@/services/certificate";
+import {
+  resolveCourseAccessState,
+  type CourseAccessOrderItem,
+} from "@/services/courseAccess";
 import { DashboardTabs } from "@/features/dashboard/DashboardTabs";
 import type { CourseCard } from "@/features/dashboard/DashboardTabs";
 
@@ -50,7 +54,11 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false });
 
   const orderIds = orders?.map((order) => order.id) ?? [];
-  let orderItems: { course_id: string; title: string }[] = [];
+  let orderItems: {
+    course_id: string;
+    title: string;
+    access_expires_at: string | null;
+  }[] = [];
   let adminCourseIds: string[] = [];
   let courseCards: CourseCard[] = [];
 
@@ -80,7 +88,7 @@ export default async function DashboardPage() {
   if (orderIds.length > 0) {
     const { data: purchasedItems, error: orderItemsError } = await supabase
       .from("order_items")
-      .select("course_id, title")
+      .select("course_id, title, access_expires_at")
       .in("order_id", orderIds);
 
     orderItems = purchasedItems ?? [];
@@ -172,6 +180,14 @@ export default async function DashboardPage() {
     const purchasedTitleByCourseId = new Map(
       orderItems.map((item) => [item.course_id, item.title]),
     );
+    const purchasedAccessByCourseId = new Map(
+      purchasedCourseIds.map((courseId) => [
+        courseId,
+        resolveCourseAccessState(
+          orderItems.filter((item) => item.course_id === courseId) as CourseAccessOrderItem[],
+        ),
+      ]),
+    );
 
     const { data: courses, error: coursesError } = await supabase
       .from("courses")
@@ -211,7 +227,6 @@ export default async function DashboardPage() {
       userId,
       courseIds,
     );
-
     courseCards = courseIds.map((courseId) => {
       const course = courses?.find((item) => item.id === courseId);
       const courseTitle =
@@ -225,6 +240,16 @@ export default async function DashboardPage() {
         granted: false,
         grantedAt: null,
       };
+      const access = adminCourseIds.includes(courseId)
+        ? {
+            status: "active" as const,
+            activeExpiresAt: null,
+          }
+        : (purchasedAccessByCourseId.get(courseId) ?? {
+            status: "expired" as const,
+            activeExpiresAt: null,
+            lastExpiresAt: null,
+          });
 
       return {
         id: courseId,
@@ -233,6 +258,13 @@ export default async function DashboardPage() {
         slug: course?.slug ?? "",
         status: course?.status ?? "inactive",
         adminAccess: isAdmin,
+        accessStatus: access.status === "active" ? "active" : "expired",
+        accessExpiresAt:
+          "activeExpiresAt" in access && access.activeExpiresAt
+            ? access.activeExpiresAt
+            : "lastExpiresAt" in access
+              ? (access.lastExpiresAt ?? null)
+              : null,
         completionPercentage: completion.percentage,
         certificateGranted: certificateGrant.granted,
         certificateGrantedAt: certificateGrant.grantedAt,

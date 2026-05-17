@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DEFAULT_CERTIFICATE_TEMPLATE_ID } from "@/lib/certificateTemplates";
+import { DEFAULT_COURSE_ACCESS_DURATION_MONTHS } from "@/lib/accessDuration";
 
 export const quizAnswerInputSchema = z.object({
   text: z.string().min(1, "Answer text is required."),
@@ -87,6 +88,12 @@ export const courseInputSchema = z
     description: z.string().min(1),
     price: z.number().positive(),
     status: z.enum(["active", "inactive"]),
+    accessDurationMonths: z
+      .number()
+      .int()
+      .min(1)
+      .optional()
+      .default(DEFAULT_COURSE_ACCESS_DURATION_MONTHS),
     mainImageUrl: z.string().url().max(2048).optional().nullable(),
     certificateTemplateId: z
       .string()

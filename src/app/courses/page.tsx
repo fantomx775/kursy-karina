@@ -3,6 +3,7 @@ import Image from "next/image";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
 import type { Course } from "@/types/course";
 import { isPromoActive, getEffectivePriceCents, getPromoLabel } from "@/lib/coursePromo";
+import { formatAccessDuration } from "@/lib/accessDuration";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +87,9 @@ export default async function CoursesPage() {
                   </div>
                   <p className="text-sm text-[var(--coffee-espresso)] flex-1 leading-relaxed">
                     {course.description}
+                  </p>
+                  <p className="mt-3 text-sm text-[var(--coffee-espresso)]">
+                    Dostęp: {formatAccessDuration(course.access_duration_months ?? 6)}
                   </p>
                   <div className="mt-4 pt-4 border-t border-[var(--coffee-cappuccino)] flex items-center justify-between gap-3">
                     <span className="text-lg sm:text-xl font-semibold text-[var(--coffee-charcoal)] whitespace-nowrap flex flex-wrap items-baseline gap-2">

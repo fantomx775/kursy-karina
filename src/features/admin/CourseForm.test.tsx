@@ -42,6 +42,7 @@ describe("CourseForm", () => {
         title: "Quizowy kurs",
         description: "Opis kursu",
         price: 149,
+        accessDurationMonths: 6,
         sections: [
           {
             title: "Sekcja 1",

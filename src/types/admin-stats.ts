@@ -5,6 +5,7 @@ export type CourseStatsSummary = {
   createdAt: string;
   buyersCount: number;
   lastPurchaseAt?: string | null;
+  activeAccessCount?: number;
   totalRevenue?: number | null;
 };
 
@@ -13,6 +14,8 @@ export type PurchaserWithProgress = {
   fullName: string;
   email: string;
   purchaseDate: string;
+  accessStatus: "active" | "expired";
+  accessExpiresAt: string | null;
   completedItems: number;
   totalItems: number;
   completionPercentage: number;
@@ -24,5 +27,6 @@ export type CourseStatsDetail = {
   slug: string;
   createdAt: string;
   buyersCount: number;
+  activeAccessCount?: number;
   purchasers: PurchaserWithProgress[];
 };

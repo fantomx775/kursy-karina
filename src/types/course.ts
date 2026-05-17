@@ -31,6 +31,7 @@ export type Course = {
   description: string;
   price: number;
   status: CourseStatus;
+  access_duration_months?: number;
   main_image_url?: string;
   certificate_template_key?: CertificateTemplateKey | null;
   certificate_template_id?: CertificateTemplateId | null;

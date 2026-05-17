@@ -22,7 +22,7 @@ VALUES (
   'a0000001-0001-4000-8000-000000000001',
   'React od zera – kompletny kurs',
   'react-od-zera',
-  'Naucz się Reacta od podstaw: komponenty, hooks, stan, routing i TypeScript. Praktyczne projekty i dożywotni dostęp.',
+  'Naucz się Reacta od podstaw: komponenty, hooks, stan, routing i TypeScript. Praktyczne projekty i czasowy dostęp do materiałów.',
   29900,
   'active',
   NULL

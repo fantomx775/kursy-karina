@@ -1,10 +1,10 @@
-# Migracje bazy danych
+ï»¿# Migracje bazy danych
 
 Uruchamiaj w **Supabase SQL Editor**.
 
 ## Jedno uruchomienie
 
-W katalogu `database/` jest plik **`full_schema.sql`** - idempotentny: najpierw usuwa tabele, typy, funkcje i polityki, potem tworzy wszystko od zera. Historycznym zrodlem prawdy sa jednak migracje ponizej, bo zawieraja najnowsze poprawki RLS i hardening dostêpu do RPC/Storage. Po migracjach uruchom **`seed_test_data.sql`**, jesli chcesz dane testowe.
+W katalogu `database/` jest plik **`full_schema.sql`** - idempotentny: najpierw usuwa tabele, typy, funkcje i polityki, potem tworzy wszystko od zera. Historycznym zrodlem prawdy sa jednak migracje ponizej, bo zawieraja najnowsze poprawki RLS i hardening dostepu do RPC/Storage. Po migracjach uruchom **`seed_test_data.sql`**, jesli chcesz dane testowe.
 
 ## Migracje pojedynczo (od zera)
 
@@ -23,15 +23,20 @@ W podanej kolejnosci:
 11. **011_harden_rls_and_rpc_access.sql** - hardening funkcji RPC i Storage
 12. **012_move_rls_helper_to_private_schema.sql** - prywatny helper dla RLS
 13. **013_optimize_rls_policies_and_fk_indexes.sql** - optymalizacja polityk RLS i indeksy FK
+14. **014_add_course_certificate_template_key.sql** - wybor szablonu certyfikatu per kurs
+15. **015_add_certificate_storage_and_generation_state.sql** - storage i stan generowania certyfikatow
+16. **015_add_course_access_duration.sql** - czas dostepu do kursu i data wygasniecia pozycji zamowienia
+17. **016_tune_certificate_template_indexes_and_policies.sql** - indeksy i polityki dla szablonow certyfikatow
 
-## Baza z ju¿ dzialajacym projektem
+## Baza z juz dzialajacym projektem
 
-- Jesli masz ju¿ schemat z `init.sql`: uruchom brakujace migracje po **001**. W aktualnej wersji zwykle beda to **002**-**013**.
+- Jesli masz juz schemat z `init.sql`: uruchom brakujace migracje po **001**. W aktualnej wersji zwykle beda to **002**-**016**.
 - Jesli brakuje tylko promocji: **003**, **004**, **005**.
-- Jesli brakuje tylko zdjec kursów: **002**, **006** oraz ewentualnie **004**/**005**, jesli RPC nie zapisuje jeszcze `main_image_url`.
-- Jesli chcesz w³¹czyæ admin-controlled certyfikaty na istniejacej bazie: uruchom co najmniej **007** i **010**.
+- Jesli brakuje tylko zdjec kursow: **002**, **006** oraz ewentualnie **004**/**005**, jesli RPC nie zapisuje jeszcze `main_image_url`.
+- Jesli chcesz wlaczyc admin-controlled certyfikaty na istniejacej bazie: uruchom co najmniej **007** i **010**.
+- Jesli chcesz wlaczyc czasowy dostep do kursow: uruchom **015_add_course_access_duration.sql**.
 
 ## Dane testowe
 
-Po migracjach mo¿esz uruchomic opcjonalnie:
+Po migracjach mozesz uruchomic opcjonalnie:
 `../seed_test_data.sql`

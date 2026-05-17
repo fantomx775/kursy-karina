@@ -1,4 +1,8 @@
 import { authenticateAdmin } from "@/services/auth/server";
+import {
+  resolveCourseAccessState,
+  type CourseAccessOrderItem,
+} from "@/services/courseAccess";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
 import type {
   CourseStatsDetail,
@@ -41,6 +45,7 @@ export async function GET(
         slug: course.slug,
         createdAt: course.created_at,
         buyersCount: 0,
+        activeAccessCount: 0,
         purchasers: [],
       } satisfies CourseStatsDetail,
     });
@@ -48,15 +53,22 @@ export async function GET(
 
   const { data: orderItems } = await admin
     .from("order_items")
-    .select("order_id, course_id")
+    .select("order_id, course_id, access_expires_at")
     .eq("course_id", courseId)
     .in("order_id", orderIds);
 
   const orderById = new Map(paidOrders?.map((o) => [o.id, o]) ?? []);
   const userIdToPurchaseDate = new Map<string, string>();
+  const accessItemsByUserId = new Map<string, CourseAccessOrderItem[]>();
   orderItems?.forEach((item) => {
     const order = orderById.get(item.order_id);
     if (!order) return;
+    const accessItems = accessItemsByUserId.get(order.user_id) ?? [];
+    accessItems.push({
+      course_id: item.course_id,
+      access_expires_at: item.access_expires_at,
+    });
+    accessItemsByUserId.set(order.user_id, accessItems);
     const existing = userIdToPurchaseDate.get(order.user_id);
     const orderDate = order.created_at;
     if (
@@ -76,6 +88,7 @@ export async function GET(
         slug: course.slug,
         createdAt: course.created_at,
         buyersCount: 0,
+        activeAccessCount: 0,
         purchasers: [],
       } satisfies CourseStatsDetail,
     });
@@ -119,6 +132,9 @@ export async function GET(
     const completedItems = completedByUser.get(userId) ?? 0;
     const completionPercentage =
       totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+    const access = resolveCourseAccessState(
+      accessItemsByUserId.get(userId) ?? [],
+    );
     return {
       userId,
       fullName: u
@@ -126,6 +142,8 @@ export async function GET(
         : "—",
       email: u?.email ?? "—",
       purchaseDate: userIdToPurchaseDate.get(userId) ?? "",
+      accessStatus: access.hasActiveAccess ? "active" : "expired",
+      accessExpiresAt: access.activeExpiresAt ?? access.lastExpiresAt,
       completedItems,
       totalItems,
       completionPercentage,
@@ -138,6 +156,9 @@ export async function GET(
     slug: course.slug,
     createdAt: course.created_at,
     buyersCount: purchasers.length,
+    activeAccessCount: purchasers.filter(
+      (purchaser) => purchaser.accessStatus === "active",
+    ).length,
     purchasers,
   };
 

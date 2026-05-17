@@ -1,4 +1,5 @@
 import { authenticateUser } from "@/services/auth/server";
+import { getUserCourseAccess } from "@/services/courseAccess";
 import { getCourseBySlug } from "@/services/courses";
 import { listCourseSvgs } from "@/services/courseAssets";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
@@ -36,41 +37,17 @@ export async function GET(
 
   if (auth.user.role !== "admin") {
     const admin = createAdminSupabaseClient();
-    const { data: orders, error: ordersError } = await admin
-      .from("orders")
-      .select("id")
-      .eq("user_id", auth.user.id)
-      .eq("status", "paid");
-
-    if (ordersError) {
+    const access = await getUserCourseAccess(admin, auth.user.id, course.id);
+    if (!access.hasActiveAccess) {
       return Response.json(
-        { error: "Failed to validate course access" },
-        { status: 500 },
+        {
+          error:
+            access.status === "expired"
+              ? "Course access expired"
+              : "Course not purchased",
+        },
+        { status: 403 },
       );
-    }
-
-    const orderIds = orders?.map((order) => order.id) ?? [];
-    if (orderIds.length === 0) {
-      return Response.json({ error: "Course not purchased" }, { status: 403 });
-    }
-
-    const { data: orderItem, error: orderItemError } = await admin
-      .from("order_items")
-      .select("course_id")
-      .eq("course_id", course.id)
-      .in("order_id", orderIds)
-      .limit(1)
-      .maybeSingle();
-
-    if (orderItemError) {
-      return Response.json(
-        { error: "Failed to validate course access" },
-        { status: 500 },
-      );
-    }
-
-    if (!orderItem) {
-      return Response.json({ error: "Course not purchased" }, { status: 403 });
     }
   }
 

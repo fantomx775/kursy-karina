@@ -35,6 +35,7 @@ export async function GET() {
       slug: c.slug,
       createdAt: c.created_at,
       buyersCount: 0,
+      activeAccessCount: 0,
       lastPurchaseAt: null,
       totalRevenue: null,
     }));
@@ -43,24 +44,41 @@ export async function GET() {
 
   const { data: orderItems } = await admin
     .from("order_items")
-    .select("order_id, course_id, price")
+    .select("order_id, course_id, price, access_expires_at")
     .in("order_id", orderIds);
 
   const orderById = new Map(paidOrders?.map((o) => [o.id, o]) ?? []);
   const byCourseId = new Map<
     string,
-    { userIds: Set<string>; lastAt: string | null; revenue: number }
+    {
+      userIds: Set<string>;
+      activeUserIds: Set<string>;
+      lastAt: string | null;
+      revenue: number;
+    }
   >();
+  const now = Date.now();
 
   orderItems?.forEach((item) => {
     const order = orderById.get(item.order_id);
     if (!order) return;
     let entry = byCourseId.get(item.course_id);
     if (!entry) {
-      entry = { userIds: new Set(), lastAt: null, revenue: 0 };
+      entry = {
+        userIds: new Set(),
+        activeUserIds: new Set(),
+        lastAt: null,
+        revenue: 0,
+      };
       byCourseId.set(item.course_id, entry);
     }
     entry.userIds.add(order.user_id);
+    if (
+      item.access_expires_at &&
+      new Date(item.access_expires_at).getTime() > now
+    ) {
+      entry.activeUserIds.add(order.user_id);
+    }
     if (
       !entry.lastAt ||
       new Date(order.created_at) > new Date(entry.lastAt)
@@ -78,6 +96,7 @@ export async function GET() {
       slug: c.slug,
       createdAt: c.created_at,
       buyersCount: entry?.userIds.size ?? 0,
+      activeAccessCount: entry?.activeUserIds.size ?? 0,
       lastPurchaseAt: entry?.lastAt ?? null,
       totalRevenue: entry ? entry.revenue : null,
     };

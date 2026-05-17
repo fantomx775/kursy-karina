@@ -32,6 +32,7 @@ export type CourseFormData = {
   description: string;
   price: number;
   status: "active" | "inactive";
+  accessDurationMonths: number;
   mainImageUrl?: string;
   certificateTemplateId: CertificateTemplateId;
   sections: CourseFormSection[];

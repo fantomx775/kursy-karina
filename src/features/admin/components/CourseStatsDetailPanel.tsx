@@ -52,6 +52,15 @@ export function CourseStatsDetailPanel({ detail }: Props) {
       render: (_, record) => formatDate(record.purchaseDate),
     },
     {
+      key: "accessExpiresAt",
+      title: "Dostęp",
+      dataIndex: "accessExpiresAt",
+      render: (_, record) =>
+        record.accessStatus === "active"
+          ? `Aktywny do ${formatDate(record.accessExpiresAt)}`
+          : `Wygasł ${formatDate(record.accessExpiresAt)}`,
+    },
+    {
       key: "progress",
       title: "Postęp",
       dataIndex: "completionPercentage",
@@ -88,6 +97,15 @@ export function CourseStatsDetailPanel({ detail }: Props) {
               <span>
                 <span className="text-[var(--coffee-espresso)]">Liczba kupujących: </span>
                 {detail.buyersCount}
+              </span>
+            </li>
+            <li className="flex items-center gap-3 text-[var(--text-sm)] text-[var(--coffee-charcoal)]">
+              <span className="flex shrink-0 w-8 h-8 items-center justify-center border-radius bg-[var(--coffee-latte)] text-[var(--coffee-mocha)]">
+                <FiUsers className="w-4 h-4" aria-hidden />
+              </span>
+              <span>
+                <span className="text-[var(--coffee-espresso)]">Aktywne dostępy: </span>
+                {detail.activeAccessCount ?? 0}
               </span>
             </li>
           </ul>

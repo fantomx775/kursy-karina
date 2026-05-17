@@ -9,6 +9,7 @@ function createBaseCoursePayload(): z.input<typeof courseInputSchema> {
     description: "Opis",
     price: 199,
     status: "active" as const,
+    accessDurationMonths: 6,
     sections: [
       {
         title: "Sekcja 1",
@@ -48,6 +49,25 @@ describe("courseInputSchema", () => {
     const result = courseInputSchema.safeParse(payload);
 
     expect(result.success).toBe(true);
+  });
+
+  it("defaults the access duration to six months", () => {
+    const payload = createBaseCoursePayload();
+    delete payload.accessDurationMonths;
+
+    const result = courseInputSchema.safeParse(payload);
+
+    expect(result.success).toBe(true);
+    expect(result.data?.accessDurationMonths).toBe(6);
+  });
+
+  it("rejects non-positive access durations", () => {
+    const payload = createBaseCoursePayload();
+    payload.accessDurationMonths = 0;
+
+    const result = courseInputSchema.safeParse(payload);
+
+    expect(result.success).toBe(false);
   });
 
   it("rejects single choice questions with more than one correct answer", () => {

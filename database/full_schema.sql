@@ -156,6 +156,7 @@ CREATE TABLE courses (
   description TEXT NOT NULL,
   price INTEGER NOT NULL,
   status course_status NOT NULL DEFAULT 'inactive',
+  access_duration_months INTEGER NOT NULL DEFAULT 6,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   main_image_url TEXT,
@@ -185,12 +186,16 @@ CREATE TABLE courses (
   ),
   CONSTRAINT courses_certificate_template_key_nonempty CHECK (
     length(trim(certificate_template_key)) > 0
+  ),
+  CONSTRAINT courses_access_duration_months_positive CHECK (
+    access_duration_months > 0
   )
 );
 
 COMMENT ON COLUMN courses.main_image_url IS 'URL of the main course image displayed on course cards and detail pages';
 COMMENT ON COLUMN courses.certificate_template_key IS 'Bundled certificate template key used for PDF generation';
 COMMENT ON COLUMN courses.certificate_template_id IS 'Stable certificate template id used for PDF generation';
+COMMENT ON COLUMN courses.access_duration_months IS 'Number of months of student access granted by a new purchase of this course';
 COMMENT ON COLUMN courses.promotion_discount_type IS 'Promotion discount type: percentage or fixed amount';
 COMMENT ON COLUMN courses.promotion_discount_value IS 'Promotion value: 1-100 for percentage, amount in grosze for fixed';
 COMMENT ON COLUMN courses.promotion_start_date IS 'Promotion valid from (inclusive)';
@@ -316,8 +321,16 @@ CREATE TABLE order_items (
   title TEXT NOT NULL,
   price INTEGER NOT NULL,
   quantity INTEGER NOT NULL DEFAULT 1,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  access_duration_months INTEGER NOT NULL DEFAULT 6,
+  access_expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() + INTERVAL '6 months'),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT order_items_access_duration_months_positive CHECK (
+    access_duration_months > 0
+  )
 );
+
+COMMENT ON COLUMN order_items.access_duration_months IS 'Snapshot of the course access duration in months at purchase time';
+COMMENT ON COLUMN order_items.access_expires_at IS 'Timestamp when this purchased course access expires';
 
 CREATE TABLE coupon_usage (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -350,6 +363,7 @@ CREATE INDEX idx_courses_certificate_template_id ON courses(certificate_template
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_order_items_course_id ON order_items(course_id);
+CREATE INDEX idx_order_items_course_access_expires_at ON order_items(course_id, access_expires_at);
 CREATE INDEX idx_coupons_code ON coupons(code);
 CREATE INDEX idx_coupon_usage_coupon_id ON coupon_usage(coupon_id);
 
@@ -467,8 +481,70 @@ CREATE POLICY "Order items viewable by owner" ON order_items
     SELECT 1 FROM orders WHERE id = order_id AND user_id = auth.uid()
   ) OR (SELECT current_user_role() = 'admin'));
 
-CREATE POLICY "Users can manage own progress" ON course_progress
-  FOR ALL USING (auth.uid() = user_id OR (SELECT current_user_role() = 'admin'));
+CREATE POLICY "Users can view own progress" ON course_progress
+  FOR SELECT
+  USING (
+    auth.uid() = user_id
+    OR (SELECT current_user_role() = 'admin')
+  );
+
+CREATE POLICY "Users can insert own progress with active access" ON course_progress
+  FOR INSERT
+  WITH CHECK (
+    (
+      auth.uid() = user_id
+      AND EXISTS (
+        SELECT 1
+        FROM orders AS o
+        JOIN order_items AS oi ON oi.order_id = o.id
+        WHERE o.user_id = auth.uid()
+          AND o.status = 'paid'
+          AND oi.course_id = course_progress.course_id
+          AND oi.access_expires_at > NOW()
+      )
+    )
+    OR (SELECT current_user_role() = 'admin')
+  );
+
+CREATE POLICY "Users can update own progress with active access" ON course_progress
+  FOR UPDATE
+  USING (
+    auth.uid() = user_id
+    OR (SELECT current_user_role() = 'admin')
+  )
+  WITH CHECK (
+    (
+      auth.uid() = user_id
+      AND EXISTS (
+        SELECT 1
+        FROM orders AS o
+        JOIN order_items AS oi ON oi.order_id = o.id
+        WHERE o.user_id = auth.uid()
+          AND o.status = 'paid'
+          AND oi.course_id = course_progress.course_id
+          AND oi.access_expires_at > NOW()
+      )
+    )
+    OR (SELECT current_user_role() = 'admin')
+  );
+
+CREATE POLICY "Users can delete own progress with active access" ON course_progress
+  FOR DELETE
+  USING (
+    (
+      auth.uid() = user_id
+      AND EXISTS (
+        SELECT 1
+        FROM orders AS o
+        JOIN order_items AS oi ON oi.order_id = o.id
+        WHERE o.user_id = auth.uid()
+          AND o.status = 'paid'
+          AND oi.course_id = course_progress.course_id
+          AND oi.access_expires_at > NOW()
+      )
+    )
+    OR (SELECT current_user_role() = 'admin')
+  );
 
 CREATE POLICY "Course certificates viewable by owner or admin" ON course_certificates
   FOR SELECT USING (auth.uid() = user_id OR (SELECT current_user_role() = 'admin'));

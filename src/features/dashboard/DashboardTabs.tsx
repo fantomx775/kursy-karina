@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -19,6 +19,8 @@ export type CourseCard = {
   slug: string;
   status: CourseStatus;
   adminAccess: boolean;
+  accessStatus: "active" | "expired";
+  accessExpiresAt: string | null;
   completionPercentage: number;
   certificateGranted: boolean;
   certificateGrantedAt: string | null;
@@ -84,6 +86,15 @@ function formatCertificateDate(iso: string | null): string {
     month: "2-digit",
     year: "numeric",
   })}`;
+}
+
+function formatAccessDate(iso: string | null): string {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("pl-PL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 export function DashboardTabs({
@@ -165,10 +176,10 @@ export function DashboardTabs({
             <div className="bg-white border border-[var(--table-border)] border-radius overflow-hidden">
               <div className="p-6 sm:p-8 text-center">
                 <h2 className="text-lg font-semibold text-[var(--coffee-charcoal)] mb-2">
-                  Brak zakupionych kursów
+                  Brak zakupionych kursĂłw
                 </h2>
                 <p className="text-[var(--coffee-espresso)] mb-4 text-sm">
-                  Dodaj kursy do koszyka i rozpocznij naukę.
+                  Dodaj kursy do koszyka i rozpocznij naukÄ™.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link href="/courses">
@@ -200,7 +211,15 @@ export function DashboardTabs({
                       </Badge>
                       {course.adminAccess ? (
                         <Badge rounded={false} variant="secondary" size="sm">
-                          Dostęp admina
+                          DostÄ™p admina
+                        </Badge>
+                      ) : course.accessStatus === "expired" ? (
+                        <Badge rounded={false} variant="warning" size="sm">
+                          Dostep wygasl
+                        </Badge>
+                      ) : course.accessExpiresAt ? (
+                        <Badge rounded={false} variant="secondary" size="sm">
+                          Dostep do {formatAccessDate(course.accessExpiresAt)}
                         </Badge>
                       ) : null}
                     </div>
@@ -219,16 +238,21 @@ export function DashboardTabs({
                   </div>
                   <div className="mt-3 rounded-md border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] px-3 py-2 text-sm text-[var(--coffee-espresso)]">
                     {course.certificateRegenerationAllowed
-                      ? "Administrator pozwolił wygenerować certyfikat ponownie."
+                      ? "Administrator pozwoliĹ‚ wygenerowaÄ‡ certyfikat ponownie."
                       : course.certificateGenerated
                         ? formatCertificateDate(course.certificateGeneratedAt)
                         : course.certificateGranted
                           ? "Certyfikat przyznany. Odbierz go raz po sprawdzeniu danych."
                           : course.completionPercentage === 100
-                            ? "Ukończyłeś 100% kursu. Certyfikat będzie dostępny po decyzji administratora."
-                            : "Certyfikat będzie dostępny po decyzji administratora."}
+                            ? "UkoĹ„czyĹ‚eĹ› 100% kursu. Certyfikat bÄ™dzie dostÄ™pny po decyzji administratora."
+                            : "Certyfikat bÄ™dzie dostÄ™pny po decyzji administratora."}
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3">
+                    {course.accessStatus === "expired" && !course.adminAccess ? (
+                      <Link href={`/courses/${course.slug}`}>
+                        <Button variant="primary">PrzedĹ‚uĹĽ dostÄ™p</Button>
+                      </Link>
+                    ) : null}
                     {course.certificateGranted ? (
                       <>
                         <CertificateActions
@@ -255,9 +279,11 @@ export function DashboardTabs({
                             );
                           }}
                         />
-                        <Link href={`/learn/${course.slug}`}>
-                          <Button variant="outline">Otworz kurs</Button>
-                        </Link>
+                        {course.accessStatus === "active" || course.adminAccess ? (
+                          <Link href={`/learn/${course.slug}`}>
+                            <Button variant="outline">Otworz kurs</Button>
+                          </Link>
+                        ) : null}
                         {isAdmin ? (
                           <Link href={`/dashboard/courses/${course.id}/edit`}>
                             <Button variant="secondary">Edytuj</Button>
@@ -266,13 +292,15 @@ export function DashboardTabs({
                       </>
                     ) : (
                       <>
-                        <Link href={`/learn/${course.slug}`}>
-                          <Button variant="primary">
-                            {course.completionPercentage === 100
-                              ? "Otworz kurs"
-                              : "Kontynuuj naukę"}
-                          </Button>
-                        </Link>
+                        {course.accessStatus === "active" || course.adminAccess ? (
+                          <Link href={`/learn/${course.slug}`}>
+                            <Button variant="primary">
+                              {course.completionPercentage === 100
+                                ? "Otworz kurs"
+                                : "Kontynuuj nauke"}
+                            </Button>
+                          </Link>
+                        ) : null}
                         {isAdmin ? (
                           <Link href={`/dashboard/courses/${course.id}/edit`}>
                             <Button variant="secondary">Edytuj</Button>
@@ -304,3 +332,4 @@ export function DashboardTabs({
     </>
   );
 }
+

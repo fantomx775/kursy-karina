@@ -42,6 +42,7 @@ export async function POST(request: Request) {
     description,
     price,
     status,
+    accessDurationMonths,
     mainImageUrl,
     certificateTemplateId,
     sections,
@@ -106,6 +107,7 @@ export async function POST(request: Request) {
       main_image_url: mainImageUrl ?? null,
       certificate_template_id: certificateTemplateId,
       certificate_template_key: certificateTemplateId,
+      access_duration_months: accessDurationMonths,
     })
     .eq("id", result.course_id);
   if (metadataError) {

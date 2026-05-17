@@ -14,6 +14,8 @@ export type StudentCourseProgress = {
   totalItems: number;
   completedItems: number;
   completionPercentage: number;
+  accessStatus: "active" | "expired";
+  accessExpiresAt: string | null;
   certificateGranted: boolean;
   certificateGrantedAt: string | null;
   certificateGenerated: boolean;

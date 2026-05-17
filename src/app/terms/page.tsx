@@ -33,7 +33,7 @@ export default function TermsPage() {
       <p>
         Zakup szkolenia następuje poprzez złożenie zamówienia za pośrednictwem strony internetowej.
         Po dokonaniu płatności użytkownik otrzymuje dostęp do zakupionych materiałów
-        szkoleniowych. Dostęp do szkolenia jest udzielany na czas określony lub nieokreślony –
+        szkoleniowych. Dostęp do szkolenia jest udzielany na czas określony
         zgodnie z informacją podaną w ofercie konkretnego szkolenia.
       </p>
 
