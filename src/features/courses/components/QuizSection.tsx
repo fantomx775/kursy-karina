@@ -19,8 +19,8 @@ type AttemptState = {
 
 function getQuestionTypeLabel(question: CourseQuizQuestion): string {
   return question.type === "multiple"
-    ? "Wielokrotny wybor"
-    : "Jednokrotny wybor";
+    ? "Wielokrotny wybór"
+    : "Jednokrotny wybór";
 }
 
 export function QuizSection({ item, isCompleted, onPass }: Props) {
@@ -30,8 +30,8 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const statusText = isCompleted
-    ? "Quiz zaliczony. Kolejne proby nie cofna progresu."
-    : "Rozwiaz quiz i kliknij Sprawdz.";
+    ? "Quiz zaliczony. Kolejne próby nie cofną progresu."
+    : "Rozwiąż quiz i kliknij Sprawdź.";
 
   const attemptMessage = useMemo(() => {
     if (!attempt) {
@@ -41,14 +41,14 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
     if (attempt.isPassed) {
       return isCompleted
         ? `Wynik: ${attempt.correctQuestions}/${attempt.totalQuestions}. Quiz pozostaje zaliczony.`
-        : `Wynik: ${attempt.correctQuestions}/${attempt.totalQuestions}. Quiz zostal zaliczony.`;
+        : `Wynik: ${attempt.correctQuestions}/${attempt.totalQuestions}. Quiz został zaliczony.`;
     }
 
     if (isCompleted) {
-      return `Wynik tej proby: ${attempt.correctQuestions}/${attempt.totalQuestions}. Quiz pozostaje zaliczony.`;
+      return `Wynik tej próby: ${attempt.correctQuestions}/${attempt.totalQuestions}. Quiz pozostaje zaliczony.`;
     }
 
-    return `Wynik: ${attempt.correctQuestions}/${attempt.totalQuestions}. Sprobuj ponownie.`;
+    return `Wynik: ${attempt.correctQuestions}/${attempt.totalQuestions}. Spróbuj ponownie.`;
   }, [attempt, isCompleted]);
 
   if (!quiz || quiz.questions.length === 0) {
@@ -104,7 +104,7 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
           {statusText}
         </div>
         <div className="mt-1 text-sm text-[var(--coffee-espresso)]">
-          Aby zaliczyc quiz, wszystkie pytania musza byc rozwiazane poprawnie.
+          Aby zaliczyć quiz, wszystkie pytania muszą być rozwiązane poprawnie.
         </div>
       </div>
 
@@ -187,7 +187,7 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
         disabled={isSubmitting}
         className="h-10 border-radius bg-[var(--coffee-mocha)] px-4 text-sm font-medium text-white transition-colors hover:bg-[var(--coffee-espresso)] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "Zapisywanie..." : "Sprawdz"}
+        {isSubmitting ? "Zapisywanie..." : "Sprawdź"}
       </button>
     </div>
   );

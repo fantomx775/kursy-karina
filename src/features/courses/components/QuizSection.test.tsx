@@ -16,7 +16,7 @@ function createQuizItem(): CourseItem {
     quiz_data: {
       questions: [
         {
-          text: "Ktory katalog obsluguje routing?",
+          text: "Który katalog obsługuje routing?",
           type: "single",
           answers: [
             { text: "app", isCorrect: true },
@@ -24,7 +24,7 @@ function createQuizItem(): CourseItem {
           ],
         },
         {
-          text: "Ktore pliki sa typowe dla App Router?",
+          text: "Które pliki są typowe dla App Router?",
           type: "multiple",
           answers: [
             { text: "layout.tsx", isCorrect: true },
@@ -51,13 +51,13 @@ describe("QuizSection", () => {
     await user.click(screen.getByLabelText("app"));
     await user.click(screen.getByLabelText("layout.tsx"));
     await user.click(screen.getByLabelText("page.tsx"));
-    await user.click(screen.getByRole("button", { name: "Sprawdz" }));
+    await user.click(screen.getByRole("button", { name: "Sprawdź" }));
 
     await waitFor(() => {
       expect(onPass).toHaveBeenCalledWith("quiz-item-1");
     });
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Quiz zostal zaliczony.",
+      "Quiz został zaliczony.",
     );
   });
 
@@ -72,7 +72,7 @@ describe("QuizSection", () => {
     await user.click(screen.getByLabelText("app"));
     await user.click(screen.getByLabelText("layout.tsx"));
     await user.click(screen.getByLabelText("page.tsx"));
-    await user.click(screen.getByRole("button", { name: "Sprawdz" }));
+    await user.click(screen.getByRole("button", { name: "Sprawdź" }));
 
     await waitFor(() => {
       expect(onPass).toHaveBeenCalledTimes(1);
@@ -84,7 +84,7 @@ describe("QuizSection", () => {
     await user.click(screen.getByLabelText("layout.tsx"));
     await user.click(screen.getByLabelText("page.tsx"));
     await user.click(screen.getByLabelText("getServerSideProps"));
-    await user.click(screen.getByRole("button", { name: "Sprawdz" }));
+    await user.click(screen.getByRole("button", { name: "Sprawdź" }));
 
     expect(onPass).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("status")).toHaveTextContent(

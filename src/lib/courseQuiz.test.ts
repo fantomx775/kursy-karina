@@ -4,7 +4,7 @@ import { evaluateQuizAttempt } from "./courseQuiz";
 const quiz = {
   questions: [
     {
-      text: "Jedna odpowiedz",
+      text: "Jedna odpowiedź",
       type: "single" as const,
       answers: [
         { text: "A", isCorrect: true },

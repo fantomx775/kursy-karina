@@ -6,7 +6,7 @@ describe("getCertificateGrantConfirmationMessage", () => {
     expect(
       getCertificateGrantConfirmationMessage({ completionPercentage: 82 }),
     ).toBe(
-      "UWAGA! Ten kursant nie ukonczyl jeszcze 100% kursu. Czy na pewno chcesz mu przyznac certyfikat?",
+      "UWAGA! Ten kursant nie ukończył jeszcze 100% kursu. Czy na pewno chcesz mu przyznać certyfikat?",
     );
   });
 
@@ -14,7 +14,7 @@ describe("getCertificateGrantConfirmationMessage", () => {
     expect(
       getCertificateGrantConfirmationMessage({ completionPercentage: 100 }),
     ).toBe(
-      "Ten kursant ukonczyl 100% kursu. Czy na pewno chcesz mu przyznac certyfikat?",
+      "Ten kursant ukończył 100% kursu. Czy na pewno chcesz mu przyznać certyfikat?",
     );
   });
 });

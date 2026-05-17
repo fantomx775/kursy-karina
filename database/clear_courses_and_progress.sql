@@ -1,5 +1,5 @@
--- =============================================================================
--- Wyzerowanie kursow i progresow (faza testowa, bez uzytkownikow)
+-- Wyzerowanie kursów i progresów (faza testowa, bez użytkowników)
+-- Wyzerowanie kursów i progresów (faza testowa, bez użytkowników)
 -- Usuwa: certyfikaty, progresy, pozycje zamowien powiazane z kursami, lekcje,
 -- sekcje i kursy.
 -- Nie usuwa: users, auth.users, orders, coupons, coupon_usage.

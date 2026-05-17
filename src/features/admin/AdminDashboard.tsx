@@ -129,15 +129,15 @@ export function AdminDashboard({
         type: "success",
         title: editingCoupon ? "Kupon zaktualizowany" : "Kupon dodany",
         message: editingCoupon
-          ? "Kupon zostal pomyslnie zaktualizowany."
-          : "Nowy kupon zostal pomyslnie dodany.",
+          ? "Kupon został pomyślnie zaktualizowany."
+          : "Nowy kupon został pomyślnie dodany.",
       });
       closeCouponModal();
       await loadCoupons();
     } else {
       addToast({
         type: "error",
-        title: "Blad zapisu kuponu",
+        title: "Błąd zapisu kuponu",
         message: result.error,
       });
     }
@@ -148,14 +148,14 @@ export function AdminDashboard({
     if (result.success) {
       addToast({
         type: "success",
-        title: "Kupon usuniety",
-        message: "Kupon zostal pomyslnie usuniety.",
+        title: "Kupon usunięty",
+        message: "Kupon został pomyślnie usunięty.",
       });
       await loadCoupons();
     } else {
       addToast({
         type: "error",
-        title: "Blad usuwania kuponu",
+        title: "Błąd usuwania kuponu",
         message: result.error,
       });
     }
@@ -198,7 +198,7 @@ export function AdminDashboard({
 
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Nie udalo sie przyznac certyfikatu.");
+        throw new Error(data?.error ?? "Nie udało się przyznać certyfikatu.");
       }
 
       markCertificateGranted(
@@ -210,20 +210,20 @@ export function AdminDashboard({
       addToast({
         type: "success",
         title: data?.alreadyGranted
-          ? "Certyfikat juz przyznany"
+          ? "Certyfikat już przyznany"
           : "Certyfikat przyznany",
         message: data?.alreadyGranted
-          ? "Ten kursant ma juz aktywny certyfikat dla tego kursu."
-          : "Kursant moze juz odebrac certyfikat.",
+          ? "Ten kursant ma już aktywny certyfikat dla tego kursu."
+          : "Kursant może już odebrać certyfikat.",
       });
     } catch (error) {
       addToast({
         type: "error",
-        title: "Blad przyznawania certyfikatu",
+        title: "Błąd przyznawania certyfikatu",
         message:
           error instanceof Error
             ? error.message
-            : "Nie udalo sie przyznac certyfikatu.",
+            : "Nie udało się przyznać certyfikatu.",
       });
     } finally {
       setGrantingCertificateCourseId(null);
@@ -251,25 +251,25 @@ export function AdminDashboard({
 
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Nie udalo sie przyznac certyfikatu.");
+        throw new Error(data?.error ?? "Nie udało się przyznać certyfikatu.");
       }
 
       addToast({
         type: "success",
         title: data?.alreadyGranted
-          ? "Certyfikat juz przyznany"
+          ? "Certyfikat już przyznany"
           : "Certyfikat przyznany",
-        message: "Lista osob do przyznania zostala odswiezona.",
+        message: "Lista osób do przyznania została odświeżona.",
       });
       await Promise.all([loadCertificates(), loadStudents()]);
     } catch (error) {
       addToast({
         type: "error",
-        title: "Blad przyznawania certyfikatu",
+        title: "Błąd przyznawania certyfikatu",
         message:
           error instanceof Error
             ? error.message
-            : "Nie udalo sie przyznac certyfikatu.",
+            : "Nie udało się przyznać certyfikatu.",
       });
     } finally {
       setGrantingEligibleKey(null);
@@ -300,7 +300,7 @@ export function AdminDashboard({
       const data = await response.json().catch(() => null);
       if (!response.ok) {
         throw new Error(
-          data?.error ?? "Nie udalo sie wlaczyc ponownego generowania.",
+          data?.error ?? "Nie udało się włączyć ponownego generowania.",
         );
       }
 
@@ -308,17 +308,17 @@ export function AdminDashboard({
       setPendingRegenerationCourse(null);
       addToast({
         type: "success",
-        title: "Ponowne generowanie wlaczone",
-        message: "Kursant moze raz jeszcze wygenerowac ten certyfikat.",
+        title: "Ponowne generowanie włączone",
+        message: "Kursant może raz jeszcze wygenerować ten certyfikat.",
       });
     } catch (error) {
       addToast({
         type: "error",
-        title: "Blad certyfikatu",
+        title: "Błąd certyfikatu",
         message:
           error instanceof Error
             ? error.message
-            : "Nie udalo sie wlaczyc ponownego generowania.",
+            : "Nie udało się włączyć ponownego generowania.",
       });
     } finally {
       setRegeneratingCertificateCourseId(null);
@@ -358,7 +358,7 @@ export function AdminDashboard({
               Panel administracyjny
             </h1>
             <p className="text-[var(--coffee-espresso)]">
-              Zarzadzaj kursami, kursantami i kuponami rabatowymi.
+              Zarządzaj kursami, kursantami i kuponami rabatowymi.
             </p>
           </div>
           {getAddButton()}
@@ -448,14 +448,14 @@ export function AdminDashboard({
       <Modal
         isOpen={studentModalOpen}
         onClose={handleCloseStudentModal}
-        title="Szczegoly kursanta"
+        title="Szczegóły kursanta"
         size="lg"
       >
         {studentDetailLoading ? (
           <div className="flex min-h-64 flex-col items-center justify-center gap-3 py-10">
             <Spinner size="lg" />
             <p className="text-sm text-[var(--coffee-espresso)]">
-              Trwa ladowanie danych kursanta...
+              Trwa ładowanie danych kursanta...
             </p>
           </div>
         ) : studentDetailError ? (
@@ -487,7 +487,7 @@ export function AdminDashboard({
           <CourseStatsDetailPanel detail={courseStatsDetail} />
         ) : (
           <div className="p-6 text-sm text-[var(--coffee-espresso)]">
-            Ladowanie szczegolow...
+            Ładowanie szczegółów...
           </div>
         )}
       </Modal>
@@ -500,7 +500,7 @@ export function AdminDashboard({
           }
         }}
         onConfirm={handleConfirmCertificateGrant}
-        title="Potwierdz przyznanie certyfikatu"
+        title="Potwierdź przyznanie certyfikatu"
         message={
           pendingCertificateCourse
             ? getCertificateGrantConfirmationMessage(pendingCertificateCourse)
@@ -521,13 +521,13 @@ export function AdminDashboard({
           }
         }}
         onConfirm={handleConfirmCertificateRegeneration}
-        title="Pozwolic wygenerowac ponownie?"
+        title="Pozwolić wygenerować ponownie?"
         message={
           pendingRegenerationCourse
-            ? `Kursant bedzie mogl raz jeszcze wygenerowac certyfikat dla kursu "${pendingRegenerationCourse.courseTitle}". Nowy plik zastapi poprzedni.`
+            ? `Kursant będzie mógł raz jeszcze wygenerować certyfikat dla kursu "${pendingRegenerationCourse.courseTitle}". Nowy plik zastąpi poprzedni.`
             : ""
         }
-        confirmText="Pozwol ponownie"
+        confirmText="Pozwól ponownie"
         cancelText="Anuluj"
         variant="warning"
         loading={regeneratingCertificateCourseId !== null}

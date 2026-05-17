@@ -21,7 +21,7 @@ export function ConfirmModal({
   onConfirm,
   title,
   message,
-  confirmText = "Potwierdz",
+  confirmText = "Potwierdź",
   cancelText = "Anuluj",
   variant = "warning",
   loading = false,

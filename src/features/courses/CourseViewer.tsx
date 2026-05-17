@@ -196,18 +196,18 @@ export function CourseViewer({
               className="mb-2 inline-flex items-center gap-1.5 text-sm text-[var(--coffee-mocha)] transition-colors hover:text-[var(--coffee-espresso)]"
             >
               <FiChevronLeft className="h-4 w-4 shrink-0" aria-hidden />
-              Powrot do moich kursow
+              Powrót do moich kursów
             </Link>
             <h1 className="text-2xl font-semibold tracking-tight">
               {course.title}
             </h1>
             <p className="text-sm text-[var(--coffee-espresso)]">
-              Kontynuuj nauke krok po kroku. Postep zapisuje sie automatycznie.
+              Kontynuuj naukę krok po kroku. Postęp zapisuje się automatycznie.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <div className="border-radius border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 text-sm text-[var(--coffee-espresso)] shadow-sm">
-              Postep:{" "}
+              Postęp:{" "}
               <span className="font-semibold text-[var(--coffee-charcoal)]">
                 {completedCount}/{steps.length} ({completionPercentage}%)
               </span>
@@ -236,12 +236,12 @@ export function CourseViewer({
 
         <div className="mb-4 rounded-md border border-[var(--coffee-cappuccino)] bg-white px-4 py-3 text-sm text-[var(--coffee-espresso)] shadow-sm">
           {certificateState.regenerationAllowed
-            ? "Administrator pozwolil wygenerowac certyfikat ponownie."
+            ? "Administrator pozwolił wygenerować certyfikat ponownie."
             : certificateState.generated
               ? formatCertificateDate(certificateState.generatedAt)
               : certificateGranted
                 ? "Certyfikat przyznany. Odbierz go raz po sprawdzeniu danych."
-                : "Certyfikat bedzie dostepny po decyzji administratora."}
+                : "Certyfikat będzie dostępny po decyzji administratora."}
         </div>
 
         <div className="grid gap-4 md:grid-cols-[320px_1fr]">
@@ -268,7 +268,7 @@ export function CourseViewer({
             <div className="mt-4 space-y-6 md:mt-0">
               {steps.length === 0 ? (
                 <div className="border-radius border border-[var(--coffee-cappuccino)] bg-white p-6 text-[var(--coffee-espresso)]">
-                  Materialy kursu sa w przygotowaniu.
+                  Materiały kursu są w przygotowaniu.
                 </div>
               ) : (
                 course.sections.map((section) => (

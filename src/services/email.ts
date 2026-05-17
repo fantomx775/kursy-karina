@@ -10,7 +10,7 @@ export class EmailService {
     // Tutaj integracja z usługą email (np. Resend, SendGrid, lub własny SMTP)
     const templates = {
       course_purchase: {
-        subject: "Potwierdzenie zakupu kursu",
+        subject: "Potwierdźenie zakupu kursu",
         template: "course-purchase-template",
       },
       course_completed: {

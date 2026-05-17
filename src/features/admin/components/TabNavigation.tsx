@@ -21,7 +21,7 @@ export function TabNavigation({
     { key: "students", label: "Kursanci" },
     { key: "certificates", label: "Certyfikaty" },
     { key: "coupons", label: "Kupony" },
-    { key: "stats", label: "Statystyki kursow" },
+    { key: "stats", label: "Statystyki kursów" },
   ];
 
   return (

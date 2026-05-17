@@ -82,7 +82,7 @@ export function CertificatesTab({
       });
       const responseData = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(responseData?.error ?? "Nie udalo sie wgrac szablonu.");
+        throw new Error(responseData?.error ?? "Nie udało się wgrać szablonu.");
       }
 
       setUploadFile(null);
@@ -90,15 +90,15 @@ export function CertificatesTab({
       addToast({
         type: "success",
         title: "Szablon dodany",
-        message: "Nowy PDF certyfikatu jest dostepny w kreatorze kursu.",
+        message: "Nowy PDF certyfikatu jest dostępny w kreatorze kursu.",
       });
       await onRefresh();
     } catch (error) {
       addToast({
         type: "error",
-        title: "Blad wgrywania",
+        title: "Błąd wgrywania",
         message:
-          error instanceof Error ? error.message : "Nie udalo sie wgrac PDF.",
+          error instanceof Error ? error.message : "Nie udało się wgrać PDF.",
       });
     } finally {
       setUploading(false);
@@ -124,7 +124,7 @@ export function CertificatesTab({
       const responseData = await response.json().catch(() => null);
       if (!response.ok) {
         throw new Error(
-          responseData?.error ?? "Nie udalo sie zmienic nazwy szablonu.",
+          responseData?.error ?? "Nie udało się zmienić nazwy szablonu.",
         );
       }
 
@@ -137,11 +137,11 @@ export function CertificatesTab({
     } catch (error) {
       addToast({
         type: "error",
-        title: "Blad zmiany nazwy",
+        title: "Błąd zmiany nazwy",
         message:
           error instanceof Error
             ? error.message
-            : "Nie udalo sie zmienic nazwy.",
+            : "Nie udało się zmienić nazwy.",
       });
     } finally {
       setRenamingId(null);
@@ -225,7 +225,7 @@ export function CertificatesTab({
     { key: "courseTitle", title: "Kurs", dataIndex: "courseTitle" },
     {
       key: "progress",
-      title: "Postep",
+      title: "Postęp",
       dataIndex: "completedItems",
       render: (_, record) => `${record.completedItems}/${record.totalItems}`,
     },
@@ -314,7 +314,7 @@ export function CertificatesTab({
         </div>
         <div className="grid gap-3 md:grid-cols-5 md:items-end">
           <Input
-            label="Imie"
+            label="Imię"
             value={manualFirstName}
             onChange={(event) => setManualFirstName(event.target.value)}
           />

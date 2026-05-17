@@ -165,10 +165,10 @@ export function DashboardTabs({
             <div className="bg-white border border-[var(--table-border)] border-radius overflow-hidden">
               <div className="p-6 sm:p-8 text-center">
                 <h2 className="text-lg font-semibold text-[var(--coffee-charcoal)] mb-2">
-                  Brak zakupionych kursow
+                  Brak zakupionych kursów
                 </h2>
                 <p className="text-[var(--coffee-espresso)] mb-4 text-sm">
-                  Dodaj kursy do koszyka i rozpocznij nauke.
+                  Dodaj kursy do koszyka i rozpocznij naukę.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link href="/courses">
@@ -200,7 +200,7 @@ export function DashboardTabs({
                       </Badge>
                       {course.adminAccess ? (
                         <Badge rounded={false} variant="secondary" size="sm">
-                          Dostep admina
+                          Dostęp admina
                         </Badge>
                       ) : null}
                     </div>
@@ -219,14 +219,14 @@ export function DashboardTabs({
                   </div>
                   <div className="mt-3 rounded-md border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] px-3 py-2 text-sm text-[var(--coffee-espresso)]">
                     {course.certificateRegenerationAllowed
-                      ? "Administrator pozwolil wygenerowac certyfikat ponownie."
+                      ? "Administrator pozwolił wygenerować certyfikat ponownie."
                       : course.certificateGenerated
                         ? formatCertificateDate(course.certificateGeneratedAt)
                         : course.certificateGranted
                           ? "Certyfikat przyznany. Odbierz go raz po sprawdzeniu danych."
                           : course.completionPercentage === 100
-                            ? "Ukonczyles 100% kursu. Certyfikat bedzie dostepny po decyzji administratora."
-                            : "Certyfikat bedzie dostepny po decyzji administratora."}
+                            ? "Ukończyłeś 100% kursu. Certyfikat będzie dostępny po decyzji administratora."
+                            : "Certyfikat będzie dostępny po decyzji administratora."}
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3">
                     {course.certificateGranted ? (
@@ -270,7 +270,7 @@ export function DashboardTabs({
                           <Button variant="primary">
                             {course.completionPercentage === 100
                               ? "Otworz kurs"
-                              : "Kontynuuj nauke"}
+                              : "Kontynuuj naukę"}
                           </Button>
                         </Link>
                         {isAdmin ? (

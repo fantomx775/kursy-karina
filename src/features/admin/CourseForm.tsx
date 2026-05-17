@@ -151,7 +151,7 @@ function getCourseValidationError(
       if (!item.title.trim() && hasKindSpecificContent) {
         return createFieldValidationError(
           fieldNames.itemTitle(sectionIndex, itemIndex),
-          "Kazdy element lekcji musi miec tytul.",
+          "Każdy element lekcji musi mieć tytuł.",
           sectionIndex,
         );
       }
@@ -163,7 +163,7 @@ function getCourseValidationError(
       if (item.kind === "svg" && !item.assetPath.trim()) {
         return createFieldValidationError(
           fieldNames.itemAsset(sectionIndex, itemIndex),
-          "Kazdy element typu Tekst musi miec dodany plik SVG.",
+          "Każdy element typu Tekst musi mieć dodany plik SVG.",
           sectionIndex,
         );
       }
@@ -171,7 +171,7 @@ function getCourseValidationError(
       if (item.kind === "youtube" && !item.youtubeUrl.trim()) {
         return createFieldValidationError(
           fieldNames.itemYoutube(sectionIndex, itemIndex),
-          "Kazdy element typu Video musi miec podany adres URL.",
+          "Każdy element typu Video musi mieć podany adres URL.",
           sectionIndex,
         );
       }
@@ -192,7 +192,7 @@ function getCourseValidationError(
         if (!question.text.trim()) {
           return createFieldValidationError(
             fieldNames.quizQuestion(sectionIndex, itemIndex, questionIndex),
-            "Kazde pytanie quizu musi miec tresc.",
+            "Każde pytanie quizu musi mieć treść.",
             sectionIndex,
           );
         }
@@ -200,7 +200,7 @@ function getCourseValidationError(
         if (question.answers.length < 2) {
           return createFieldValidationError(
             fieldNames.quizCorrect(sectionIndex, itemIndex, questionIndex),
-            "Kazde pytanie quizu musi miec minimum 2 odpowiedzi.",
+            "Każde pytanie quizu musi mieć minimum 2 odpowiedzi.",
             sectionIndex,
           );
         }
@@ -216,7 +216,7 @@ function getCourseValidationError(
               questionIndex,
               emptyAnswerIndex,
             ),
-            "Kazda odpowiedz w quizie musi miec tresc.",
+            "Każda odpowiedź w quizie musi mieć treść.",
             sectionIndex,
           );
         }
@@ -228,7 +228,7 @@ function getCourseValidationError(
         if (correctAnswers.length === 0) {
           return createFieldValidationError(
             fieldNames.quizCorrect(sectionIndex, itemIndex, questionIndex),
-            "Kazde pytanie quizu musi miec przynajmniej jedna poprawna odpowiedz.",
+            "Każde pytanie quizu musi mieć przynajmniej jedną poprawną odpowiedź.",
             sectionIndex,
           );
         }
@@ -236,7 +236,7 @@ function getCourseValidationError(
         if (question.type === "single" && correctAnswers.length > 1) {
           return createFieldValidationError(
             fieldNames.quizCorrect(sectionIndex, itemIndex, questionIndex),
-            "Pytanie jednokrotnego wyboru moze miec tylko jedna poprawna odpowiedz.",
+            "Pytanie jednokrotnego wyboru może mieć tylko jedną poprawną odpowiedź.",
             sectionIndex,
           );
         }
@@ -582,7 +582,7 @@ export function CourseForm({
 
     if (!title.trim()) {
       setValidationResult(
-        createFieldValidationError(fieldNames.title, "Podaj tytul kursu."),
+        createFieldValidationError(fieldNames.title, "Podaj tytuł kursu."),
       );
       return;
     }
@@ -599,7 +599,7 @@ export function CourseForm({
       setValidationResult(
         createFieldValidationError(
           fieldNames.price,
-          "Podaj cene wieksza niz 0.",
+          "Podaj cenę większą niż 0.",
         ),
       );
       return;
@@ -612,7 +612,7 @@ export function CourseForm({
       setValidationResult(
         createFieldValidationError(
           fieldNames.sectionTitle(0),
-          "Dodaj co najmniej jedna sekcje i podaj jej tytul.",
+          "Dodaj co najmniej jedną sekcję i podaj jej tytuł.",
           0,
         ),
       );
@@ -641,7 +641,7 @@ export function CourseForm({
         setValidationResult(
           createFieldValidationError(
             fieldNames.promotionDiscountValue,
-            "Podaj prawidlowa wartosc znizki promocji.",
+            "Podaj prawidłową wartość zniżki promocji.",
           ),
         );
         return;
@@ -651,7 +651,7 @@ export function CourseForm({
         setValidationResult(
           createFieldValidationError(
             fieldNames.promotionDiscountValue,
-            "Znizka procentowa nie moze byc wieksza niz 100.",
+            "Zniżka procentowa nie może być większa niż 100.",
           ),
         );
         return;
@@ -726,7 +726,7 @@ export function CourseForm({
           htmlFor="title"
           className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]"
         >
-          Tytul
+          Tytuł
         </label>
         <input
           id="title"
@@ -890,14 +890,14 @@ export function CourseForm({
           Promocja
         </h3>
         <p className="mb-4 text-sm text-[var(--coffee-espresso)]">
-          Opcjonalnie: ustaw date rozpoczecia, aby wlaczyc promocje. Pusta data
-          zakonczenia oznacza promocje bez konca.
+          Opcjonalnie: ustaw datę rozpoczęcia, aby włączyć promocję. Pusta data
+          zakończenia oznacza promocję bez końca.
         </p>
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <div className="flex items-center gap-2">
             <label className="whitespace-nowrap text-sm font-medium text-[var(--coffee-charcoal)]">
-              Typ znizki
+              Typ zniżki
             </label>
             <select
               value={promotionDiscountType}
@@ -917,8 +917,8 @@ export function CourseForm({
           <div className="flex items-start gap-2">
             <label className="whitespace-nowrap text-sm font-medium text-[var(--coffee-charcoal)]">
               {promotionDiscountType === "percentage"
-                ? "Wartosc (%)"
-                : "Wartosc (PLN)"}
+                ? "Wartość (%)"
+                : "Wartość (PLN)"}
             </label>
             <div>
               <input
@@ -1022,7 +1022,7 @@ export function CourseForm({
                     <div className="min-w-0 flex-1">
                       <input
                         type="text"
-                        placeholder="Tytul sekcji"
+                        placeholder="Tytuł sekcji"
                         value={section.title}
                         onChange={(event) =>
                           setSectionTitle(sectionIndex, event.target.value)
@@ -1044,7 +1044,7 @@ export function CourseForm({
                       size="sm"
                       onClick={() => removeSection(sectionIndex)}
                     >
-                      Usun sekcje
+                      Usuń sekcje
                     </Button>
                   </div>
 
@@ -1074,11 +1074,11 @@ export function CourseForm({
                               <div className="flex flex-wrap items-center justify-between gap-3">
                                 <div className="min-w-0 flex-1">
                                   <label className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]">
-                                    Tytul elementu
+                                    Tytuł elementu
                                   </label>
                                   <input
                                     type="text"
-                                    placeholder="Tytul elementu"
+                                    placeholder="Tytuł elementu"
                                     value={item.title}
                                     onChange={(event) =>
                                       setItem(sectionIndex, itemIndex, {
@@ -1237,7 +1237,7 @@ export function CourseForm({
                                     removeItem(sectionIndex, itemIndex)
                                   }
                                 >
-                                  Usun element
+                                  Usuń element
                                 </Button>
                               </div>
                             </CardContent>

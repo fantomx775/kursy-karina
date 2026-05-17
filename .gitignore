@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+KarinaStripeLiveKey.txt
 
 # debug
 .cursor/debug*.log

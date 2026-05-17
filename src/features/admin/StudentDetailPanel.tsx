@@ -102,11 +102,11 @@ export function StudentDetailPanel({
       <section>
         <h3 className="mb-3 flex items-center gap-2 text-[var(--text-base)] font-semibold text-[var(--coffee-charcoal)]">
           <FiBook className="h-5 w-5 text-[var(--coffee-mocha)]" aria-hidden />
-          Postep w kursach
+          Postęp w kursach
         </h3>
         {student.courses.length === 0 ? (
           <div className="bg-white border border-[var(--coffee-cappuccino)] border-radius p-6 text-center text-[var(--text-sm)] text-[var(--coffee-espresso)]">
-            Brak zakupionych kursow.
+            Brak zakupionych kursów.
           </div>
         ) : (
           <ul className="space-y-3">
@@ -129,7 +129,7 @@ export function StudentDetailPanel({
                   aria-valuenow={course.completionPercentage}
                   aria-valuemin={0}
                   aria-valuemax={100}
-                  aria-label={`Postep: ${course.completionPercentage}%`}
+                  aria-label={`Postęp: ${course.completionPercentage}%`}
                 >
                   <div
                     className="h-full bg-[var(--coffee-mocha)] border-radius-sm transition-[width] duration-300"
@@ -137,13 +137,13 @@ export function StudentDetailPanel({
                   />
                 </div>
                 <p className="mt-2 text-[var(--text-xs)] text-[var(--coffee-espresso)]">
-                  {course.completedItems} / {course.totalItems} materialow
+                  {course.completedItems} / {course.totalItems} materiałów
                 </p>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="text-[var(--text-xs)] text-[var(--coffee-espresso)]">
                     {course.certificateGenerated
                       ? course.certificateRegenerationAllowed
-                        ? "Kursant moze wygenerowac certyfikat ponownie."
+                        ? "Kursant może wygenerować certyfikat ponownie."
                         : formatGeneratedCertificateDate(
                             course.certificateGeneratedAt,
                           )
@@ -166,8 +166,8 @@ export function StudentDetailPanel({
                       <span className="inline-flex items-center gap-2">
                         <FiAward className="h-4 w-4" aria-hidden />
                         {course.certificateRegenerationAllowed
-                          ? "Ponowne generowanie wlaczone"
-                          : "Pozwol wygenerowac ponownie"}
+                          ? "Ponowne generowanie włączone"
+                          : "Pozwól wygenerować ponownie"}
                       </span>
                     </Button>
                   ) : (

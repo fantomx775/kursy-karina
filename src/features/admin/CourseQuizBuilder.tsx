@@ -285,7 +285,7 @@ export function CourseQuizBuilder({
                   size="sm"
                   onClick={() => removeQuestion(questionIndex)}
                 >
-                  Usun pytanie
+                  Usuń pytanie
                 </Button>
               </div>
 
@@ -297,7 +297,7 @@ export function CourseQuizBuilder({
                     checked={question.type === "single"}
                     onChange={() => setQuestionType(questionIndex, "single")}
                   />
-                  Jednokrotny wybor
+                  Jednokrotny wybór
                 </label>
                 <label className="flex items-center gap-2 text-sm font-medium text-[var(--coffee-charcoal)]">
                   <input
@@ -306,7 +306,7 @@ export function CourseQuizBuilder({
                     checked={question.type === "multiple"}
                     onChange={() => setQuestionType(questionIndex, "multiple")}
                   />
-                  Wielokrotny wybor
+                  Wielokrotny wybór
                 </label>
               </div>
 
@@ -379,7 +379,7 @@ export function CourseQuizBuilder({
                         size="sm"
                         onClick={() => removeAnswer(questionIndex, answerIndex)}
                       >
-                        Usun odpowiedz
+                        Usuń odpowiedź
                       </Button>
                     </div>
                   );
@@ -400,7 +400,7 @@ export function CourseQuizBuilder({
                 size="sm"
                 onClick={() => addAnswer(questionIndex)}
               >
-                + Dodaj odpowiedz
+                + Dodaj odpowiedź
               </Button>
             </CardContent>
           </Card>

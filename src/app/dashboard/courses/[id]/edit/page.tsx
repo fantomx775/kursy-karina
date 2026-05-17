@@ -198,7 +198,7 @@ export default function EditCoursePage() {
           setPendingNavigation(null);
         }}
         onConfirm={handleConfirmNavigation}
-        title="Potwierdzenie opuszczenia strony"
+        title="Potwierdźenie opuszczenia strony"
         message="Masz niezapisane zmiany. Czy na pewno chcesz opuścić tę stronę? Wszystkie wprowadzone dane zostaną utracone."
         confirmText="Opuść stronę"
         cancelText="Anuluj"

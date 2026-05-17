@@ -10,7 +10,7 @@ async function solveSeededQuiz(page: import("@playwright/test").Page) {
   await page.getByLabel("app").check();
   await page.getByLabel("layout.tsx").check();
   await page.getByLabel("page.tsx").check();
-  await page.getByRole("button", { name: "Sprawdz" }).click();
+  await page.getByRole("button", { name: "Sprawdź" }).click();
 }
 
 test.describe("Interakcje z kursem po stronie kursanta", () => {
@@ -23,18 +23,18 @@ test.describe("Interakcje z kursem po stronie kursanta", () => {
     await expect(page).toHaveURL("/login");
   });
 
-  test("blokuje dostep do kursu bez zakupu", async ({ page }) => {
+  test("blokuje dostęp do kursu bez zakupu", async ({ page }) => {
     await loginAsStudentEmpty(page);
     await goToLearning(page, UNOWNED_SLUG);
-    await expect(page.getByText("Brak dostepu")).toBeVisible();
+    await expect(page.getByText("Brak dostępu")).toBeVisible();
   });
 
-  test("zapisuje postep kursu po oznaczeniu zwyklych krokow", async ({ page }) => {
+  test("zapisuje postęp kursu po oznaczeniu zwykłych kroków", async ({ page }) => {
     await loginAsStudentWithPurchases(page);
     await goToLearning(page, OWNED_SLUG);
 
     await expect(page.getByRole("heading", { name: /Next\.js/i })).toBeVisible();
-    const progressText = page.getByText(/Postep:/);
+    const progressText = page.getByText(/Postęp:/);
     const progressBefore = await progressText.textContent();
     const beforeMatch = (progressBefore ?? "").match(/(\d+)\/(\d+)/);
     const beforeValue = beforeMatch?.[1] ?? "0";
@@ -57,7 +57,7 @@ test.describe("Interakcje z kursem po stronie kursanta", () => {
     await loginAsStudentWithPurchases(page);
     await goToLearning(page, OWNED_SLUG);
 
-    const progressText = page.getByText(/Postep:/);
+    const progressText = page.getByText(/Postęp:/);
     const before = await progressText.textContent();
 
     await solveSeededQuiz(page);
@@ -68,7 +68,7 @@ test.describe("Interakcje z kursem po stronie kursanta", () => {
 
     await page.getByLabel("pages").check();
     await page.getByLabel("getServerSideProps").check();
-    await page.getByRole("button", { name: "Sprawdz" }).click();
+    await page.getByRole("button", { name: "Sprawdź" }).click();
 
     await expect(page.getByRole("status")).toContainText(
       "Quiz pozostaje zaliczony",
@@ -76,7 +76,7 @@ test.describe("Interakcje z kursem po stronie kursanta", () => {
     await expect(progressText).toHaveText(afterPass ?? "");
   });
 
-  test("udostepnia certyfikat po pelnym zakonczeniu kursu wraz z quizem", async ({
+  test("udostępnia certyfikat po pełnym zakończeniu kursu wraz z quizem", async ({
     page,
   }) => {
     await loginAsStudentWithPurchases(page);
@@ -97,11 +97,11 @@ test.describe("Interakcje z kursem po stronie kursanta", () => {
     );
   });
 
-  test("umozliwia cofniecie postepu dla zwyklych materialow", async ({ page }) => {
+  test("umożliwia cofnięcie postępu dla zwykłych materiałów", async ({ page }) => {
     await loginAsStudentWithPurchases(page);
     await goToLearning(page, OWNED_SLUG);
 
-    const progressText = page.getByText(/Postep:/);
+    const progressText = page.getByText(/Postęp:/);
     const progressBefore = await progressText.textContent();
 
     const completeButtons = page.locator('button:has-text("Oznacz jako ukonczone")');
@@ -116,6 +116,6 @@ test.describe("Interakcje z kursem po stronie kursanta", () => {
       .first();
     await expect(undoButton).toBeVisible();
     await undoButton.click();
-    await expect(progressText).toHaveText(progressBefore ?? "Postep:");
+    await expect(progressText).toHaveText(progressBefore ?? "Postęp:");
   });
 });

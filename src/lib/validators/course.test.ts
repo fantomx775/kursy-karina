@@ -34,7 +34,7 @@ describe("courseInputSchema", () => {
       quizData: {
         questions: [
           {
-            text: "Ktory katalog sluzy do routingu?",
+            text: "Który katalog służy do routingu?",
             type: "single",
             answers: [
               { text: "app", isCorrect: true },
@@ -60,7 +60,7 @@ describe("courseInputSchema", () => {
       quizData: {
         questions: [
           {
-            text: "Wybierz jedna odpowiedz",
+            text: "Wybierz jedną odpowiedź",
             type: "single",
             answers: [
               { text: "A", isCorrect: true },
@@ -89,7 +89,7 @@ describe("courseInputSchema", () => {
       quizData: {
         questions: [
           {
-            text: "Za malo odpowiedzi",
+            text: "Za mało odpowiedzi",
             type: "multiple",
             answers: [{ text: "A", isCorrect: false }],
           },

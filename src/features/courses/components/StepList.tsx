@@ -40,7 +40,7 @@ export function StepList({
     >
       <div className="flex shrink-0 items-center justify-between border-b border-[var(--coffee-cappuccino)] bg-white px-3 py-2">
         <div className="text-sm font-semibold text-[var(--coffee-charcoal)]">
-          Zawartosc kursu
+          Zawartość kursu
         </div>
         <div className="flex items-center gap-2">
           <div className="text-xs text-[var(--coffee-espresso)]">
@@ -94,7 +94,7 @@ export function StepList({
                     </div>
                     <div className="text-xs text-[var(--coffee-espresso)]">
                       {badge}
-                      {isDone ? " • Ukonczone" : ""}
+                      {isDone ? " • Ukończone" : ""}
                     </div>
                   </div>
                   <div className="border-radius-sm bg-[var(--coffee-latte)] px-2 py-1 text-[11px] font-semibold text-[var(--coffee-espresso)]">

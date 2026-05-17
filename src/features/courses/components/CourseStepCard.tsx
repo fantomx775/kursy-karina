@@ -28,7 +28,7 @@ function getStatusLabel(item: CourseItem, isCompleted: boolean): string {
     return isCompleted ? "Zaliczone" : "Do zaliczenia";
   }
 
-  return isCompleted ? "Ukonczone" : "Nieukonczone";
+  return isCompleted ? "Ukończone" : "Nieukończone";
 }
 
 export function CourseStepCard({

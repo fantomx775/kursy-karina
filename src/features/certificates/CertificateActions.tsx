@@ -45,7 +45,7 @@ export function CertificateActions({
   const certificateUrl = `/api/courses/${slug}/certificate`;
   const fullName = `${firstName} ${lastName}`.trim();
   const actionLabel = isGenerated ? "Wygeneruj ponownie" : "Odbierz certyfikat";
-  const confirmMessage = `Certyfikat zostanie wygenerowany z danymi: ${fullName}, z dzisiejsza data: ${getTodayLabel()}. Po wygenerowaniu tych danych nie bedzie mozna zmienic bez zgody administratora. Upewnij sie, ze imie i nazwisko sa poprawne.`;
+  const confirmMessage = `Certyfikat zostanie wygenerowany z danymi: ${fullName}, z dzisiejszą datą: ${getTodayLabel()}. Po wygenerowaniu tych danych nie będzie można ich zmienić bez zgody administratora. Upewnij się, że imię i nazwisko są poprawne.`;
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -54,7 +54,7 @@ export function CertificateActions({
       const data = await response.json().catch(() => null);
       if (!response.ok) {
         throw new Error(
-          data?.error ?? "Nie udalo sie wygenerowac certyfikatu.",
+          data?.error ?? "Nie udało się wygenerować certyfikatu.",
         );
       }
 
@@ -65,20 +65,20 @@ export function CertificateActions({
       addToast({
         type: "success",
         title: data?.alreadyGenerated
-          ? "Certyfikat jest juz gotowy"
+          ? "Certyfikat jest już gotowy"
           : "Certyfikat wygenerowany",
-        message: "Pobieranie pliku PDF rozpocznie sie automatycznie.",
+        message: "Pobieranie pliku PDF rozpocznie się automatycznie.",
       });
 
       window.location.assign(data?.downloadUrl ?? certificateUrl);
     } catch (error) {
       addToast({
         type: "error",
-        title: "Blad certyfikatu",
+        title: "Błąd certyfikatu",
         message:
           error instanceof Error
             ? error.message
-            : "Nie udalo sie wygenerowac certyfikatu.",
+            : "Nie udało się wygenerować certyfikatu.",
       });
     } finally {
       setLoading(false);
@@ -96,7 +96,7 @@ export function CertificateActions({
           target="_blank"
           rel="noopener noreferrer"
         >
-          <Button variant="outline">Podglad certyfikatu</Button>
+          <Button variant="outline">Podgląd certyfikatu</Button>
         </a>
       </>
     );
@@ -124,7 +124,7 @@ export function CertificateActions({
           }
         }}
         onConfirm={handleGenerate}
-        title={isGenerated ? "Potwierdz ponowne generowanie" : "Potwierdz dane"}
+        title={isGenerated ? "Potwierdź ponowne generowanie" : "Potwierdź dane"}
         message={confirmMessage}
         confirmText={actionLabel}
         cancelText="Anuluj"

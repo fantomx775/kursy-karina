@@ -106,14 +106,14 @@ export function CouponForm({ initial, onCancel, onSave }: Props) {
 
     const valueNum = parseFloat(discountValue.replace(",", "."));
     if (Number.isNaN(valueNum) || valueNum <= 0) {
-      nextErrors.discountValue = "Podaj wartosc znizki wieksza niz 0.";
+      nextErrors.discountValue = "Podaj wartość zniżki większą niż 0.";
     } else if (discountType === "percentage" && valueNum > 100) {
       nextErrors.discountValue =
-        "Znizka procentowa nie moze byc wieksza niz 100.";
+        "Zniżka procentowa nie może być większa niż 100.";
     }
 
     if (!startDate.trim()) {
-      nextErrors.startDate = "Podaj date rozpoczecia.";
+      nextErrors.startDate = "Podaj datę rozpoczęcia.";
     }
 
     const usageLimitValue = parseInt(usageLimit, 10);
@@ -121,7 +121,7 @@ export function CouponForm({ initial, onCancel, onSave }: Props) {
       usageLimit.trim() &&
       (Number.isNaN(usageLimitValue) || usageLimitValue < 1)
     ) {
-      nextErrors.usageLimit = "Limit musi byc pusty albo wiekszy niz 0.";
+      nextErrors.usageLimit = "Limit musi być pusty albo większy niż 0.";
     }
 
     const usageLimitPerUserValue = parseInt(usageLimitPerUser, 10);
@@ -130,7 +130,7 @@ export function CouponForm({ initial, onCancel, onSave }: Props) {
       (Number.isNaN(usageLimitPerUserValue) || usageLimitPerUserValue < 1)
     ) {
       nextErrors.usageLimitPerUser =
-        "Limit na uzytkownika musi byc pusty albo wiekszy niz 0.";
+        "Limit na użytkownika musi być pusty albo większy niż 0.";
     }
 
     if (Object.keys(nextErrors).length > 0) {

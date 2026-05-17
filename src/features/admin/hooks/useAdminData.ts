@@ -99,7 +99,7 @@ export function useAdminData() {
     try {
       const response = await fetch("/api/admin/certificates");
       if (!response.ok) {
-        throw new Error("Nie udalo sie pobrac certyfikatow.");
+        throw new Error("Nie udało się pobrać certyfikatów.");
       }
       const data = await response.json();
       setCertificateData(data ?? null);
@@ -107,7 +107,7 @@ export function useAdminData() {
       setError(
         err instanceof Error
           ? err.message
-          : "Nie udalo sie pobrac certyfikatow.",
+          : "Nie udało się pobrać certyfikatów.",
       );
     } finally {
       setLoading(false);

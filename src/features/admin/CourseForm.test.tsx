@@ -11,19 +11,19 @@ describe("CourseForm", () => {
 
     render(<CourseForm onCancel={vi.fn()} onSave={onSave} />);
 
-    await user.type(screen.getByLabelText("Tytul"), "Quizowy kurs");
+    await user.type(screen.getByLabelText("Tytuł"), "Quizowy kurs");
     await user.type(screen.getByLabelText("Opis"), "Opis kursu");
     await user.type(screen.getByLabelText("Cena (PLN)"), "149");
-    await user.type(screen.getByPlaceholderText("Tytul sekcji"), "Sekcja 1");
+    await user.type(screen.getByPlaceholderText("Tytuł sekcji"), "Sekcja 1");
 
     await user.click(screen.getByRole("button", { name: "Quiz" }));
     await user.type(
-      screen.getByPlaceholderText("Tytul elementu"),
+      screen.getByPlaceholderText("Tytuł elementu"),
       "Quiz koncowy",
     );
     await user.type(
       screen.getByPlaceholderText("Tresc pytania"),
-      "Jak dziala App Router?",
+      "Jak działa App Router?",
     );
     await user.type(
       screen.getByPlaceholderText("Odpowiedz 1"),
@@ -54,7 +54,7 @@ describe("CourseForm", () => {
                 quiz: {
                   questions: [
                     {
-                      text: "Jak dziala App Router?",
+                      text: "Jak działa App Router?",
                       type: "single",
                       answers: [
                         { text: "W katalogu app", isCorrect: true },
@@ -78,18 +78,18 @@ describe("CourseForm", () => {
     render(<CourseForm onCancel={vi.fn()} onSave={onSave} />);
 
     await user.type(
-      screen.getByLabelText("Tytul"),
+      screen.getByLabelText("Tytuł"),
       "Quiz bez poprawnej odpowiedzi",
     );
     await user.type(screen.getByLabelText("Opis"), "Opis kursu");
     await user.type(screen.getByLabelText("Cena (PLN)"), "99");
-    await user.type(screen.getByPlaceholderText("Tytul sekcji"), "Sekcja 1");
+    await user.type(screen.getByPlaceholderText("Tytuł sekcji"), "Sekcja 1");
 
     await user.click(screen.getByRole("button", { name: "Quiz" }));
-    await user.type(screen.getByPlaceholderText("Tytul elementu"), "Quiz");
+    await user.type(screen.getByPlaceholderText("Tytuł elementu"), "Quiz");
     await user.type(
       screen.getByPlaceholderText("Tresc pytania"),
-      "Ktora odpowiedz jest poprawna?",
+      "Która odpowiedź jest poprawna?",
     );
     await user.type(screen.getByPlaceholderText("Odpowiedz 1"), "Opcja A");
     await user.type(screen.getByPlaceholderText("Odpowiedz 2"), "Opcja B");
@@ -98,7 +98,7 @@ describe("CourseForm", () => {
 
     expect(onSave).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Kazde pytanie quizu musi miec przynajmniej jedna poprawna odpowiedz.",
+      "Każde pytanie quizu musi mieć przynajmniej jedną poprawną odpowiedź.",
     );
   });
 
@@ -108,7 +108,7 @@ describe("CourseForm", () => {
 
     render(<CourseForm onCancel={vi.fn()} onSave={onSave} />);
 
-    await user.type(screen.getByLabelText("Tytul"), "Kurs bez ceny");
+    await user.type(screen.getByLabelText("Tytuł"), "Kurs bez ceny");
     await user.type(screen.getByLabelText("Opis"), "Opis kursu");
 
     await user.click(screen.getByRole("button", { name: "Zapisz" }));
@@ -116,9 +116,9 @@ describe("CourseForm", () => {
     const priceInput = screen.getByLabelText("Cena (PLN)");
     expect(onSave).not.toHaveBeenCalled();
     expect(priceInput).toHaveAttribute("aria-invalid", "true");
-    expect(priceInput).toHaveAccessibleDescription("Podaj cene wieksza niz 0.");
+    expect(priceInput).toHaveAccessibleDescription("Podaj cenę większą niż 0.");
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Podaj cene wieksza niz 0.",
+      "Podaj cenę większą niż 0.",
     );
   });
 
@@ -128,17 +128,17 @@ describe("CourseForm", () => {
 
     render(<CourseForm onCancel={vi.fn()} onSave={onSave} />);
 
-    await user.type(screen.getByLabelText("Tytul"), "Kurs bez sekcji");
+    await user.type(screen.getByLabelText("Tytuł"), "Kurs bez sekcji");
     await user.type(screen.getByLabelText("Opis"), "Opis kursu");
     await user.type(screen.getByLabelText("Cena (PLN)"), "99");
 
     await user.click(screen.getByRole("button", { name: "Zapisz" }));
 
-    const sectionTitle = screen.getByPlaceholderText("Tytul sekcji");
+    const sectionTitle = screen.getByPlaceholderText("Tytuł sekcji");
     expect(onSave).not.toHaveBeenCalled();
     expect(sectionTitle).toHaveAttribute("aria-invalid", "true");
     expect(sectionTitle).toHaveAccessibleDescription(
-      "Dodaj co najmniej jedna sekcje i podaj jej tytul.",
+      "Dodaj co najmniej jedną sekcję i podaj jej tytuł.",
     );
   });
 });

@@ -113,7 +113,7 @@ VALUES
     '{
       "questions": [
         {
-          "text": "Ktory katalog odpowiada za routing w App Router?",
+          "text": "Który katalog odpowiada za routing w App Router?",
           "type": "single",
           "answers": [
             { "text": "app", "isCorrect": true },
@@ -122,7 +122,7 @@ VALUES
           ]
         },
         {
-          "text": "Ktore elementy sa standardem App Router?",
+          "text": "Które elementy są standardem App Router?",
           "type": "multiple",
           "answers": [
             { "text": "layout.tsx", "isCorrect": true },

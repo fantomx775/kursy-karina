@@ -48,7 +48,7 @@ export function useAdminModals() {
       const response = await fetch(`/api/admin/students/${studentId}`);
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Nie udalo sie pobrac danych kursanta.");
+        throw new Error(data?.error ?? "Nie udało się pobrać danych kursanta.");
       }
 
       if (studentRequestIdRef.current !== requestId) {
@@ -66,7 +66,7 @@ export function useAdminModals() {
       setStudentDetailError(
         error instanceof Error
           ? error.message
-          : "Nie udalo sie pobrac danych kursanta.",
+          : "Nie udało się pobrać danych kursanta.",
       );
     } finally {
       if (studentRequestIdRef.current === requestId) {
