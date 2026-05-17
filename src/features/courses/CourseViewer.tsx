@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { FiChevronLeft } from "react-icons/fi";
 import type { CourseWithContent } from "@/types/course";
+import { CertificateActions } from "@/features/certificates/CertificateActions";
 import { useAuth } from "@/features/auth/AuthContext";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
 import { CourseStepCard } from "./components/CourseStepCard";
@@ -14,14 +15,20 @@ type Props = {
   completedItemIds: string[];
   certificateGranted: boolean;
   certificateGrantedAt: string | null;
+  certificateGenerated: boolean;
+  certificateGeneratedAt: string | null;
+  certificateIssuedAt: string | null;
+  certificateRegenerationAllowed: boolean;
+  certificateFirstName: string;
+  certificateLastName: string;
 };
 
 function formatCertificateDate(iso: string | null): string {
   if (!iso) {
-    return "Certyfikat jest juz dostepny.";
+    return "Certyfikat odebrany.";
   }
 
-  return `Certyfikat przyznano ${new Date(iso).toLocaleDateString("pl-PL", {
+  return `Certyfikat odebrano ${new Date(iso).toLocaleDateString("pl-PL", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -33,9 +40,15 @@ export function CourseViewer({
   completedItemIds,
   certificateGranted,
   certificateGrantedAt,
+  certificateGenerated,
+  certificateGeneratedAt,
+  certificateIssuedAt,
+  certificateRegenerationAllowed,
+  certificateFirstName,
+  certificateLastName,
 }: Props) {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const steps = useMemo(
     () => course.sections.flatMap((section) => section.items),
     [course.sections],
@@ -44,6 +57,12 @@ export function CourseViewer({
   const [activeItemId, setActiveItemId] = useState<string | null>(
     steps[0]?.id ?? null,
   );
+  const [certificateState, setCertificateState] = useState({
+    generated: certificateGenerated,
+    generatedAt: certificateGeneratedAt,
+    issuedAt: certificateIssuedAt,
+    regenerationAllowed: certificateRegenerationAllowed,
+  });
 
   useEffect(() => {
     const seed: Record<string, true> = {};
@@ -52,6 +71,20 @@ export function CourseViewer({
     });
     setCompletedIds(seed);
   }, [completedItemIds]);
+
+  useEffect(() => {
+    setCertificateState({
+      generated: certificateGenerated,
+      generatedAt: certificateGeneratedAt,
+      issuedAt: certificateIssuedAt,
+      regenerationAllowed: certificateRegenerationAllowed,
+    });
+  }, [
+    certificateGenerated,
+    certificateGeneratedAt,
+    certificateIssuedAt,
+    certificateRegenerationAllowed,
+  ]);
 
   useEffect(() => {
     const elements = steps
@@ -165,7 +198,9 @@ export function CourseViewer({
               <FiChevronLeft className="h-4 w-4 shrink-0" aria-hidden />
               Powrot do moich kursow
             </Link>
-            <h1 className="text-2xl font-semibold tracking-tight">{course.title}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {course.title}
+            </h1>
             <p className="text-sm text-[var(--coffee-espresso)]">
               Kontynuuj nauke krok po kroku. Postep zapisuje sie automatycznie.
             </p>
@@ -179,30 +214,34 @@ export function CourseViewer({
             </div>
             {certificateGranted ? (
               <div className="flex flex-wrap items-center gap-2">
-                <a
-                  href={`/api/courses/${course.slug}/certificate`}
-                  download
-                  className="inline-block border-radius border border-[var(--coffee-mocha)] bg-[var(--coffee-mocha)] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[var(--coffee-espresso)]"
-                >
-                  Pobierz certyfikat
-                </a>
-                <a
-                  href={`/api/courses/${course.slug}/certificate?preview=1`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block border-radius border border-[var(--coffee-mocha)] bg-white px-4 py-2 text-sm font-medium text-[var(--coffee-mocha)] shadow-sm hover:bg-[var(--coffee-cream)]"
-                >
-                  Podglad certyfikatu
-                </a>
+                <CertificateActions
+                  slug={course.slug}
+                  firstName={profile?.first_name ?? certificateFirstName}
+                  lastName={profile?.last_name ?? certificateLastName}
+                  generated={certificateState.generated}
+                  regenerationAllowed={certificateState.regenerationAllowed}
+                  onGenerated={(generatedAt, issuedAt) => {
+                    setCertificateState({
+                      generated: true,
+                      generatedAt,
+                      issuedAt,
+                      regenerationAllowed: false,
+                    });
+                  }}
+                />
               </div>
             ) : null}
           </div>
         </header>
 
         <div className="mb-4 rounded-md border border-[var(--coffee-cappuccino)] bg-white px-4 py-3 text-sm text-[var(--coffee-espresso)] shadow-sm">
-          {certificateGranted
-            ? formatCertificateDate(certificateGrantedAt)
-            : "Certyfikat bedzie dostepny po decyzji administratora."}
+          {certificateState.regenerationAllowed
+            ? "Administrator pozwolil wygenerowac certyfikat ponownie."
+            : certificateState.generated
+              ? formatCertificateDate(certificateState.generatedAt)
+              : certificateGranted
+                ? "Certyfikat przyznany. Odbierz go raz po sprawdzeniu danych."
+                : "Certyfikat bedzie dostepny po decyzji administratora."}
         </div>
 
         <div className="grid gap-4 md:grid-cols-[320px_1fr]">

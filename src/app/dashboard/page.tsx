@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/services/supabase/server";
 import { authenticateUser } from "@/services/auth/server";
-import { getCertificateGrants, getCoursesCompletion } from "@/services/certificate";
+import {
+  getCertificateGrants,
+  getCoursesCompletion,
+} from "@/services/certificate";
 import { DashboardTabs } from "@/features/dashboard/DashboardTabs";
 import type { CourseCard } from "@/features/dashboard/DashboardTabs";
 
@@ -24,7 +27,10 @@ export default async function DashboardPage() {
   // #region agent log
   fetch("http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ee7115" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "ee7115",
+    },
     body: JSON.stringify({
       sessionId: "ee7115",
       hypothesisId: "A",
@@ -51,7 +57,10 @@ export default async function DashboardPage() {
   // #region agent log
   fetch("http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ee7115" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "ee7115",
+    },
     body: JSON.stringify({
       sessionId: "ee7115",
       hypothesisId: "B",
@@ -79,7 +88,10 @@ export default async function DashboardPage() {
     // #region agent log
     fetch("http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ee7115" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "ee7115",
+      },
       body: JSON.stringify({
         sessionId: "ee7115",
         hypothesisId: "C",
@@ -90,7 +102,7 @@ export default async function DashboardPage() {
           orderItemsError: orderItemsError?.message ?? null,
           orderItemsCode: orderItemsError?.code ?? null,
         },
-      timestamp: Date.now(),
+        timestamp: Date.now(),
       }),
     }).catch(() => {});
     // #endregion
@@ -109,10 +121,11 @@ export default async function DashboardPage() {
 
     if (createdCoursesError) {
       fallbackUsed = true;
-      const { data: fallbackCourses, error: fallbackCoursesError } = await supabase
-        .from("courses")
-        .select("id")
-        .order("created_at", { ascending: false });
+      const { data: fallbackCourses, error: fallbackCoursesError } =
+        await supabase
+          .from("courses")
+          .select("id")
+          .order("created_at", { ascending: false });
 
       adminCourseIds = fallbackCourses?.map((course) => course.id) ?? [];
       fallbackErrorMessage = fallbackCoursesError?.message ?? null;
@@ -124,7 +137,10 @@ export default async function DashboardPage() {
     // #region agent log
     fetch("http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ee7115" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "ee7115",
+      },
       body: JSON.stringify({
         sessionId: "ee7115",
         hypothesisId: "C2",
@@ -165,7 +181,10 @@ export default async function DashboardPage() {
     // #region agent log
     fetch("http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ee7115" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "ee7115",
+      },
       body: JSON.stringify({
         sessionId: "ee7115",
         hypothesisId: "D",
@@ -195,7 +214,8 @@ export default async function DashboardPage() {
 
     courseCards = courseIds.map((courseId) => {
       const course = courses?.find((item) => item.id === courseId);
-      const courseTitle = purchasedTitleByCourseId.get(courseId) ?? course?.title ?? "Kurs";
+      const courseTitle =
+        purchasedTitleByCourseId.get(courseId) ?? course?.title ?? "Kurs";
       const completion = completionByCourse[courseId] ?? {
         totalItems: 0,
         completedItems: 0,
@@ -216,6 +236,10 @@ export default async function DashboardPage() {
         completionPercentage: completion.percentage,
         certificateGranted: certificateGrant.granted,
         certificateGrantedAt: certificateGrant.grantedAt,
+        certificateGenerated: certificateGrant.generated,
+        certificateGeneratedAt: certificateGrant.generatedAt,
+        certificateIssuedAt: certificateGrant.issuedAt,
+        certificateRegenerationAllowed: certificateGrant.regenerationAllowed,
       };
     });
   }
@@ -223,7 +247,10 @@ export default async function DashboardPage() {
   // #region agent log
   fetch("http://127.0.0.1:7463/ingest/76655e3e-8895-4035-ade6-e75a3869f7a8", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ee7115" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "ee7115",
+    },
     body: JSON.stringify({
       sessionId: "ee7115",
       hypothesisId: "E",

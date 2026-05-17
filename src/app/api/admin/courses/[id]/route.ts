@@ -73,7 +73,7 @@ export async function PUT(
     price,
     status,
     mainImageUrl,
-    certificateTemplateKey,
+    certificateTemplateId,
     sections,
     promotionDiscountType,
     promotionDiscountValue,
@@ -139,7 +139,8 @@ export async function PUT(
     .from("courses")
     .update({
       main_image_url: mainImageUrl ?? null,
-      certificate_template_key: certificateTemplateKey,
+      certificate_template_id: certificateTemplateId,
+      certificate_template_key: certificateTemplateId,
     })
     .eq("id", result.course_id);
   if (metadataError) {

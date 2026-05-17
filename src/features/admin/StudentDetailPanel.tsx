@@ -7,7 +7,9 @@ import type { StudentCourseProgress, StudentDetail } from "@/types/student";
 type Props = {
   student: StudentDetail;
   onGrantCertificate: (course: StudentCourseProgress) => void;
+  onAllowRegenerateCertificate: (course: StudentCourseProgress) => void;
   grantingCourseId: string | null;
+  regeneratingCourseId: string | null;
 };
 
 function formatDateTime(iso: string | null): string {
@@ -30,10 +32,21 @@ function formatCertificateDate(iso: string | null): string {
   })}.`;
 }
 
+function formatGeneratedCertificateDate(iso: string | null): string {
+  if (!iso) return "Certyfikat odebrany.";
+  return `Certyfikat odebrany ${new Date(iso).toLocaleDateString("pl-PL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })}.`;
+}
+
 export function StudentDetailPanel({
   student,
   onGrantCertificate,
+  onAllowRegenerateCertificate,
   grantingCourseId,
+  regeneratingCourseId,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -65,7 +78,9 @@ export function StudentDetailPanel({
                 <FiCalendar className="h-4 w-4" aria-hidden />
               </span>
               <span>
-                <span className="text-[var(--coffee-espresso)]">Rejestracja: </span>
+                <span className="text-[var(--coffee-espresso)]">
+                  Rejestracja:{" "}
+                </span>
                 {formatDateTime(student.registrationDate)}
               </span>
             </li>
@@ -74,7 +89,9 @@ export function StudentDetailPanel({
                 <FiLogIn className="h-4 w-4" aria-hidden />
               </span>
               <span>
-                <span className="text-[var(--coffee-espresso)]">Ostatnie logowanie: </span>
+                <span className="text-[var(--coffee-espresso)]">
+                  Ostatnie logowanie:{" "}
+                </span>
                 {formatDateTime(student.lastLogin)}
               </span>
             </li>
@@ -124,24 +141,53 @@ export function StudentDetailPanel({
                 </p>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="text-[var(--text-xs)] text-[var(--coffee-espresso)]">
-                    {course.certificateGranted
-                      ? formatCertificateDate(course.certificateGrantedAt)
-                      : "Certyfikat oczekuje na decyzje administratora."}
+                    {course.certificateGenerated
+                      ? course.certificateRegenerationAllowed
+                        ? "Kursant moze wygenerowac certyfikat ponownie."
+                        : formatGeneratedCertificateDate(
+                            course.certificateGeneratedAt,
+                          )
+                      : course.certificateGranted
+                        ? formatCertificateDate(course.certificateGrantedAt)
+                        : "Certyfikat oczekuje na decyzje administratora."}
                   </div>
-                  <Button
-                    variant={course.certificateGranted ? "secondary" : "primary"}
-                    size="sm"
-                    loading={grantingCourseId === course.courseId}
-                    disabled={course.certificateGranted}
-                    onClick={() => onGrantCertificate(course)}
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <FiAward className="h-4 w-4" aria-hidden />
-                      {course.certificateGranted
-                        ? "Certyfikat przyznany"
-                        : "Przyznaj certyfikat"}
-                    </span>
-                  </Button>
+                  {course.certificateGenerated ? (
+                    <Button
+                      variant={
+                        course.certificateRegenerationAllowed
+                          ? "secondary"
+                          : "outline"
+                      }
+                      size="sm"
+                      loading={regeneratingCourseId === course.courseId}
+                      disabled={course.certificateRegenerationAllowed}
+                      onClick={() => onAllowRegenerateCertificate(course)}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <FiAward className="h-4 w-4" aria-hidden />
+                        {course.certificateRegenerationAllowed
+                          ? "Ponowne generowanie wlaczone"
+                          : "Pozwol wygenerowac ponownie"}
+                      </span>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant={
+                        course.certificateGranted ? "secondary" : "primary"
+                      }
+                      size="sm"
+                      loading={grantingCourseId === course.courseId}
+                      disabled={course.certificateGranted}
+                      onClick={() => onGrantCertificate(course)}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <FiAward className="h-4 w-4" aria-hidden />
+                        {course.certificateGranted
+                          ? "Certyfikat przyznany"
+                          : "Przyznaj certyfikat"}
+                      </span>
+                    </Button>
+                  )}
                 </div>
               </li>
             ))}

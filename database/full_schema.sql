@@ -20,6 +20,7 @@ DROP TABLE IF EXISTS public.course_items CASCADE;
 DROP TABLE IF EXISTS public.course_sections CASCADE;
 DROP TABLE IF EXISTS public.orders CASCADE;
 DROP TABLE IF EXISTS public.courses CASCADE;
+DROP TABLE IF EXISTS public.certificate_templates CASCADE;
 DROP TABLE IF EXISTS public.coupons CASCADE;
 DROP TABLE IF EXISTS public.users CASCADE;
 
@@ -128,6 +129,26 @@ CREATE TABLE users (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TABLE certificate_templates (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  storage_bucket TEXT NOT NULL DEFAULT 'certificates',
+  storage_path TEXT NOT NULL UNIQUE,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  CONSTRAINT certificate_templates_id_nonempty CHECK (length(trim(id)) > 0),
+  CONSTRAINT certificate_templates_name_nonempty CHECK (length(trim(name)) > 0),
+  CONSTRAINT certificate_templates_storage_path_nonempty CHECK (length(trim(storage_path)) > 0)
+);
+
+COMMENT ON TABLE certificate_templates IS 'Admin-managed certificate PDF templates stored in Supabase Storage.';
+
+INSERT INTO certificate_templates (id, name, storage_path)
+VALUES
+  ('certificate-1', 'Certyfikat 1 - laminacja brwi', 'templates/certificate-1.pdf'),
+  ('certificate-2', 'Certyfikat 2 - koloryzacja brwi', 'templates/certificate-2.pdf');
+
 CREATE TABLE courses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
@@ -139,6 +160,8 @@ CREATE TABLE courses (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   main_image_url TEXT,
   certificate_template_key TEXT NOT NULL DEFAULT 'certificate-1',
+  certificate_template_id TEXT NOT NULL DEFAULT 'certificate-1'
+    REFERENCES certificate_templates(id) ON UPDATE CASCADE ON DELETE RESTRICT,
   promotion_discount_type discount_type,
   promotion_discount_value INTEGER,
   promotion_start_date TIMESTAMP WITH TIME ZONE,
@@ -167,6 +190,7 @@ CREATE TABLE courses (
 
 COMMENT ON COLUMN courses.main_image_url IS 'URL of the main course image displayed on course cards and detail pages';
 COMMENT ON COLUMN courses.certificate_template_key IS 'Bundled certificate template key used for PDF generation';
+COMMENT ON COLUMN courses.certificate_template_id IS 'Stable certificate template id used for PDF generation';
 COMMENT ON COLUMN courses.promotion_discount_type IS 'Promotion discount type: percentage or fixed amount';
 COMMENT ON COLUMN courses.promotion_discount_value IS 'Promotion value: 1-100 for percentage, amount in grosze for fixed';
 COMMENT ON COLUMN courses.promotion_start_date IS 'Promotion valid from (inclusive)';
@@ -239,9 +263,23 @@ CREATE TABLE course_certificates (
   course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
   granted_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   granted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  recipient_first_name TEXT,
+  recipient_last_name TEXT,
+  issued_at DATE,
+  generated_at TIMESTAMP WITH TIME ZONE,
+  pdf_storage_bucket TEXT NOT NULL DEFAULT 'certificates',
+  pdf_storage_path TEXT,
+  certificate_template_id TEXT REFERENCES certificate_templates(id) ON UPDATE CASCADE ON DELETE SET NULL,
+  regeneration_allowed BOOLEAN NOT NULL DEFAULT FALSE,
+  regeneration_allowed_at TIMESTAMP WITH TIME ZONE,
+  generation_version INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT course_certificates_generation_version_nonnegative CHECK (generation_version >= 0),
   UNIQUE(user_id, course_id)
 );
+
+COMMENT ON COLUMN course_certificates.generated_at IS 'Timestamp when the student generated the immutable certificate PDF.';
+COMMENT ON COLUMN course_certificates.regeneration_allowed IS 'Allows exactly one replacement generation after an admin-approved correction.';
 
 CREATE TABLE coupons (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -302,6 +340,13 @@ CREATE INDEX idx_course_progress_user_id ON course_progress(user_id);
 CREATE INDEX idx_course_progress_course_id ON course_progress(course_id);
 CREATE INDEX idx_course_certificates_user_id ON course_certificates(user_id);
 CREATE INDEX idx_course_certificates_course_id ON course_certificates(course_id);
+CREATE INDEX idx_course_certificates_generated_at ON course_certificates(generated_at);
+CREATE INDEX idx_course_certificates_certificate_template_id
+  ON course_certificates(certificate_template_id);
+CREATE UNIQUE INDEX idx_course_certificates_pdf_storage_path
+  ON course_certificates(pdf_storage_bucket, pdf_storage_path)
+  WHERE pdf_storage_path IS NOT NULL;
+CREATE INDEX idx_courses_certificate_template_id ON courses(certificate_template_id);
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_order_items_course_id ON order_items(course_id);
@@ -313,6 +358,11 @@ CREATE INDEX idx_coupon_usage_coupon_id ON coupon_usage(coupon_id);
 -- ================================
 CREATE TRIGGER update_users_timestamp
   BEFORE UPDATE ON users
+  FOR EACH ROW
+  EXECUTE FUNCTION update_timestamp();
+
+CREATE TRIGGER update_certificate_templates_timestamp
+  BEFORE UPDATE ON certificate_templates
   FOR EACH ROW
   EXECUTE FUNCTION update_timestamp();
 
@@ -355,6 +405,7 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
 -- RLS
 -- ================================
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE certificate_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE course_sections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE course_items ENABLE ROW LEVEL SECURITY;
@@ -370,6 +421,22 @@ CREATE POLICY "Users can view own profile" ON users
 
 CREATE POLICY "Users can update own profile" ON users
   FOR UPDATE USING (auth.uid() = id OR (SELECT current_user_role() = 'admin'));
+
+CREATE POLICY "Certificate templates viewable by admins" ON certificate_templates
+  FOR SELECT USING ((SELECT current_user_role() = 'admin'));
+
+CREATE POLICY "Only admins can insert certificate templates" ON certificate_templates
+  FOR INSERT
+  WITH CHECK ((SELECT current_user_role() = 'admin'));
+
+CREATE POLICY "Only admins can update certificate templates" ON certificate_templates
+  FOR UPDATE
+  USING ((SELECT current_user_role() = 'admin'))
+  WITH CHECK ((SELECT current_user_role() = 'admin'));
+
+CREATE POLICY "Only admins can delete certificate templates" ON certificate_templates
+  FOR DELETE
+  USING ((SELECT current_user_role() = 'admin'));
 
 CREATE POLICY "Courses are viewable by everyone" ON courses
   FOR SELECT USING (true);
@@ -706,3 +773,34 @@ USING (
 
 GRANT ALL ON storage.objects TO authenticated;
 GRANT SELECT ON storage.objects TO anon;
+
+-- ================================
+-- STORAGE: bucket certificates
+-- ================================
+INSERT INTO storage.buckets (
+  id,
+  name,
+  public,
+  file_size_limit,
+  allowed_mime_types
+)
+VALUES (
+  'certificates',
+  'certificates',
+  FALSE,
+  10485760,
+  ARRAY['application/pdf']
+)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "Only admins can manage certificate storage"
+ON storage.objects FOR ALL
+TO authenticated
+USING (
+  bucket_id = 'certificates'
+  AND (SELECT current_user_role() = 'admin')
+)
+WITH CHECK (
+  bucket_id = 'certificates'
+  AND (SELECT current_user_role() = 'admin')
+);

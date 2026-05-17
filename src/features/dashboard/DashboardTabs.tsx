@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge, Button } from "@/components/ui";
-import { AdminDashboard, type AdminTabId } from "@/features/admin/AdminDashboard";
+import {
+  AdminDashboard,
+  type AdminTabId,
+} from "@/features/admin/AdminDashboard";
+import { CertificateActions } from "@/features/certificates/CertificateActions";
 import type { CourseStatus } from "@/types/course";
 import type { UserProfile } from "@/types/user";
 import { AccountForm } from "./AccountForm";
@@ -18,6 +22,10 @@ export type CourseCard = {
   completionPercentage: number;
   certificateGranted: boolean;
   certificateGrantedAt: string | null;
+  certificateGenerated: boolean;
+  certificateGeneratedAt: string | null;
+  certificateIssuedAt: string | null;
+  certificateRegenerationAllowed: boolean;
 };
 
 type Props = {
@@ -32,6 +40,7 @@ type TabId =
   | "account"
   | "admin-courses"
   | "admin-students"
+  | "admin-certificates"
   | "admin-coupons"
   | "admin-stats";
 
@@ -43,6 +52,7 @@ const STUDENT_TABS: { key: TabId; label: string }[] = [
 const ADMIN_TABS: { key: TabId; label: string }[] = [
   { key: "admin-courses", label: "Zarzadzanie kursami" },
   { key: "admin-students", label: "Kursanci" },
+  { key: "admin-certificates", label: "Certyfikaty" },
   { key: "admin-coupons", label: "Kupony" },
   { key: "admin-stats", label: "Statystyki" },
 ];
@@ -53,6 +63,8 @@ function getAdminTabId(tab: TabId): AdminTabId | null {
       return "courses";
     case "admin-students":
       return "students";
+    case "admin-certificates":
+      return "certificates";
     case "admin-coupons":
       return "coupons";
     case "admin-stats":
@@ -64,10 +76,10 @@ function getAdminTabId(tab: TabId): AdminTabId | null {
 
 function formatCertificateDate(iso: string | null): string {
   if (!iso) {
-    return "Certyfikat przyznany przez administratora.";
+    return "Certyfikat odebrany.";
   }
 
-  return `Certyfikat przyznany: ${new Date(iso).toLocaleDateString("pl-PL", {
+  return `Certyfikat odebrany: ${new Date(iso).toLocaleDateString("pl-PL", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -81,6 +93,38 @@ export function DashboardTabs({
   emptyState,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("courses");
+  const [localCourseCards, setLocalCourseCards] = useState(courseCards);
+  const [certificateActionCount, setCertificateActionCount] = useState<
+    number | null
+  >(null);
+
+  useEffect(() => {
+    setLocalCourseCards(courseCards);
+  }, [courseCards]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      return;
+    }
+
+    let active = true;
+    fetch("/api/admin/certificates/summary")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (active) {
+          setCertificateActionCount(data?.actionRequiredCount ?? 0);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setCertificateActionCount(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isAdmin]);
 
   const tabs: { key: TabId; label: string }[] = [
     ...STUDENT_TABS,
@@ -101,7 +145,16 @@ export function DashboardTabs({
             }`}
             onClick={() => setActiveTab(tab.key)}
           >
-            {tab.label}
+            <span className="inline-flex items-center gap-2">
+              {tab.label}
+              {tab.key === "admin-certificates" &&
+              certificateActionCount != null &&
+              certificateActionCount > 0 ? (
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--coffee-mocha)] px-1.5 py-0.5 text-xs font-semibold text-white">
+                  {certificateActionCount}
+                </span>
+              ) : null}
+            </span>
           </button>
         ))}
       </div>
@@ -126,7 +179,7 @@ export function DashboardTabs({
             </div>
           ) : (
             <div className="flex flex-col gap-6">
-              {courseCards.map((course) => (
+              {localCourseCards.map((course) => (
                 <div
                   key={course.id}
                   className="bg-white border border-[var(--table-border)] border-radius overflow-hidden p-5 sm:p-6 transition-shadow duration-300 hover:bg-[var(--coffee-cream)]"
@@ -138,7 +191,9 @@ export function DashboardTabs({
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge
                         rounded={false}
-                        variant={course.status === "active" ? "success" : "warning"}
+                        variant={
+                          course.status === "active" ? "success" : "warning"
+                        }
                         size="sm"
                       >
                         {course.status === "active" ? "Aktywny" : "Nieaktywny"}
@@ -163,25 +218,43 @@ export function DashboardTabs({
                     Ukonczono: {course.completionPercentage}%
                   </div>
                   <div className="mt-3 rounded-md border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] px-3 py-2 text-sm text-[var(--coffee-espresso)]">
-                    {course.certificateGranted
-                      ? formatCertificateDate(course.certificateGrantedAt)
-                      : course.completionPercentage === 100
-                        ? "Ukonczyles 100% kursu. Certyfikat bedzie dostepny po decyzji administratora."
-                        : "Certyfikat bedzie dostepny po decyzji administratora."}
+                    {course.certificateRegenerationAllowed
+                      ? "Administrator pozwolil wygenerowac certyfikat ponownie."
+                      : course.certificateGenerated
+                        ? formatCertificateDate(course.certificateGeneratedAt)
+                        : course.certificateGranted
+                          ? "Certyfikat przyznany. Odbierz go raz po sprawdzeniu danych."
+                          : course.completionPercentage === 100
+                            ? "Ukonczyles 100% kursu. Certyfikat bedzie dostepny po decyzji administratora."
+                            : "Certyfikat bedzie dostepny po decyzji administratora."}
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3">
                     {course.certificateGranted ? (
                       <>
-                        <a href={`/api/courses/${course.slug}/certificate`} download>
-                          <Button variant="primary">Pobierz certyfikat</Button>
-                        </a>
-                        <a
-                          href={`/api/courses/${course.slug}/certificate?preview=1`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Button variant="outline">Podglad certyfikatu</Button>
-                        </a>
+                        <CertificateActions
+                          slug={course.slug}
+                          firstName={profile.first_name}
+                          lastName={profile.last_name}
+                          generated={course.certificateGenerated}
+                          regenerationAllowed={
+                            course.certificateRegenerationAllowed
+                          }
+                          onGenerated={(generatedAt, issuedAt) => {
+                            setLocalCourseCards((previous) =>
+                              previous.map((item) =>
+                                item.id === course.id
+                                  ? {
+                                      ...item,
+                                      certificateGenerated: true,
+                                      certificateGeneratedAt: generatedAt,
+                                      certificateIssuedAt: issuedAt,
+                                      certificateRegenerationAllowed: false,
+                                    }
+                                  : item,
+                              ),
+                            );
+                          }}
+                        />
                         <Link href={`/learn/${course.slug}`}>
                           <Button variant="outline">Otworz kurs</Button>
                         </Link>
@@ -222,7 +295,11 @@ export function DashboardTabs({
       )}
 
       {isAdmin && getAdminTabId(activeTab) !== null && (
-        <AdminDashboard embedded activeAdminTab={getAdminTabId(activeTab)!} />
+        <AdminDashboard
+          embedded
+          activeAdminTab={getAdminTabId(activeTab)!}
+          onCertificateActionCountChange={setCertificateActionCount}
+        />
       )}
     </>
   );

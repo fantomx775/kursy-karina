@@ -4,9 +4,23 @@ export const CERTIFICATE_TEMPLATE_KEYS = [
 ] as const;
 
 export type CertificateTemplateKey = (typeof CERTIFICATE_TEMPLATE_KEYS)[number];
+export type CertificateTemplateId = string;
+
+export type CertificateTemplate = {
+  id: CertificateTemplateId;
+  name: string;
+  storageBucket: string;
+  storagePath: string;
+  isActive: boolean;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
 
 export const DEFAULT_CERTIFICATE_TEMPLATE_KEY: CertificateTemplateKey =
   "certificate-1";
+export const DEFAULT_CERTIFICATE_TEMPLATE_ID: CertificateTemplateId =
+  DEFAULT_CERTIFICATE_TEMPLATE_KEY;
+export const CERTIFICATE_STORAGE_BUCKET = "certificates";
 
 export const CERTIFICATE_TEMPLATE_OPTIONS: Array<{
   key: CertificateTemplateKey;
@@ -34,4 +48,12 @@ export function normalizeCertificateTemplateKey(
   return isCertificateTemplateKey(value)
     ? value
     : DEFAULT_CERTIFICATE_TEMPLATE_KEY;
+}
+
+export function normalizeCertificateTemplateId(
+  value: unknown,
+): CertificateTemplateId {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : DEFAULT_CERTIFICATE_TEMPLATE_ID;
 }

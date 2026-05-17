@@ -8,6 +8,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   DEFAULT_CERTIFICATE_TEMPLATE_KEY,
   normalizeCertificateTemplateKey,
+  type CertificateTemplateId,
   type CertificateTemplateKey,
 } from "@/lib/certificateTemplates";
 
@@ -98,6 +99,17 @@ export type CourseCompletion = {
 export type CertificateGrant = {
   granted: boolean;
   grantedAt: string | null;
+  generated: boolean;
+  generatedAt: string | null;
+  issuedAt: string | null;
+  recipientFirstName: string | null;
+  recipientLastName: string | null;
+  pdfStorageBucket: string | null;
+  pdfStoragePath: string | null;
+  certificateTemplateId: CertificateTemplateId | null;
+  regenerationAllowed: boolean;
+  regenerationAllowedAt: string | null;
+  generationVersion: number;
 };
 
 /**
@@ -210,7 +222,9 @@ export async function getCertificateGrant(
 ): Promise<CertificateGrant> {
   const { data } = await supabase
     .from("course_certificates")
-    .select("granted_at")
+    .select(
+      "granted_at, generated_at, issued_at, recipient_first_name, recipient_last_name, pdf_storage_bucket, pdf_storage_path, certificate_template_id, regeneration_allowed, regeneration_allowed_at, generation_version",
+    )
     .eq("user_id", userId)
     .eq("course_id", courseId)
     .maybeSingle();
@@ -218,6 +232,17 @@ export async function getCertificateGrant(
   return {
     granted: Boolean(data?.granted_at),
     grantedAt: data?.granted_at ?? null,
+    generated: Boolean(data?.generated_at && data?.pdf_storage_path),
+    generatedAt: data?.generated_at ?? null,
+    issuedAt: data?.issued_at ?? null,
+    recipientFirstName: data?.recipient_first_name ?? null,
+    recipientLastName: data?.recipient_last_name ?? null,
+    pdfStorageBucket: data?.pdf_storage_bucket ?? null,
+    pdfStoragePath: data?.pdf_storage_path ?? null,
+    certificateTemplateId: data?.certificate_template_id ?? null,
+    regenerationAllowed: Boolean(data?.regeneration_allowed),
+    regenerationAllowedAt: data?.regeneration_allowed_at ?? null,
+    generationVersion: data?.generation_version ?? 0,
   };
 }
 
@@ -230,7 +255,9 @@ export async function getCertificateGrants(
 
   const { data } = await supabase
     .from("course_certificates")
-    .select("course_id, granted_at")
+    .select(
+      "course_id, granted_at, generated_at, issued_at, recipient_first_name, recipient_last_name, pdf_storage_bucket, pdf_storage_path, certificate_template_id, regeneration_allowed, regeneration_allowed_at, generation_version",
+    )
     .eq("user_id", userId)
     .in("course_id", courseIds);
 
@@ -239,6 +266,17 @@ export async function getCertificateGrants(
     result[courseId] = {
       granted: false,
       grantedAt: null,
+      generated: false,
+      generatedAt: null,
+      issuedAt: null,
+      recipientFirstName: null,
+      recipientLastName: null,
+      pdfStorageBucket: null,
+      pdfStoragePath: null,
+      certificateTemplateId: null,
+      regenerationAllowed: false,
+      regenerationAllowedAt: null,
+      generationVersion: 0,
     };
   });
 
@@ -246,6 +284,17 @@ export async function getCertificateGrants(
     result[entry.course_id] = {
       granted: true,
       grantedAt: entry.granted_at,
+      generated: Boolean(entry.generated_at && entry.pdf_storage_path),
+      generatedAt: entry.generated_at,
+      issuedAt: entry.issued_at,
+      recipientFirstName: entry.recipient_first_name,
+      recipientLastName: entry.recipient_last_name,
+      pdfStorageBucket: entry.pdf_storage_bucket,
+      pdfStoragePath: entry.pdf_storage_path,
+      certificateTemplateId: entry.certificate_template_id,
+      regenerationAllowed: Boolean(entry.regeneration_allowed),
+      regenerationAllowedAt: entry.regeneration_allowed_at,
+      generationVersion: entry.generation_version ?? 0,
     };
   });
 
@@ -258,7 +307,47 @@ export type CertificateData = {
   courseTitle: string;
   issuedAt: string;
   templateKey?: CertificateTemplateKey | null;
+  templateBytes?: Uint8Array | ArrayBuffer | null;
 };
+
+export function formatCertificateIssuedAt(date: Date = new Date()): string {
+  return new Intl.DateTimeFormat("pl-PL", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Warsaw",
+  }).format(date);
+}
+
+export function getWarsawDateOnly(date: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "Europe/Warsaw",
+  }).formatToParts(date);
+
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+
+  return `${year}-${month}-${day}`;
+}
+
+export function formatCertificateIssuedAtInput(value: string): string {
+  if (!value) {
+    return formatCertificateIssuedAt();
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return formatCertificateIssuedAt(new Date(`${value}T12:00:00Z`));
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime())
+    ? value
+    : formatCertificateIssuedAt(parsed);
+}
 
 function fitFontSize(
   text: string,
@@ -480,7 +569,9 @@ export async function generateCertificatePdf(
     data.templateKey ?? DEFAULT_CERTIFICATE_TEMPLATE_KEY,
   );
   const [templateBytes, fontBytes] = await Promise.all([
-    loadCertificateTemplate(templateKey),
+    data.templateBytes
+      ? Promise.resolve(new Uint8Array(data.templateBytes))
+      : loadCertificateTemplate(templateKey),
     loadPrataFont(),
   ]);
 

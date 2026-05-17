@@ -24,7 +24,11 @@ function formatDate(iso: string | null): string {
   });
 }
 
-export function StudentsTab({ students, loading, onViewStudent }: StudentsTabProps) {
+export function StudentsTab({
+  students,
+  loading,
+  onViewStudent,
+}: StudentsTabProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -32,21 +36,26 @@ export function StudentsTab({ students, loading, onViewStudent }: StudentsTabPro
   }, [students.length]);
 
   const columns: Column<StudentSummary>[] = [
-    { key: "fullName", title: "Imię i nazwisko", dataIndex: "fullName", sortable: true },
-    { key: "email", title: "Email", dataIndex: "email", sortable: true },
     {
-      key: "registrationDate",
-      title: "Data rejestracji",
-      dataIndex: "registrationDate",
+      key: "fullName",
+      title: "Imię i nazwisko",
+      dataIndex: "fullName",
       sortable: true,
-      render: (_, record) => formatDate(record.registrationDate),
     },
+    { key: "email", title: "Email", dataIndex: "email", sortable: true },
     {
       key: "lastLogin",
       title: "Ostatnie logowanie",
       dataIndex: "lastLogin",
       sortable: true,
       render: (_, record) => formatDate(record.lastLogin ?? null),
+    },
+    {
+      key: "certificatesRedeemed",
+      title: "Odebrane Certyfikaty",
+      dataIndex: "certificatesRedeemed",
+      align: "center",
+      sortable: true,
     },
     {
       key: "coursesEnrolled",
