@@ -15,6 +15,8 @@ export type CourseCard = {
   slug: string;
   status: CourseStatus;
   adminAccess: boolean;
+  accessStatus: "active" | "expired";
+  accessExpiresAt: string | null;
   completionPercentage: number;
   certificateGranted: boolean;
   certificateGrantedAt: string | null;
@@ -72,6 +74,15 @@ function formatCertificateDate(iso: string | null): string {
     month: "2-digit",
     year: "numeric",
   })}`;
+}
+
+function formatAccessDate(iso: string | null): string {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("pl-PL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 export function DashboardTabs({
@@ -147,6 +158,14 @@ export function DashboardTabs({
                         <Badge rounded={false} variant="secondary" size="sm">
                           Dostep admina
                         </Badge>
+                      ) : course.accessStatus === "expired" ? (
+                        <Badge rounded={false} variant="warning" size="sm">
+                          Dostep wygasl
+                        </Badge>
+                      ) : course.accessExpiresAt ? (
+                        <Badge rounded={false} variant="secondary" size="sm">
+                          Dostep do {formatAccessDate(course.accessExpiresAt)}
+                        </Badge>
                       ) : null}
                     </div>
                   </div>
@@ -170,6 +189,11 @@ export function DashboardTabs({
                         : "Certyfikat bedzie dostepny po decyzji administratora."}
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3">
+                    {course.accessStatus === "expired" && !course.adminAccess ? (
+                      <Link href={`/courses/${course.slug}`}>
+                        <Button variant="primary">Przedłuż dostęp</Button>
+                      </Link>
+                    ) : null}
                     {course.certificateGranted ? (
                       <>
                         <a href={`/api/courses/${course.slug}/certificate`} download>
@@ -182,9 +206,11 @@ export function DashboardTabs({
                         >
                           <Button variant="outline">Podglad certyfikatu</Button>
                         </a>
-                        <Link href={`/learn/${course.slug}`}>
-                          <Button variant="outline">Otworz kurs</Button>
-                        </Link>
+                        {course.accessStatus === "active" || course.adminAccess ? (
+                          <Link href={`/learn/${course.slug}`}>
+                            <Button variant="outline">Otworz kurs</Button>
+                          </Link>
+                        ) : null}
                         {isAdmin ? (
                           <Link href={`/dashboard/courses/${course.id}/edit`}>
                             <Button variant="secondary">Edytuj</Button>
@@ -193,13 +219,15 @@ export function DashboardTabs({
                       </>
                     ) : (
                       <>
-                        <Link href={`/learn/${course.slug}`}>
-                          <Button variant="primary">
-                            {course.completionPercentage === 100
-                              ? "Otworz kurs"
-                              : "Kontynuuj nauke"}
-                          </Button>
-                        </Link>
+                        {course.accessStatus === "active" || course.adminAccess ? (
+                          <Link href={`/learn/${course.slug}`}>
+                            <Button variant="primary">
+                              {course.completionPercentage === 100
+                                ? "Otworz kurs"
+                                : "Kontynuuj nauke"}
+                            </Button>
+                          </Link>
+                        ) : null}
                         {isAdmin ? (
                           <Link href={`/dashboard/courses/${course.id}/edit`}>
                             <Button variant="secondary">Edytuj</Button>

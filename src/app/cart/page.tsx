@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useCart } from "@/features/cart/CartContext";
 import { useAuth } from "@/features/auth/AuthContext";
 import { TrashIcon } from "@/components/ui/Icon";
+import { formatAccessDuration } from "@/lib/accessDuration";
 import { cn } from "@/lib/utils";
 
 export default function CartPage() {
@@ -186,6 +187,9 @@ export default function CartPage() {
                           <span>{(item.price / 100).toFixed(2)} PLN</span>
                         )}
                       </div>
+                      <div className="mt-1 text-xs text-[var(--coffee-espresso)]">
+                        Dostęp: {formatAccessDuration(item.accessDurationMonths ?? 6)}
+                      </div>
                     </div>
                   </div>
                   <button
@@ -219,6 +223,9 @@ export default function CartPage() {
                   >
                     <span className="text-[var(--coffee-charcoal)] line-clamp-2 min-w-0">
                       {item.title}
+                      <span className="block text-xs text-[var(--coffee-espresso)]">
+                        {formatAccessDuration(item.accessDurationMonths ?? 6)}
+                      </span>
                     </span>
                     <span className="flex-shrink-0 text-right">
                       {onPromo ? (

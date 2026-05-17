@@ -54,6 +54,13 @@ export function CourseStatsTab({
       render: (_, record) => String(record.buyersCount),
     },
     {
+      key: "activeAccessCount",
+      title: "Aktywne dostępy",
+      dataIndex: "activeAccessCount",
+      align: "right",
+      render: (_, record) => String(record.activeAccessCount ?? 0),
+    },
+    {
       key: "lastPurchaseAt",
       title: "Ostatni zakup",
       dataIndex: "lastPurchaseAt",

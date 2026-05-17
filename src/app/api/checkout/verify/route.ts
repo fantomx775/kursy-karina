@@ -2,6 +2,11 @@ import { revalidatePath } from "next/cache";
 import { authenticateUser } from "@/services/auth/server";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
 import { stripe } from "@/services/stripe";
+import {
+  DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+  addCalendarMonths,
+  normalizeAccessDurationMonths,
+} from "@/lib/accessDuration";
 
 export async function POST(request: Request) {
   const auth = await authenticateUser();
@@ -89,21 +94,30 @@ export async function POST(request: Request) {
 
   const { data: courses } = await admin
     .from("courses")
-    .select("id, title, price")
+    .select("id, title, price, access_duration_months")
     .in("id", courseIds);
 
   const courseMap = new Map(
     (courses ?? []).map((course) => [course.id, course]),
   );
 
+  const accessGrantedAt = new Date();
   const orderItems = courseIds.map((courseId: string) => {
     const course = courseMap.get(courseId);
+    const accessDurationMonths = normalizeAccessDurationMonths(
+      course?.access_duration_months ?? DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+    );
     return {
       order_id: order.id,
       course_id: courseId,
       title: course?.title ?? "Kurs",
       price: course?.price ?? 0,
       quantity: 1,
+      access_duration_months: accessDurationMonths,
+      access_expires_at: addCalendarMonths(
+        accessGrantedAt,
+        accessDurationMonths,
+      ).toISOString(),
     };
   });
 

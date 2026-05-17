@@ -72,6 +72,7 @@ export async function PUT(
     description,
     price,
     status,
+    accessDurationMonths,
     mainImageUrl,
     certificateTemplateKey,
     sections,
@@ -140,6 +141,7 @@ export async function PUT(
     .update({
       main_image_url: mainImageUrl ?? null,
       certificate_template_key: certificateTemplateKey,
+      access_duration_months: accessDurationMonths,
     })
     .eq("id", result.course_id);
   if (metadataError) {

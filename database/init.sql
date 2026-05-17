@@ -1,3 +1,3 @@
--- Schemat bazy jest w folderze migrations/ (pliki 001-009).
+-- Schemat bazy jest w folderze migrations/ (pliki 001-015).
 -- Uruchamiaj je w kolejnosci w Supabase SQL Editor.
 -- Zobacz: database/migrations/README.md

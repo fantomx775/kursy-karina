@@ -28,7 +28,7 @@ export async function GET() {
     });
   }
 
-  let courseCounts: Record<string, number> = {};
+  let courseIdsByStudent: Record<string, Set<string>> = {};
   if (studentIds.length > 0) {
     const { data: orders } = await admin
       .from("orders")
@@ -47,7 +47,8 @@ export async function GET() {
         const order = orders?.find((o) => o.id === item.order_id);
         if (!order) return;
         const key = order.user_id;
-        courseCounts[key] = (courseCounts[key] ?? 0) + 1;
+        courseIdsByStudent[key] = courseIdsByStudent[key] ?? new Set();
+        courseIdsByStudent[key].add(item.course_id);
       });
     }
   }
@@ -59,7 +60,7 @@ export async function GET() {
       email: student.email,
       registrationDate: student.created_at,
       lastLogin: lastSignInMap[student.id] ?? null,
-      coursesEnrolled: courseCounts[student.id] ?? 0,
+      coursesEnrolled: courseIdsByStudent[student.id]?.size ?? 0,
     })) ?? [];
 
   return Response.json({ students: result });

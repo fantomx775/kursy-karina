@@ -4,8 +4,10 @@ import { notFound } from "next/navigation";
 import { FaLock, FaPlay } from "react-icons/fa";
 import { createServerSupabaseClient } from "@/services/supabase/server";
 import { getCourseWithContentBySlug } from "@/services/courses";
+import { getUserCourseAccess } from "@/services/courseAccess";
 import { CoursePurchaseCard } from "@/features/courses/CoursePurchaseCard";
 import { isPromoActive, getEffectivePriceCents } from "@/lib/coursePromo";
+import { formatAccessDuration } from "@/lib/accessDuration";
 import type { Course } from "@/types/course";
 
 export const dynamic = "force-dynamic";
@@ -26,24 +28,12 @@ export default async function CourseDetailPage({
     notFound();
   }
 
-  let ownsCourse = false;
+  let accessStatus: "none" | "active" | "expired" = "none";
+  let accessExpiresAt: string | null = null;
   if (user) {
-    const { data: orders } = await supabase
-      .from("orders")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("status", "paid");
-
-    const orderIds = orders?.map((order) => order.id) ?? [];
-    if (orderIds.length > 0) {
-      const { data: orderItems } = await supabase
-        .from("order_items")
-        .select("course_id")
-        .in("order_id", orderIds);
-      ownsCourse = Boolean(
-        orderItems?.some((item) => item.course_id === course.id),
-      );
-    }
+    const access = await getUserCourseAccess(supabase, user.id, course.id);
+    accessStatus = access.status;
+    accessExpiresAt = access.activeExpiresAt ?? access.lastExpiresAt;
   }
 
   // Pass only purchase-card fields to the client component to avoid exposing
@@ -60,6 +50,7 @@ export default async function CourseDetailPage({
     promotion_discount_value: course.promotion_discount_value,
     promotion_start_date: course.promotion_start_date,
     promotion_end_date: course.promotion_end_date,
+    access_duration_months: course.access_duration_months,
     created_at: course.created_at,
     updated_at: course.updated_at,
   };
@@ -111,7 +102,7 @@ export default async function CourseDetailPage({
                           className="flex items-center justify-between border-radius border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] px-3 py-2 text-sm"
                         >
                           <div className="flex items-center gap-2 text-[var(--coffee-charcoal)]">
-                            {ownsCourse ? (
+                            {accessStatus === "active" ? (
                               <FaPlay className="text-[var(--coffee-mocha)]" />
                             ) : (
                               <FaLock className="text-[var(--coffee-espresso)]" />
@@ -140,10 +131,18 @@ export default async function CourseDetailPage({
                 )}
                 {(getEffectivePriceCents(course) / 100).toFixed(2)} PLN
               </div>
-              <CoursePurchaseCard course={purchaseCourse} isOwned={ownsCourse} />
+              <CoursePurchaseCard
+                course={purchaseCourse}
+                accessStatus={accessStatus}
+                accessExpiresAt={accessExpiresAt}
+              />
             </div>
             <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 text-sm text-[var(--coffee-espresso)] leading-relaxed">
               <p>Pełny dostęp do materiałów SVG i video YouTube.</p>
+              <p className="mt-2">
+                Dostęp po zakupie:{" "}
+                {formatAccessDuration(course.access_duration_months ?? 6)}.
+              </p>
               <p className="mt-2">Śledzenie postępów w panelu kursanta.</p>
             </div>
           </aside>

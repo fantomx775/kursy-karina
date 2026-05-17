@@ -30,6 +30,22 @@ function formatCertificateDate(iso: string | null): string {
   })}.`;
 }
 
+function formatAccessStatus(course: StudentCourseProgress): string {
+  const date = course.accessExpiresAt
+    ? new Date(course.accessExpiresAt).toLocaleDateString("pl-PL", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : null;
+
+  if (course.accessStatus === "active") {
+    return date ? `Dostęp aktywny do ${date}.` : "Dostęp aktywny.";
+  }
+
+  return date ? `Dostęp wygasł ${date}.` : "Dostęp wygasł.";
+}
+
 export function StudentDetailPanel({
   student,
   onGrantCertificate,
@@ -121,6 +137,9 @@ export function StudentDetailPanel({
                 </div>
                 <p className="mt-2 text-[var(--text-xs)] text-[var(--coffee-espresso)]">
                   {course.completedItems} / {course.totalItems} materialow
+                </p>
+                <p className="mt-1 text-[var(--text-xs)] text-[var(--coffee-espresso)]">
+                  {formatAccessStatus(course)}
                 </p>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="text-[var(--text-xs)] text-[var(--coffee-espresso)]">

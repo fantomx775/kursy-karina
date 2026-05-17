@@ -1,8 +1,10 @@
 import { getEffectivePriceCents } from "@/lib/coursePromo";
 import { authenticateUser } from "@/services/auth/server";
 import { validateCoupon } from "@/services/coupons";
+import { getUserCourseAccessMap } from "@/services/courseAccess";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
 import { stripe } from "@/services/stripe";
+import { formatAccessDuration } from "@/lib/accessDuration";
 import type { Course } from "@/types/course";
 
 type CartItem = {
@@ -28,7 +30,7 @@ export async function POST(request: Request) {
   const { data: courses } = await admin
     .from("courses")
     .select(
-      "id, slug, title, description, price, promotion_discount_type, promotion_discount_value, promotion_start_date, promotion_end_date",
+      "id, slug, title, description, price, access_duration_months, promotion_discount_type, promotion_discount_value, promotion_start_date, promotion_end_date",
     )
     .in("id", uniqueCourseIds)
     .eq("status", "active");
@@ -42,6 +44,7 @@ export async function POST(request: Request) {
       description: row.description,
       price: row.price,
       status: "active",
+      access_duration_months: row.access_duration_months ?? 6,
       promotion_discount_type: row.promotion_discount_type ?? null,
       promotion_discount_value: row.promotion_discount_value ?? null,
       promotion_start_date: row.promotion_start_date != null ? String(row.promotion_start_date) : null,
@@ -58,24 +61,14 @@ export async function POST(request: Request) {
     return Response.json({ error: "Brak aktywnych kursów w koszyku." }, { status: 400 });
   }
 
-  const { data: orders } = await admin
-    .from("orders")
-    .select("id")
-    .eq("user_id", auth.user.id)
-    .eq("status", "paid");
-
-  const orderIds = orders?.map((order) => order.id) ?? [];
-  let purchasedCourseIds: string[] = [];
-  if (orderIds.length > 0) {
-    const { data: items } = await admin
-      .from("order_items")
-      .select("course_id")
-      .in("order_id", orderIds);
-    purchasedCourseIds = items?.map((item) => item.course_id) ?? [];
-  }
+  const accessByCourseId = await getUserCourseAccessMap(
+    admin,
+    auth.user.id,
+    validCourses.map((course) => course.id),
+  );
 
   const coursesToCharge = validCourses.filter(
-    (course) => !purchasedCourseIds.includes(course.id),
+    (course) => !accessByCourseId[course.id]?.hasActiveAccess,
   );
 
   if (coursesToCharge.length === 0) {
@@ -135,7 +128,9 @@ export async function POST(request: Request) {
         currency: "pln",
         product_data: {
           name: course.title,
-          description: course.description,
+          description: `${course.description} Dostęp: ${formatAccessDuration(
+            course.access_duration_months ?? 6,
+          )}.`,
         },
         unit_amount: Math.round(course.finalPrice),
       },

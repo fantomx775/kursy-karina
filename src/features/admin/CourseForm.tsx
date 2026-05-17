@@ -10,6 +10,7 @@ import {
   normalizeCertificateTemplateKey,
   type CertificateTemplateKey,
 } from "@/lib/certificateTemplates";
+import { DEFAULT_COURSE_ACCESS_DURATION_MONTHS } from "@/lib/accessDuration";
 import type { Course } from "@/types/course";
 import { CourseQuizBuilder, createEmptyQuiz } from "./CourseQuizBuilder";
 import type {
@@ -50,6 +51,7 @@ const fieldNames = {
   title: "title",
   description: "description",
   price: "price",
+  accessDurationMonths: "accessDurationMonths",
   promotionDiscountValue: "promotionDiscountValue",
   sectionTitle: (sectionIndex: number) => `section-${sectionIndex}-title`,
   itemTitle: (sectionIndex: number, itemIndex: number) =>
@@ -272,6 +274,11 @@ export function CourseForm({
   );
   const [status, setStatus] = useState<"active" | "inactive">(
     initial?.status ?? "inactive",
+  );
+  const [accessDurationMonths, setAccessDurationMonths] = useState(
+    String(
+      initial?.access_duration_months ?? DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+    ),
   );
   const [mainImageUrl, setMainImageUrl] = useState(
     initial?.main_image_url ?? "",
@@ -544,6 +551,20 @@ export function CourseForm({
       return;
     }
 
+    const accessDurationMonthsValue = Number(accessDurationMonths);
+    if (
+      !Number.isInteger(accessDurationMonthsValue) ||
+      accessDurationMonthsValue < 1
+    ) {
+      setValidationResult(
+        createFieldValidationError(
+          fieldNames.accessDurationMonths,
+          "Podaj czas dostepu jako liczbe miesiecy wieksza od 0.",
+        ),
+      );
+      return;
+    }
+
     const validSections = sections
       .map((section, sectionIndex) => ({ section, sectionIndex }))
       .filter(({ section }) => section.title.trim());
@@ -611,6 +632,7 @@ export function CourseForm({
       description: description.trim(),
       price: priceValue,
       status,
+      accessDurationMonths: accessDurationMonthsValue,
       mainImageUrl: mainImageUrl.trim() || undefined,
       certificateTemplateKey,
       sections: validSections.map(({ section }) => ({
@@ -715,7 +737,7 @@ export function CourseForm({
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div>
           <label
             htmlFor="price"
@@ -764,6 +786,36 @@ export function CourseForm({
             <option value="inactive">Nieaktywny</option>
             <option value="active">Aktywny</option>
           </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="access-duration-months"
+            className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]"
+          >
+            Czas dostepu (miesiace)
+          </label>
+          <input
+            id="access-duration-months"
+            type="number"
+            min={1}
+            step={1}
+            value={accessDurationMonths}
+            onChange={(event) => {
+              setAccessDurationMonths(event.target.value);
+              notifyChange();
+            }}
+            className={getFieldControlClass(
+              fieldNames.accessDurationMonths,
+              "h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2",
+            )}
+            {...getFieldControlProps(fieldNames.accessDurationMonths)}
+            required
+          />
+          <FieldError
+            field={fieldNames.accessDurationMonths}
+            message={getFieldError(fieldNames.accessDurationMonths)}
+          />
         </div>
       </div>
 

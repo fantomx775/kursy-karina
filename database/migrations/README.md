@@ -19,13 +19,16 @@ W podanej kolejnosci:
 7. **007_fix_rls_recursion_users.sql** - poprawka polityk RLS bez rekurencji
 8. **008_add_quiz_to_course_items.sql** - obsluga quizow w `course_items`
 9. **009_add_admin_managed_course_certificates.sql** - certyfikaty nadawane przez admina
+10. **014_add_course_certificate_template_key.sql** - wybór szablonu certyfikatu per kurs
+11. **015_add_course_access_duration.sql** - czas dostępu do kursu i data wygaśnięcia pozycji zamówienia
 
 ## Baza z juz dzialajacym projektem
 
-- Jesli masz juz schemat z `init.sql`: uruchom brakujace migracje po **001**. W aktualnej wersji zwykle beda to **002**-**009**.
+- Jesli masz juz schemat z `init.sql`: uruchom brakujace migracje po **001**. W aktualnej wersji zwykle beda to **002**-**015**.
 - Jesli brakuje tylko promocji: **003**, **004**, **005**.
 - Jesli brakuje tylko zdjec kursow: **002**, **006** oraz ewentualnie **004**/**005**, jesli RPC nie zapisuje jeszcze `main_image_url`.
 - Jesli chcesz wlaczyc admin-controlled certyfikaty na istniejacej bazie: uruchom co najmniej **007** i **009**.
+- Jesli chcesz wlaczyc czasowy dostep do kursow: uruchom **015**.
 
 ## Dane testowe
 
