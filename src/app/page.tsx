@@ -198,11 +198,7 @@ export default async function HomePage() {
                   tempie - bez presji i chaosu informacyjnego.
                 </p>
                 <p className="text-[var(--coffee-espresso)] leading-relaxed text-base sm:text-lg mt-5">
-                  Najpierw dokładnie przyswajasz teorię, a moment wdrożenia jej w praktyce podczas
-                  pracy ze mną jest Twoją indywidualną decyzją. Taki model nauki daje znacznie lepsze
-                  rezultaty, większą pewność w działaniu i realny rozwój umiejętności.
-                  To forma nauki, która naprawdę działa - sprawdzona w praktyce i oparta na
-                  doświadczeniu.
+Najpierw dokładnie przyswajasz teorię, a moment wdrożenia jej w praktyce zależy od Ciebie i Twojej gotowości - z moim wsparciem i stałym kontaktem na każdym etapie nauki. Taki model nauki daje znacznie lepsze rezultaty, buduje większą pewność w działaniu oraz pozwala na realny rozwój umiejętności. To forma nauki, która naprawdę działa - sprawdzona w praktyce i oparta na doświadczeniu.
                 </p>
               </div>
               <div className="relative order-first md:order-last flex justify-center md:justify-end">
