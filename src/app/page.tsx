@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
 import type { Course } from "@/types/course";
 import { isPromoActive, getEffectivePriceCents, getPromoLabel } from "@/lib/coursePromo";
+import { getCourseDescriptionExcerpt } from "@/lib/courseDescription";
 
 export const dynamic = "force-dynamic";
 
@@ -75,7 +76,7 @@ function CourseCard({
           {title}
         </h3>
         <p className="text-[var(--coffee-espresso)] text-sm mb-5 leading-relaxed flex-1 line-clamp-3">
-          {description.length > 100 ? `${description.slice(0, 100).trim()}...` : description}
+          {getCourseDescriptionExcerpt(description)}
         </p>
         <div className="flex items-center justify-between gap-3 mt-auto pt-4 border-t border-[var(--coffee-cappuccino)]">
           <span className="text-xl sm:text-2xl font-bold text-[var(--coffee-charcoal)] whitespace-nowrap flex flex-wrap items-baseline gap-2">
@@ -216,7 +217,7 @@ export default async function HomePage() {
                     priority
                   />
                   <Image
-                    src="/main.JPG"
+                    src="/main.jpg"
                     alt="Karina Koziara – stylistka brwi, wielokrotna zwyciężczyni mistrzostw"
                     width={3024}
                     height={4032}

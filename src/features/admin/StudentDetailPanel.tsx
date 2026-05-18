@@ -51,10 +51,10 @@ function formatAccessStatus(course: StudentCourseProgress): string {
     : null;
 
   if (course.accessStatus === "active") {
-    return date ? `Dostep aktywny do ${date}.` : "Dostep aktywny.";
+    return date ? `Dostęp aktywny do ${date}.` : "Dostęp aktywny.";
   }
 
-  return date ? `Dostep wygasl ${date}.` : "Dostep wygasl.";
+  return date ? `Dostęp wygasł ${date}.` : "Dostęp wygasł.";
 }
 
 export function StudentDetailPanel({
@@ -118,11 +118,11 @@ export function StudentDetailPanel({
       <section>
         <h3 className="mb-3 flex items-center gap-2 text-[var(--text-base)] font-semibold text-[var(--coffee-charcoal)]">
           <FiBook className="h-5 w-5 text-[var(--coffee-mocha)]" aria-hidden />
-          PostÄ™p w kursach
+          Postęp w kursach
         </h3>
         {student.courses.length === 0 ? (
           <div className="bg-white border border-[var(--coffee-cappuccino)] border-radius p-6 text-center text-[var(--text-sm)] text-[var(--coffee-espresso)]">
-            Brak zakupionych kursĂłw.
+            Brak zakupionych kursów.
           </div>
         ) : (
           <ul className="space-y-3">
@@ -145,7 +145,7 @@ export function StudentDetailPanel({
                   aria-valuenow={course.completionPercentage}
                   aria-valuemin={0}
                   aria-valuemax={100}
-                  aria-label={`PostÄ™p: ${course.completionPercentage}%`}
+                  aria-label={`Postęp: ${course.completionPercentage}%`}
                 >
                   <div
                     className="h-full bg-[var(--coffee-mocha)] border-radius-sm transition-[width] duration-300"
@@ -153,7 +153,7 @@ export function StudentDetailPanel({
                   />
                 </div>
                 <p className="mt-2 text-[var(--text-xs)] text-[var(--coffee-espresso)]">
-                  {course.completedItems} / {course.totalItems} materiaĹ‚Ăłw
+                  {course.completedItems} / {course.totalItems} materiałów
                 </p>
                 <p className="mt-1 text-[var(--text-xs)] text-[var(--coffee-espresso)]">
                   {formatAccessStatus(course)}
@@ -162,13 +162,13 @@ export function StudentDetailPanel({
                   <div className="text-[var(--text-xs)] text-[var(--coffee-espresso)]">
                     {course.certificateGenerated
                       ? course.certificateRegenerationAllowed
-                        ? "Kursant moĹĽe wygenerowaÄ‡ certyfikat ponownie."
+                        ? "Kursant może wygenerować certyfikat ponownie."
                         : formatGeneratedCertificateDate(
                             course.certificateGeneratedAt,
                           )
                       : course.certificateGranted
                         ? formatCertificateDate(course.certificateGrantedAt)
-                        : "Certyfikat oczekuje na decyzje administratora."}
+                        : "Certyfikat oczekuje na decyzję administratora."}
                   </div>
                   {course.certificateGenerated ? (
                     <Button
@@ -185,8 +185,8 @@ export function StudentDetailPanel({
                       <span className="inline-flex items-center gap-2">
                         <FiAward className="h-4 w-4" aria-hidden />
                         {course.certificateRegenerationAllowed
-                          ? "Ponowne generowanie wĹ‚Ä…czone"
-                          : "PozwĂłl wygenerowaÄ‡ ponownie"}
+                          ? "Ponowne generowanie włączone"
+                          : "Pozwól wygenerować ponownie"}
                       </span>
                     </Button>
                   ) : (

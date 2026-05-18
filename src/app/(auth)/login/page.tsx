@@ -4,8 +4,9 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/AuthContext";
+import { setRememberMePreference } from "@/services/auth/rememberMe";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
-import { Input, PasswordInput } from "@/components/ui";
+import { Checkbox, Input, PasswordInput } from "@/components/ui";
 
 type LoginFieldErrors = Partial<Record<"email" | "password", string>>;
 
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,6 +49,8 @@ export default function LoginPage() {
     }
 
     setIsSubmitting(true);
+    setRememberMePreference(rememberMe);
+
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -102,6 +106,13 @@ export default function LoginPage() {
           }}
           error={fieldErrors.password}
           required
+        />
+        <Checkbox
+          id="login-remember-me"
+          label="Zapamiętaj mnie"
+          checked={rememberMe}
+          onChange={setRememberMe}
+          size="sm"
         />
         <button
           type="submit"

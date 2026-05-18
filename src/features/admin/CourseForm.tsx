@@ -12,7 +12,12 @@ import {
   type CertificateTemplate,
 } from "@/lib/certificateTemplates";
 import { DEFAULT_COURSE_ACCESS_DURATION_MONTHS } from "@/lib/accessDuration";
+import {
+  getCourseDescriptionPlainText,
+  sanitizeCourseDescriptionHtml,
+} from "@/lib/courseDescription";
 import type { Course } from "@/types/course";
+import { CourseDescriptionEditor } from "./CourseDescriptionEditor";
 import { CourseQuizBuilder, createEmptyQuiz } from "./CourseQuizBuilder";
 import type {
   CourseFormData,
@@ -594,7 +599,7 @@ export function CourseForm({
       return;
     }
 
-    if (!description.trim()) {
+    if (!getCourseDescriptionPlainText(description).trim()) {
       setValidationResult(
         createFieldValidationError(fieldNames.description, "Podaj opis kursu."),
       );
@@ -690,7 +695,7 @@ export function CourseForm({
 
     onSave({
       title: title.trim(),
-      description: description.trim(),
+      description: sanitizeCourseDescriptionHtml(description.trim()),
       price: priceValue,
       status,
       accessDurationMonths: accessDurationMonthsValue,
@@ -778,19 +783,18 @@ export function CourseForm({
         >
           Opis
         </label>
-        <textarea
+        <CourseDescriptionEditor
           id="description"
           value={description}
-          onChange={(event) => {
-            setDescription(event.target.value);
+          onChange={(value) => {
+            setDescription(value);
             notifyChange();
           }}
           className={getFieldControlClass(
             fieldNames.description,
-            "min-h-[80px] w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2",
+            "min-h-[180px]",
           )}
           {...getFieldControlProps(fieldNames.description)}
-          required
         />
         <FieldError
           field={fieldNames.description}

@@ -6,6 +6,7 @@ import { createServerSupabaseClient } from "@/services/supabase/server";
 import { getCourseWithContentBySlug } from "@/services/courses";
 import { getUserCourseAccess } from "@/services/courseAccess";
 import { CoursePurchaseCard } from "@/features/courses/CoursePurchaseCard";
+import { CourseDescription } from "@/features/courses/CourseDescription";
 import { isPromoActive, getEffectivePriceCents } from "@/lib/coursePromo";
 import { formatAccessDuration } from "@/lib/accessDuration";
 import type { Course } from "@/types/course";
@@ -83,7 +84,7 @@ export default async function CourseDetailPage({
               </div>
             ) : null}
 
-            <p className="text-[var(--coffee-espresso)] text-base sm:text-lg leading-relaxed">{course.description}</p>
+            <CourseDescription description={course.description} />
 
             <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm overflow-hidden">
               <div className="border-b border-[var(--coffee-cappuccino)] px-4 sm:px-5 py-3 text-[var(--coffee-charcoal)] font-semibold">
@@ -99,7 +100,7 @@ export default async function CourseDetailPage({
                       {section.items.map((item) => (
                         <li
                           key={item.id}
-                          className="flex items-center justify-between border-radius border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] px-3 py-2 text-sm"
+                          className="flex items-center border-radius border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] px-3 py-2 text-sm"
                         >
                           <div className="flex items-center gap-2 text-[var(--coffee-charcoal)]">
                             {accessStatus === "active" ? (
@@ -109,9 +110,6 @@ export default async function CourseDetailPage({
                             )}
                             <span>{item.title}</span>
                           </div>
-                          <span className="text-xs text-[var(--coffee-espresso)]">
-                            {item.kind === "svg" ? "SVG" : "YouTube"}
-                          </span>
                         </li>
                       ))}
                     </ul>
@@ -121,7 +119,7 @@ export default async function CourseDetailPage({
             </div>
           </div>
 
-          <aside className="space-y-4">
+          <aside className="space-y-4 lg:sticky lg:top-24">
             <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 border-radius">
               <div className="text-2xl sm:text-3xl font-semibold text-[var(--coffee-charcoal)] mb-4 flex flex-wrap items-baseline gap-2">
                 {isPromoActive(course) && course.price !== getEffectivePriceCents(course) && (

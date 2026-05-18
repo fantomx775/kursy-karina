@@ -2,6 +2,11 @@
 
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  REMEMBER_ME_COOKIE_NAME,
+  applyRememberMeToCookieOptions,
+  isRememberMeDisabled,
+} from "@/services/auth/rememberMe";
 
 const PUBLIC_PATHS = [
   "/",
@@ -20,6 +25,9 @@ const PROTECTED_PREFIXES = ["/dashboard", "/learn"];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
+  const rememberMeDisabled = isRememberMeDisabled(
+    request.cookies.get(REMEMBER_ME_COOKIE_NAME)?.value,
+  );
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,7 +43,11 @@ export async function updateSession(request: NextRequest) {
           );
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
+            supabaseResponse.cookies.set(
+              name,
+              value,
+              applyRememberMeToCookieOptions(options, rememberMeDisabled),
+            ),
           );
         },
       },

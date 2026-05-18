@@ -139,31 +139,36 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
     }
 
     return (
-      <div className="flex items-start gap-3">
+      <label
+        className={cn(
+          'flex items-start gap-3 cursor-pointer',
+          disabled && 'cursor-not-allowed',
+        )}
+      >
         {renderCheckbox()}
         
         {(label || description) && (
-          <div className="flex-1">
+          <span className="flex-1">
             {label && (
-              <label
+              <span
                 className={cn(
-                  'font-medium text-[var(--coffee-charcoal)] cursor-pointer select-none',
+                  'font-medium text-[var(--coffee-charcoal)] select-none',
                   labelSizeClasses[size],
-                  disabled && 'cursor-not-allowed opacity-50'
+                  disabled && 'opacity-50'
                 )}
               >
                 {label}
-              </label>
+              </span>
             )}
             
             {description && (
-              <div className="text-sm text-gray-600 mt-1">
+              <span className="block text-sm text-gray-600 mt-1">
                 {description}
-              </div>
+              </span>
             )}
-          </div>
+          </span>
         )}
-      </div>
+      </label>
     );
   }
 );

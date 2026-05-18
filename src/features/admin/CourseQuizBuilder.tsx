@@ -73,6 +73,7 @@ export function CourseQuizBuilder({
   itemIndex = 0,
 }: Props) {
   const questions = value.questions;
+  const radioGroupPrefix = `${sectionIndex}-${itemIndex}`;
 
   const defaultControlClass = (className: string) => className;
 
@@ -293,7 +294,7 @@ export function CourseQuizBuilder({
                 <label className="flex items-center gap-2 text-sm font-medium text-[var(--coffee-charcoal)]">
                   <input
                     type="radio"
-                    name={`question-type-${questionIndex}`}
+                    name={`question-type-${radioGroupPrefix}-${questionIndex}`}
                     checked={question.type === "single"}
                     onChange={() => setQuestionType(questionIndex, "single")}
                   />
@@ -302,7 +303,7 @@ export function CourseQuizBuilder({
                 <label className="flex items-center gap-2 text-sm font-medium text-[var(--coffee-charcoal)]">
                   <input
                     type="radio"
-                    name={`question-type-${questionIndex}`}
+                    name={`question-type-${radioGroupPrefix}-${questionIndex}`}
                     checked={question.type === "multiple"}
                     onChange={() => setQuestionType(questionIndex, "multiple")}
                   />
@@ -335,7 +336,7 @@ export function CourseQuizBuilder({
                           type={
                             question.type === "single" ? "radio" : "checkbox"
                           }
-                          name={`question-${questionIndex}-correct`}
+                          name={`question-${radioGroupPrefix}-${questionIndex}-correct`}
                           checked={answer.isCorrect}
                           onChange={() =>
                             toggleAnswerCorrect(questionIndex, answerIndex)

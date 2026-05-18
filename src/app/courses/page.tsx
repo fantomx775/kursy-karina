@@ -4,6 +4,7 @@ import { createAdminSupabaseClient } from "@/services/supabase/admin";
 import type { Course } from "@/types/course";
 import { isPromoActive, getEffectivePriceCents, getPromoLabel } from "@/lib/coursePromo";
 import { formatAccessDuration } from "@/lib/accessDuration";
+import { getCourseDescriptionExcerpt } from "@/lib/courseDescription";
 
 export const dynamic = "force-dynamic";
 
@@ -86,7 +87,7 @@ export default async function CoursesPage() {
                     )}
                   </div>
                   <p className="text-sm text-[var(--coffee-espresso)] flex-1 leading-relaxed">
-                    {course.description}
+                    {getCourseDescriptionExcerpt(course.description)}
                   </p>
                   <p className="mt-3 text-sm text-[var(--coffee-espresso)]">
                     Dostęp: {formatAccessDuration(course.access_duration_months ?? 6)}

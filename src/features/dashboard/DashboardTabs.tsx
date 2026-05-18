@@ -52,7 +52,7 @@ const STUDENT_TABS: { key: TabId; label: string }[] = [
 ];
 
 const ADMIN_TABS: { key: TabId; label: string }[] = [
-  { key: "admin-courses", label: "Zarzadzanie kursami" },
+  { key: "admin-courses", label: "Zarządzanie kursami" },
   { key: "admin-students", label: "Kursanci" },
   { key: "admin-certificates", label: "Certyfikaty" },
   { key: "admin-coupons", label: "Kupony" },
@@ -176,14 +176,14 @@ export function DashboardTabs({
             <div className="bg-white border border-[var(--table-border)] border-radius overflow-hidden">
               <div className="p-6 sm:p-8 text-center">
                 <h2 className="text-lg font-semibold text-[var(--coffee-charcoal)] mb-2">
-                  Brak zakupionych kursĂłw
+                  Brak zakupionych kursów
                 </h2>
                 <p className="text-[var(--coffee-espresso)] mb-4 text-sm">
-                  Dodaj kursy do koszyka i rozpocznij naukÄ™.
+                  Dodaj kursy do koszyka i rozpocznij naukę.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link href="/courses">
-                    <Button variant="primary">Przegladaj kursy</Button>
+                    <Button variant="primary">Przeglądaj kursy</Button>
                   </Link>
                 </div>
               </div>
@@ -211,15 +211,15 @@ export function DashboardTabs({
                       </Badge>
                       {course.adminAccess ? (
                         <Badge rounded={false} variant="secondary" size="sm">
-                          DostÄ™p admina
+                          Dostęp admina
                         </Badge>
                       ) : course.accessStatus === "expired" ? (
                         <Badge rounded={false} variant="warning" size="sm">
-                          Dostep wygasl
+                          Dostęp wygasł
                         </Badge>
                       ) : course.accessExpiresAt ? (
                         <Badge rounded={false} variant="secondary" size="sm">
-                          Dostep do {formatAccessDate(course.accessExpiresAt)}
+                          Dostęp do {formatAccessDate(course.accessExpiresAt)}
                         </Badge>
                       ) : null}
                     </div>
@@ -234,23 +234,23 @@ export function DashboardTabs({
                     />
                   </div>
                   <div className="mt-2 text-xs text-[var(--coffee-espresso)]">
-                    Ukonczono: {course.completionPercentage}%
+                    Ukończono: {course.completionPercentage}%
                   </div>
                   <div className="mt-3 rounded-md border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] px-3 py-2 text-sm text-[var(--coffee-espresso)]">
                     {course.certificateRegenerationAllowed
-                      ? "Administrator pozwoliĹ‚ wygenerowaÄ‡ certyfikat ponownie."
+                      ? "Administrator pozwolił wygenerować certyfikat ponownie."
                       : course.certificateGenerated
                         ? formatCertificateDate(course.certificateGeneratedAt)
                         : course.certificateGranted
                           ? "Certyfikat przyznany. Odbierz go raz po sprawdzeniu danych."
                           : course.completionPercentage === 100
-                            ? "UkoĹ„czyĹ‚eĹ› 100% kursu. Certyfikat bÄ™dzie dostÄ™pny po decyzji administratora."
-                            : "Certyfikat bÄ™dzie dostÄ™pny po decyzji administratora."}
+                            ? "Ukończyłeś 100% kursu. Certyfikat będzie dostępny po decyzji administratora."
+                            : "Certyfikat będzie dostępny po decyzji administratora."}
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3">
                     {course.accessStatus === "expired" && !course.adminAccess ? (
                       <Link href={`/courses/${course.slug}`}>
-                        <Button variant="primary">PrzedĹ‚uĹĽ dostÄ™p</Button>
+                        <Button variant="primary">Przedłuż dostęp</Button>
                       </Link>
                     ) : null}
                     {course.certificateGranted ? (
@@ -281,7 +281,7 @@ export function DashboardTabs({
                         />
                         {course.accessStatus === "active" || course.adminAccess ? (
                           <Link href={`/learn/${course.slug}`}>
-                            <Button variant="outline">Otworz kurs</Button>
+                            <Button variant="outline">Otwórz kurs</Button>
                           </Link>
                         ) : null}
                         {isAdmin ? (
@@ -296,8 +296,8 @@ export function DashboardTabs({
                           <Link href={`/learn/${course.slug}`}>
                             <Button variant="primary">
                               {course.completionPercentage === 100
-                                ? "Otworz kurs"
-                                : "Kontynuuj nauke"}
+                                ? "Otwórz kurs"
+                                : "Kontynuuj naukę"}
                             </Button>
                           </Link>
                         ) : null}
