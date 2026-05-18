@@ -778,13 +778,14 @@ export function CourseForm({
 
       <div>
         <label
-          htmlFor="description"
+          id="description-label"
           className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]"
         >
           Opis
         </label>
         <CourseDescriptionEditor
           id="description"
+          aria-labelledby="description-label"
           value={description}
           onChange={(value) => {
             setDescription(value);

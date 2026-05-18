@@ -42,13 +42,13 @@ export default async function CoursesPage() {
                   className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm overflow-hidden flex flex-col transition-shadow duration-300 hover:shadow-[var(--shadow-lg)] border-radius"
                 >
                   <Link href={`/courses/${course.slug}`} className="block relative h-48 sm:h-52 flex-shrink-0">
-                    <div className="absolute inset-0 bg-[var(--coffee-cappuccino)] flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-white flex items-center justify-center overflow-hidden">
                       {course.main_image_url ? (
                         <Image
                           src={course.main_image_url}
                           alt={course.title}
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                       ) : (

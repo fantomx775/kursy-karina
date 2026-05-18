@@ -152,7 +152,7 @@ export default function CartPage() {
                   className="bg-white border border-[var(--coffee-cappuccino)] p-4 sm:p-5 flex items-center justify-between gap-4"
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-[var(--coffee-cappuccino)] overflow-hidden border-radius">
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-white overflow-hidden border border-[var(--coffee-cappuccino)] border-radius">
                       {(item.imageUrl ?? hydratedImageUrls[item.id]) ? (
                         <Image
                           src={
@@ -160,7 +160,7 @@ export default function CartPage() {
                           }
                           alt=""
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           sizes="80px"
                         />
                       ) : (

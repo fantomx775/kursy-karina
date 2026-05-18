@@ -42,13 +42,13 @@ function CourseCard({
     >
       <div className="relative">
         <Link href={`/courses/${slug}`} className="block relative h-48 sm:h-56 lg:h-64">
-          <div className="absolute inset-0 bg-[var(--coffee-cappuccino)] flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] overflow-hidden">
+          <div className="absolute inset-0 bg-white flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] overflow-hidden">
             {mainImageUrl ? (
               <Image
                 src={mainImageUrl}
                 alt={title}
                 fill
-                className="object-cover"
+                className="object-contain"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               />
             ) : (
