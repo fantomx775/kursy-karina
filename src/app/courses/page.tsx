@@ -41,7 +41,10 @@ export default async function CoursesPage() {
                   key={course.id}
                   className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm overflow-hidden flex flex-col transition-shadow duration-300 hover:shadow-[var(--shadow-lg)] border-radius"
                 >
-                  <Link href={`/courses/${course.slug}`} className="block relative h-48 sm:h-52 flex-shrink-0">
+                  <Link
+                    href={`/courses/${course.slug}`}
+                    className="block relative w-full aspect-[640/905] flex-shrink-0"
+                  >
                     <div className="absolute inset-0 bg-white flex items-center justify-center overflow-hidden">
                       {course.main_image_url ? (
                         <Image

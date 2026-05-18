@@ -41,7 +41,7 @@ function CourseCard({
       className="overflow-hidden flex flex-col transition-shadow duration-300 hover:shadow-[var(--shadow-lg)] group"
     >
       <div className="relative">
-        <Link href={`/courses/${slug}`} className="block relative h-48 sm:h-56 lg:h-64">
+        <Link href={`/courses/${slug}`} className="block relative w-full aspect-[640/905]">
           <div className="absolute inset-0 bg-white flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] overflow-hidden">
             {mainImageUrl ? (
               <Image

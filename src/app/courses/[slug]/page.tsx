@@ -73,7 +73,7 @@ export default async function CourseDetailPage({
         <div className="grid gap-6 sm:gap-8 lg:grid-cols-[1.5fr_1fr] lg:items-start">
           <div className="space-y-5 sm:space-y-6">
             {course.main_image_url ? (
-              <div className="relative w-full max-w-xl aspect-[4/5] sm:aspect-[3/4] overflow-hidden bg-white border border-[var(--coffee-cappuccino)]">
+              <div className="relative w-full max-w-xl aspect-[640/905] overflow-hidden bg-white border border-[var(--coffee-cappuccino)]">
                 <Image
                   src={course.main_image_url}
                   alt={course.title}
