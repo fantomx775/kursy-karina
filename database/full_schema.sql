@@ -13,6 +13,8 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 
 -- Tabele (kolejność: najpierw zależne, na końcu niezależne)
 DROP TABLE IF EXISTS public.coupon_usage CASCADE;
+DROP TABLE IF EXISTS public.coupon_required_courses CASCADE;
+DROP TABLE IF EXISTS public.coupon_applicable_courses CASCADE;
 DROP TABLE IF EXISTS public.order_items CASCADE;
 DROP TABLE IF EXISTS public.course_certificates CASCADE;
 DROP TABLE IF EXISTS public.course_progress CASCADE;
@@ -301,6 +303,20 @@ CREATE TABLE coupons (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TABLE coupon_applicable_courses (
+  coupon_id UUID NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  PRIMARY KEY (coupon_id, course_id)
+);
+
+CREATE TABLE coupon_required_courses (
+  coupon_id UUID NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  PRIMARY KEY (coupon_id, course_id)
+);
+
 CREATE TABLE orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -365,6 +381,8 @@ CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_order_items_course_id ON order_items(course_id);
 CREATE INDEX idx_order_items_course_access_expires_at ON order_items(course_id, access_expires_at);
 CREATE INDEX idx_coupons_code ON coupons(code);
+CREATE INDEX idx_coupon_applicable_courses_course_id ON coupon_applicable_courses(course_id);
+CREATE INDEX idx_coupon_required_courses_course_id ON coupon_required_courses(course_id);
 CREATE INDEX idx_coupon_usage_coupon_id ON coupon_usage(coupon_id);
 
 -- ================================
@@ -428,6 +446,8 @@ ALTER TABLE course_certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE coupon_applicable_courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE coupon_required_courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE coupon_usage ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view own profile" ON users
@@ -559,6 +579,20 @@ CREATE POLICY "Coupons viewable by everyone" ON coupons
 
 CREATE POLICY "Only admins can modify coupons" ON coupons
   FOR ALL USING ((SELECT current_user_role() = 'admin'));
+
+CREATE POLICY "Coupon applicable courses viewable by everyone" ON coupon_applicable_courses
+  FOR SELECT USING (true);
+
+CREATE POLICY "Only admins can modify coupon applicable courses" ON coupon_applicable_courses
+  FOR ALL USING ((SELECT current_user_role() = 'admin'))
+  WITH CHECK ((SELECT current_user_role() = 'admin'));
+
+CREATE POLICY "Coupon required courses viewable by everyone" ON coupon_required_courses
+  FOR SELECT USING (true);
+
+CREATE POLICY "Only admins can modify coupon required courses" ON coupon_required_courses
+  FOR ALL USING ((SELECT current_user_role() = 'admin'))
+  WITH CHECK ((SELECT current_user_role() = 'admin'));
 
 CREATE POLICY "Coupon usage viewable by owner or admin" ON coupon_usage
   FOR SELECT USING (auth.uid() = user_id OR (SELECT current_user_role() = 'admin'));

@@ -11,6 +11,8 @@ export const couponInputSchema = z
     usageLimit: z.number().int().positive().optional().nullable(),
     usageLimitPerUser: z.number().int().positive().optional().nullable(),
     isActive: z.boolean().optional(),
+    applicableCourseIds: z.array(z.string().uuid()).optional().default([]),
+    requiredCourseIds: z.array(z.string().uuid()).optional().default([]),
   })
   .superRefine((value, ctx) => {
     if (value.discountType === "percentage" && value.discountValue > 100) {

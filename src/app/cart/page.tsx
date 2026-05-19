@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useCart } from "@/features/cart/CartContext";
@@ -51,6 +51,20 @@ export default function CartPage() {
   const promotionDiscount = sumOriginal - subtotal;
   const totalDiscount = promotionDiscount + discountAmount;
   const total = subtotal - discountAmount;
+  const cartCourseKey = useMemo(
+    () => cart.map((item) => `${item.id}:${item.price}`).join("|"),
+    [cart],
+  );
+  const previousCartCourseKeyRef = useRef(cartCourseKey);
+
+  useEffect(() => {
+    if (previousCartCourseKeyRef.current === cartCourseKey) return;
+    previousCartCourseKeyRef.current = cartCourseKey;
+    if (!appliedCouponCode) return;
+    setDiscountAmount(0);
+    setAppliedCouponCode(null);
+    setApplyError("Zawartość koszyka się zmieniła. Zastosuj kupon ponownie.");
+  }, [appliedCouponCode, cartCourseKey]);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -66,7 +80,14 @@ export default function CartPage() {
     const response = await fetch("/api/coupons/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: couponCode, subtotalAmount: subtotal }),
+      body: JSON.stringify({
+        code: couponCode,
+        subtotalAmount: subtotal,
+        cartItems: cart.map((item) => ({
+          courseId: item.id,
+          amount: item.price,
+        })),
+      }),
     });
     const data = await response.json();
     if (!response.ok) {
@@ -91,7 +112,7 @@ export default function CartPage() {
     const response = await fetch("/api/checkout/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cart, couponCode: couponCode || null }),
+      body: JSON.stringify({ cart, couponCode: appliedCouponCode || null }),
     });
 
     const data = await response.json();

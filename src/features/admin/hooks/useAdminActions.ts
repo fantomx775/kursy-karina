@@ -74,6 +74,8 @@ export function useAdminActions() {
         ? Number(data.usageLimitPerUser)
         : null,
       isActive: data.isActive,
+      applicableCourseIds: data.applicableCourseIds,
+      requiredCourseIds: data.requiredCourseIds,
     };
 
     try {

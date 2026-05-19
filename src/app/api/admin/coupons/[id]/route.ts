@@ -1,5 +1,6 @@
 import { couponInputSchema } from "@/lib/validators/coupon";
 import { authenticateAdmin } from "@/services/auth/server";
+import { syncCouponCourseRules } from "@/services/couponCourseRules";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
 
 export async function PUT(
@@ -32,6 +33,8 @@ export async function PUT(
     usageLimit,
     usageLimitPerUser,
     isActive,
+    applicableCourseIds,
+    requiredCourseIds,
   } = parsed.data;
 
   const { data: coupon, error } = await admin
@@ -53,6 +56,20 @@ export async function PUT(
 
   if (error || !coupon) {
     return Response.json({ error: "Failed to update coupon" }, { status: 500 });
+  }
+
+  const rulesError = await syncCouponCourseRules({
+    admin,
+    couponId: id,
+    applicableCourseIds,
+    requiredCourseIds,
+  });
+
+  if (rulesError) {
+    return Response.json(
+      { error: "Failed to save coupon course rules" },
+      { status: 500 },
+    );
   }
 
   return Response.json({ coupon });
