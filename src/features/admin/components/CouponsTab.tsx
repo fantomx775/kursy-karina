@@ -14,6 +14,15 @@ type CouponsTabProps = {
 
 const PAGE_SIZE = 10;
 
+function formatCourseRule(
+  courses: NonNullable<Coupon["applicableCourses"]>,
+  emptyLabel: string,
+) {
+  if (courses.length === 0) return emptyLabel;
+  if (courses.length === 1) return courses[0].title;
+  return `${courses[0].title} +${courses.length - 1}`;
+}
+
 export function CouponsTab({
   coupons,
   loading,
@@ -47,10 +56,35 @@ export function CouponsTab({
       sortable: true,
       render: (_, record) =>
         record.isActive ? (
-          <Badge variant="success" appearance="button">Aktywny</Badge>
+          <Badge variant="success" appearance="button">
+            Aktywny
+          </Badge>
         ) : (
-          <Badge variant="error" appearance="button">Nieaktywny</Badge>
+          <Badge variant="error" appearance="button">
+            Nieaktywny
+          </Badge>
         ),
+    },
+    {
+      key: "courseRules",
+      title: "Kursy",
+      dataIndex: "applicableCourses",
+      render: (_, record) => (
+        <div className="max-w-72 space-y-1 text-xs text-[var(--coffee-espresso)]">
+          <div>
+            <span className="font-medium text-[var(--coffee-charcoal)]">
+              Rabat:
+            </span>{" "}
+            {formatCourseRule(record.applicableCourses ?? [], "wszystkie")}
+          </div>
+          <div>
+            <span className="font-medium text-[var(--coffee-charcoal)]">
+              Wymaga:
+            </span>{" "}
+            {formatCourseRule(record.requiredCourses ?? [], "brak")}
+          </div>
+        </div>
+      ),
     },
     {
       key: "actions",

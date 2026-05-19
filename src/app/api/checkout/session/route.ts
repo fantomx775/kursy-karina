@@ -24,7 +24,9 @@ export async function POST(request: Request) {
     return Response.json({ error: "Koszyk jest pusty." }, { status: 400 });
   }
 
-  const uniqueCourseIds = Array.from(new Set(cart.map((item: CartItem) => item.id)));
+  const uniqueCourseIds = Array.from(
+    new Set(cart.map((item: CartItem) => item.id)),
+  );
   const admin = createAdminSupabaseClient();
 
   const { data: courses } = await admin
@@ -47,8 +49,12 @@ export async function POST(request: Request) {
       access_duration_months: row.access_duration_months ?? 6,
       promotion_discount_type: row.promotion_discount_type ?? null,
       promotion_discount_value: row.promotion_discount_value ?? null,
-      promotion_start_date: row.promotion_start_date != null ? String(row.promotion_start_date) : null,
-      promotion_end_date: row.promotion_end_date != null ? String(row.promotion_end_date) : null,
+      promotion_start_date:
+        row.promotion_start_date != null
+          ? String(row.promotion_start_date)
+          : null,
+      promotion_end_date:
+        row.promotion_end_date != null ? String(row.promotion_end_date) : null,
     };
     courseMap.set(course.id, course);
   });
@@ -58,7 +64,10 @@ export async function POST(request: Request) {
     .filter((course): course is Course => Boolean(course));
 
   if (validCourses.length === 0) {
-    return Response.json({ error: "Brak aktywnych kursów w koszyku." }, { status: 400 });
+    return Response.json(
+      { error: "Brak aktywnych kursów w koszyku." },
+      { status: 400 },
+    );
   }
 
   const accessByCourseId = await getUserCourseAccessMap(
@@ -88,27 +97,54 @@ export async function POST(request: Request) {
   );
   let discountAmount = 0;
   let couponId: string | undefined;
+  let discountedCourseIds = new Set<string>(
+    coursesWithEffectivePrice.map((course) => course.id),
+  );
 
   if (couponCode) {
     const couponResult = await validateCoupon({
       code: couponCode,
       userId: auth.user.id,
       subtotalAmount,
+      cartItems: coursesWithEffectivePrice.map((course) => ({
+        courseId: course.id,
+        amount: course.effectivePrice,
+      })),
     });
     if (!couponResult.valid) {
       return Response.json({ error: couponResult.error }, { status: 400 });
     }
     discountAmount = couponResult.discountAmount ?? 0;
     couponId = couponResult.couponId;
+    discountedCourseIds = new Set(
+      couponResult.discountedCourseIds ??
+        coursesWithEffectivePrice.map((course) => course.id),
+    );
   }
 
+  const discountableCourses = coursesWithEffectivePrice.filter((course) =>
+    discountedCourseIds.has(course.id),
+  );
+  const discountableSubtotal = discountableCourses.reduce(
+    (sum, course) => sum + course.effectivePrice,
+    0,
+  );
+  const lastDiscountableCourseId =
+    discountableCourses[discountableCourses.length - 1]?.id;
   let remainingDiscount = discountAmount;
-  const discountedCourses = coursesWithEffectivePrice.map((course, index) => {
+  const discountedCourses = coursesWithEffectivePrice.map((course) => {
+    if (!discountedCourseIds.has(course.id) || discountAmount <= 0) {
+      return {
+        ...course,
+        finalPrice: course.effectivePrice,
+      };
+    }
+
     const rawDiscount =
-      index === coursesWithEffectivePrice.length - 1
+      course.id === lastDiscountableCourseId
         ? remainingDiscount
         : Math.round(
-            (course.effectivePrice / subtotalAmount) * discountAmount,
+            (course.effectivePrice / discountableSubtotal) * discountAmount,
           );
     const appliedDiscount = Math.min(rawDiscount, course.effectivePrice);
     remainingDiscount -= appliedDiscount;

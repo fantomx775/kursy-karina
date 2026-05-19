@@ -27,6 +27,7 @@ W podanej kolejnosci:
 15. **015_add_certificate_storage_and_generation_state.sql** - storage i stan generowania certyfikatow
 16. **015_add_course_access_duration.sql** - czas dostepu do kursu i data wygasniecia pozycji zamowienia
 17. **016_tune_certificate_template_indexes_and_policies.sql** - indeksy i polityki dla szablonow certyfikatow
+18. **017_add_coupon_course_rules.sql** - przypisanie kuponow do kursow i wymagane kursy w koszyku
 
 ## Baza z juz dzialajacym projektem
 

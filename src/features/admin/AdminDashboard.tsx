@@ -104,8 +104,13 @@ export function AdminDashboard({
       loadStudents();
     } else if (effectiveTab === "certificates" && !certificateData) {
       loadCertificates();
-    } else if (effectiveTab === "coupons" && coupons.length === 0) {
-      loadCoupons();
+    } else if (effectiveTab === "coupons") {
+      if (coupons.length === 0) {
+        loadCoupons();
+      }
+      if (courses.length === 0) {
+        loadCourses();
+      }
     } else if (effectiveTab === "stats") {
       loadCourseStats();
     }
@@ -436,10 +441,11 @@ export function AdminDashboard({
         isOpen={couponModalOpen}
         onClose={closeCouponModal}
         title={editingCoupon ? "Edytuj kupon" : "Dodaj kupon"}
-        size="sm"
+        size="lg"
       >
         <CouponForm
           initial={editingCoupon ?? undefined}
+          courseOptions={courses}
           onCancel={closeCouponModal}
           onSave={handleSaveCouponWithRefresh}
         />

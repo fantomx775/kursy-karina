@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { Input } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import type { Coupon } from "@/types/coupon";
+import type { Course } from "@/types/course";
 
 export type CouponFormData = {
   name: string;
@@ -15,10 +16,13 @@ export type CouponFormData = {
   usageLimit: number | null;
   usageLimitPerUser: number | null;
   isActive: boolean;
+  applicableCourseIds: string[];
+  requiredCourseIds: string[];
 };
 
 type Props = {
   initial?: Coupon;
+  courseOptions: Course[];
   onCancel: () => void;
   onSave: (data: CouponFormData) => void;
 };
@@ -42,7 +46,18 @@ function toFormDate(iso: string | undefined | null): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function CouponForm({ initial, onCancel, onSave }: Props) {
+function toggleCourseId(ids: string[], courseId: string): string[] {
+  return ids.includes(courseId)
+    ? ids.filter((id) => id !== courseId)
+    : [...ids, courseId];
+}
+
+export function CouponForm({
+  initial,
+  courseOptions,
+  onCancel,
+  onSave,
+}: Props) {
   const [name, setName] = useState(initial?.name ?? "");
   const [code, setCode] = useState(initial?.code ?? "");
   const [discountType, setDiscountType] = useState<"percentage" | "fixed">(
@@ -64,6 +79,12 @@ export function CouponForm({ initial, onCancel, onSave }: Props) {
     initial?.usageLimitPerUser != null ? String(initial.usageLimitPerUser) : "",
   );
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
+  const [applicableCourseIds, setApplicableCourseIds] = useState<string[]>(
+    initial?.applicableCourseIds ?? [],
+  );
+  const [requiredCourseIds, setRequiredCourseIds] = useState<string[]>(
+    initial?.requiredCourseIds ?? [],
+  );
   const [fieldErrors, setFieldErrors] = useState<CouponFieldErrors>({});
 
   const hintEndDate = "Puste = brak daty końcowej";
@@ -153,6 +174,8 @@ export function CouponForm({ initial, onCancel, onSave }: Props) {
         ? Math.max(1, parseInt(usageLimitPerUser, 10) || 0) || null
         : null,
       isActive,
+      applicableCourseIds,
+      requiredCourseIds,
     });
   };
 
@@ -338,6 +361,76 @@ export function CouponForm({ initial, onCancel, onSave }: Props) {
           <option value="inactive">Nieaktywny</option>
           <option value="active">Aktywny</option>
         </select>
+      </div>
+      <div className="space-y-4 border-t border-[var(--coffee-cappuccino)] pt-4">
+        <div>
+          <h3 className="text-sm font-semibold text-[var(--coffee-charcoal)]">
+            Reguły kursów
+          </h3>
+          <p className={hintClass}>
+            Pusta lista oznacza brak ograniczenia dla danego pola.
+          </p>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div>
+            <label className={labelClass}>Rabat obejmuje kursy</label>
+            <div className="max-h-56 overflow-y-auto border border-[var(--coffee-cappuccino)] bg-white p-2">
+              {courseOptions.length > 0 ? (
+                courseOptions.map((course) => (
+                  <label
+                    key={course.id}
+                    className="flex items-start gap-2 px-2 py-2 text-sm text-[var(--coffee-charcoal)]"
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-1"
+                      checked={applicableCourseIds.includes(course.id)}
+                      onChange={() =>
+                        setApplicableCourseIds((current) =>
+                          toggleCourseId(current, course.id),
+                        )
+                      }
+                    />
+                    <span>{course.title}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="px-2 py-3 text-sm text-[var(--coffee-espresso)]">
+                  Brak kursów do wyboru.
+                </p>
+              )}
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>Wymagane razem w koszyku</label>
+            <div className="max-h-56 overflow-y-auto border border-[var(--coffee-cappuccino)] bg-white p-2">
+              {courseOptions.length > 0 ? (
+                courseOptions.map((course) => (
+                  <label
+                    key={course.id}
+                    className="flex items-start gap-2 px-2 py-2 text-sm text-[var(--coffee-charcoal)]"
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-1"
+                      checked={requiredCourseIds.includes(course.id)}
+                      onChange={() =>
+                        setRequiredCourseIds((current) =>
+                          toggleCourseId(current, course.id),
+                        )
+                      }
+                    />
+                    <span>{course.title}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="px-2 py-3 text-sm text-[var(--coffee-espresso)]">
+                  Brak kursów do wyboru.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
       <div className="flex gap-3 justify-end pt-2">
         <button
