@@ -19,7 +19,8 @@ export async function POST(request: Request) {
     return Response.json({ error: auth.error }, { status: auth.statusCode });
   }
 
-  const { cart, couponCode } = await request.json();
+  const { cart, couponCode, wantsCompanyInvoice } = await request.json();
+  const shouldCreateCompanyInvoice = wantsCompanyInvoice === true;
   if (!Array.isArray(cart) || cart.length === 0) {
     return Response.json({ error: "Koszyk jest pusty." }, { status: 400 });
   }
@@ -183,8 +184,37 @@ export async function POST(request: Request) {
       discount_amount: String(discountAmount),
       subtotal_amount: String(subtotalAmount),
       total_amount: String(subtotalAmount - discountAmount),
+      company_invoice_requested: String(shouldCreateCompanyInvoice),
     },
     customer_email: auth.user.email || undefined,
+    ...(shouldCreateCompanyInvoice
+      ? {
+          billing_address_collection: "required" as const,
+          customer_creation: "always" as const,
+          tax_id_collection: {
+            enabled: true,
+            required: "if_supported" as const,
+          },
+          invoice_creation: {
+            enabled: true,
+            invoice_data: {
+              description: "Faktura za zakup kursu online",
+              metadata: {
+                user_id: auth.user.id,
+                course_ids: JSON.stringify(
+                  discountedCourses.map((course) => course.id),
+                ),
+              },
+            },
+          },
+          custom_text: {
+            submit: {
+              message:
+                "Po opłaceniu zamówienia Stripe wyśle fakturę na podany adres e-mail.",
+            },
+          },
+        }
+      : {}),
   });
 
   return Response.json({ url: session.url });

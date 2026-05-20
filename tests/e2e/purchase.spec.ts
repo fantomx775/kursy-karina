@@ -70,6 +70,33 @@ test.describe("Zakup i koszyk", () => {
     ).toBeVisible();
   });
 
+  test("wysyła żądanie faktury firmowej do checkoutu", async ({ page }) => {
+    let checkoutPayload: Record<string, unknown> | undefined;
+
+    await loginAsStudent(page);
+    await goToCourseDetail(page, NODEJS_SLUG);
+    await page.getByRole("button", { name: "Dodaj do koszyka" }).click();
+
+    await page.route("**/api/checkout/session", async (route) => {
+      checkoutPayload = route.request().postDataJSON() as Record<
+        string,
+        unknown
+      >;
+
+      await route.fulfill({
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: "/cancel" }),
+      });
+    });
+
+    await page.getByLabel("Kupuję na firmę").check();
+    await page.getByRole("button", { name: "Przejdź do płatności" }).click();
+
+    expect(checkoutPayload?.wantsCompanyInvoice).toBe(true);
+    await expect(page).toHaveURL("/cancel");
+  });
+
   test("obsługuje sukces zakupu i czyści koszyk", async ({ page }) => {
     await loginAsStudent(page);
     await goToCourseDetail(page, NODEJS_SLUG);
