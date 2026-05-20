@@ -22,6 +22,7 @@ export default function CartPage() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [isApplying, setIsApplying] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [wantsCompanyInvoice, setWantsCompanyInvoice] = useState(false);
   const [hydratedImageUrls, setHydratedImageUrls] = useState<
     Record<string, string | null>
   >({});
@@ -112,7 +113,11 @@ export default function CartPage() {
     const response = await fetch("/api/checkout/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cart, couponCode: appliedCouponCode || null }),
+      body: JSON.stringify({
+        cart,
+        couponCode: appliedCouponCode || null,
+        wantsCompanyInvoice,
+      }),
     });
 
     const data = await response.json();
@@ -347,6 +352,23 @@ export default function CartPage() {
                 </div>
               ) : null}
             </div>
+
+            <label className="flex items-start gap-3 border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] px-3 py-3 text-sm text-[var(--coffee-charcoal)]">
+              <input
+                type="checkbox"
+                checked={wantsCompanyInvoice}
+                onChange={(event) =>
+                  setWantsCompanyInvoice(event.target.checked)
+                }
+                className="mt-0.5 h-5 w-5 flex-shrink-0 accent-[var(--coffee-mocha)]"
+              />
+              <span className="min-w-0">
+                <span className="block font-medium">Kupuję na firmę</span>
+                <span className="block text-xs text-[var(--coffee-espresso)]">
+                  W Stripe podasz dane firmy, adres oraz NIP do faktury.
+                </span>
+              </span>
+            </label>
 
             {checkoutError ? (
               <div className="text-sm text-red-600">{checkoutError}</div>
