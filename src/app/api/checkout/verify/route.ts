@@ -4,24 +4,23 @@ import { createAdminSupabaseClient } from "@/services/supabase/admin";
 import { stripe } from "@/services/stripe";
 import {
   DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
-  addCalendarMonths,
   normalizeAccessDurationMonths,
 } from "@/lib/accessDuration";
 
 export async function POST(request: Request) {
   const auth = await authenticateUser();
   if (!auth.success) {
-    return Response.json({ error: auth.error, verified: false }, { status: auth.statusCode });
+    return Response.json(
+      { error: auth.error, verified: false },
+      { status: auth.statusCode },
+    );
   }
 
   const { sessionId } = await request.json();
   const userId = auth.user.id;
 
   if (!sessionId) {
-    return Response.json(
-      { error: "Missing session ID" },
-      { status: 400 },
-    );
+    return Response.json({ error: "Missing session ID" }, { status: 400 });
   }
 
   const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -101,7 +100,6 @@ export async function POST(request: Request) {
     (courses ?? []).map((course) => [course.id, course]),
   );
 
-  const accessGrantedAt = new Date();
   const orderItems = courseIds.map((courseId: string) => {
     const course = courseMap.get(courseId);
     const accessDurationMonths = normalizeAccessDurationMonths(
@@ -114,10 +112,9 @@ export async function POST(request: Request) {
       price: course?.price ?? 0,
       quantity: 1,
       access_duration_months: accessDurationMonths,
-      access_expires_at: addCalendarMonths(
-        accessGrantedAt,
-        accessDurationMonths,
-      ).toISOString(),
+      access_status: "pending",
+      access_activated_at: null,
+      access_expires_at: null,
     };
   });
 

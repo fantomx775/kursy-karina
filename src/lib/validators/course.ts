@@ -78,6 +78,11 @@ export const courseSectionInputSchema = z.object({
   items: z.array(courseItemInputSchema),
 });
 
+export const courseSaleWindowInputSchema = z.object({
+  startsAt: z.string().min(1),
+  endsAt: z.string().min(1),
+});
+
 export const courseInputSchema = z
   .object({
     title: z.string().min(1),
@@ -88,6 +93,11 @@ export const courseInputSchema = z
     description: z.string().min(1),
     price: z.number().positive(),
     status: z.enum(["active", "inactive"]),
+    saleMode: z
+      .enum(["always_open", "scheduled"])
+      .optional()
+      .default("always_open"),
+    saleWindows: z.array(courseSaleWindowInputSchema).optional().default([]),
     accessDurationMonths: z
       .number()
       .int()
@@ -111,6 +121,30 @@ export const courseInputSchema = z
     promotionEndDate: z.string().optional().nullable(),
   })
   .superRefine((data, ctx) => {
+    if (data.saleMode === "scheduled" && data.saleWindows.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Dodaj co najmniej jedno okno sprzedaży.",
+        path: ["saleWindows"],
+      });
+    }
+
+    data.saleWindows.forEach((window, index) => {
+      const startsAt = new Date(window.startsAt).getTime();
+      const endsAt = new Date(window.endsAt).getTime();
+      if (
+        Number.isNaN(startsAt) ||
+        Number.isNaN(endsAt) ||
+        endsAt <= startsAt
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Okno sprzedaży musi mieć datę zakończenia po dacie startu.",
+          path: ["saleWindows", index, "endsAt"],
+        });
+      }
+    });
+
     const hasAny =
       data.promotionDiscountType != null ||
       data.promotionDiscountValue != null ||

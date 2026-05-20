@@ -8,7 +8,11 @@ import { getUserCourseAccess } from "@/services/courseAccess";
 import { CoursePurchaseCard } from "@/features/courses/CoursePurchaseCard";
 import { CourseDescription } from "@/features/courses/CourseDescription";
 import { isPromoActive, getEffectivePriceCents } from "@/lib/coursePromo";
-import { formatAccessDuration } from "@/lib/accessDuration";
+import {
+  DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+  formatAccessDuration,
+} from "@/lib/accessDuration";
+import { resolveCourseSaleState } from "@/lib/courseSales";
 import type { Course } from "@/types/course";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +33,7 @@ export default async function CourseDetailPage({
     notFound();
   }
 
-  let accessStatus: "none" | "active" | "expired" = "none";
+  let accessStatus: "none" | "pending" | "active" | "expired" = "none";
   let accessExpiresAt: string | null = null;
   if (user) {
     const access = await getUserCourseAccess(supabase, user.id, course.id);
@@ -52,9 +56,12 @@ export default async function CourseDetailPage({
     promotion_start_date: course.promotion_start_date,
     promotion_end_date: course.promotion_end_date,
     access_duration_months: course.access_duration_months,
+    sale_mode: course.sale_mode,
+    sale_windows: course.sale_windows,
     created_at: course.created_at,
     updated_at: course.updated_at,
   };
+  const saleState = resolveCourseSaleState(course);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--coffee-cream)] to-white py-10 sm:py-14 lg:py-20">
@@ -122,11 +129,12 @@ export default async function CourseDetailPage({
           <aside className="space-y-4 lg:sticky lg:top-24">
             <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 border-radius">
               <div className="text-2xl sm:text-3xl font-semibold text-[var(--coffee-charcoal)] mb-4 flex flex-wrap items-baseline gap-2">
-                {isPromoActive(course) && course.price !== getEffectivePriceCents(course) && (
-                  <span className="line-through text-xl font-normal text-[var(--coffee-espresso)]">
-                    {(course.price / 100).toFixed(2)} PLN
-                  </span>
-                )}
+                {isPromoActive(course) &&
+                  course.price !== getEffectivePriceCents(course) && (
+                    <span className="line-through text-xl font-normal text-[var(--coffee-espresso)]">
+                      {(course.price / 100).toFixed(2)} PLN
+                    </span>
+                  )}
                 {(getEffectivePriceCents(course) / 100).toFixed(2)} PLN
               </div>
               <CoursePurchaseCard
@@ -139,8 +147,17 @@ export default async function CourseDetailPage({
               <p>Pełny dostęp do materiałów SVG i video YouTube.</p>
               <p className="mt-2">
                 Dostęp po zakupie:{" "}
-                {formatAccessDuration(course.access_duration_months ?? 6)}.
+                {formatAccessDuration(
+                  course.access_duration_months ??
+                    DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+                )}
+                .
               </p>
+              {!saleState.isOpen ? (
+                <p className="mt-2 font-medium text-[var(--coffee-mocha)]">
+                  Sprzedaż wkrótce.
+                </p>
+              ) : null}
               <p className="mt-2">Śledzenie postępów w panelu kursanta.</p>
             </div>
           </aside>

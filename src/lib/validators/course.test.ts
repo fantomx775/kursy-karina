@@ -9,7 +9,9 @@ function createBaseCoursePayload(): z.input<typeof courseInputSchema> {
     description: "Opis",
     price: 199,
     status: "active" as const,
-    accessDurationMonths: 6,
+    saleMode: "always_open" as const,
+    saleWindows: [],
+    accessDurationMonths: 12,
     sections: [
       {
         title: "Sekcja 1",
@@ -51,14 +53,45 @@ describe("courseInputSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("defaults the access duration to six months", () => {
+  it("defaults the access duration to twelve months", () => {
     const payload = createBaseCoursePayload();
     delete payload.accessDurationMonths;
 
     const result = courseInputSchema.safeParse(payload);
 
     expect(result.success).toBe(true);
-    expect(result.data?.accessDurationMonths).toBe(6);
+    expect(result.data?.accessDurationMonths).toBe(12);
+  });
+
+  it("rejects scheduled sales without a sale window", () => {
+    const payload = createBaseCoursePayload();
+    payload.saleMode = "scheduled";
+    payload.saleWindows = [];
+
+    const result = courseInputSchema.safeParse(payload);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toContain(
+      "Dodaj co najmniej jedno okno sprzedaży.",
+    );
+  });
+
+  it("rejects sale windows that end before they start", () => {
+    const payload = createBaseCoursePayload();
+    payload.saleMode = "scheduled";
+    payload.saleWindows = [
+      {
+        startsAt: "2026-06-14T00:00:00.000Z",
+        endsAt: "2026-06-01T00:00:00.000Z",
+      },
+    ];
+
+    const result = courseInputSchema.safeParse(payload);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toContain(
+      "Okno sprzedaży musi mieć datę zakończenia po dacie startu.",
+    );
   });
 
   it("rejects non-positive access durations", () => {

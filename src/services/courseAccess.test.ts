@@ -8,6 +8,7 @@ describe("resolveCourseAccessState", () => {
     expect(resolveCourseAccessState([], now)).toMatchObject({
       status: "none",
       hasActiveAccess: false,
+      hasPendingAccess: false,
       hasEverPurchased: false,
     });
   });
@@ -18,10 +19,12 @@ describe("resolveCourseAccessState", () => {
         [
           {
             course_id: "course",
+            access_status: "active",
             access_expires_at: "2026-06-17T10:00:00.000Z",
           },
           {
             course_id: "course",
+            access_status: "active",
             access_expires_at: "2026-07-17T10:00:00.000Z",
           },
         ],
@@ -30,7 +33,30 @@ describe("resolveCourseAccessState", () => {
     ).toMatchObject({
       status: "active",
       hasActiveAccess: true,
+      hasPendingAccess: false,
       activeExpiresAt: "2026-07-17T10:00:00.000Z",
+    });
+  });
+
+  it("returns pending when the course was paid for but not activated", () => {
+    expect(
+      resolveCourseAccessState(
+        [
+          {
+            course_id: "course",
+            access_status: "pending",
+            access_expires_at: null,
+          },
+        ],
+        now,
+      ),
+    ).toMatchObject({
+      status: "pending",
+      hasActiveAccess: false,
+      hasPendingAccess: true,
+      hasEverPurchased: true,
+      activeExpiresAt: null,
+      lastExpiresAt: null,
     });
   });
 
@@ -40,6 +66,7 @@ describe("resolveCourseAccessState", () => {
         [
           {
             course_id: "course",
+            access_status: "active",
             access_expires_at: "2026-01-17T10:00:00.000Z",
           },
         ],
@@ -48,6 +75,7 @@ describe("resolveCourseAccessState", () => {
     ).toMatchObject({
       status: "expired",
       hasActiveAccess: false,
+      hasPendingAccess: false,
       hasEverPurchased: true,
       lastExpiresAt: "2026-01-17T10:00:00.000Z",
     });

@@ -44,7 +44,9 @@ export async function GET(
           error:
             access.status === "expired"
               ? "Course access expired"
-              : "Course not purchased",
+              : access.status === "pending"
+                ? "Course access pending activation"
+                : "Course not purchased",
         },
         { status: 403 },
       );

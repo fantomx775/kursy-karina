@@ -29,7 +29,7 @@ export default async function LearnPage({
   }
 
   let hasActiveAccess = isAdmin;
-  let accessStatus: "none" | "active" | "expired" = isAdmin
+  let accessStatus: "none" | "pending" | "active" | "expired" = isAdmin
     ? "active"
     : "none";
   let accessExpiresAt: string | null = null;
@@ -43,11 +43,16 @@ export default async function LearnPage({
 
   if (!hasActiveAccess) {
     const isExpired = accessStatus === "expired";
+    const isPending = accessStatus === "pending";
     return (
       <div className="min-h-screen bg-gradient-to-b from-[var(--coffee-cream)] to-[var(--coffee-latte)] flex items-center justify-center page-width">
         <div className="max-w-md w-full bg-white border border-[var(--coffee-cappuccino)] border-radius shadow-md p-6 sm:p-8 text-center">
           <h1 className="text-2xl font-bold text-[var(--coffee-charcoal)] mb-2">
-            {isExpired ? "Dostęp wygasł" : "Brak dostępu"}
+            {isExpired
+              ? "Dostęp wygasł"
+              : isPending
+                ? "Dostęp oczekuje na aktywację"
+                : "Brak dostępu"}
           </h1>
           <p className="text-[var(--coffee-espresso)] mb-6">
             {isExpired
@@ -56,7 +61,9 @@ export default async function LearnPage({
                     ? ` ${new Date(accessExpiresAt).toLocaleDateString("pl-PL")}`
                     : ""
                 }. Przedłuż dostęp, aby wrócić do materiałów.`
-              : "Ten kurs nie został jeszcze zakupiony. Wróć do szczegółów kursu, aby sfinalizować zakup."}
+              : isPending
+                ? "Zakup został przyjęty. Dostęp do materiałów zostanie uruchomiony przez organizatora."
+                : "Ten kurs nie został jeszcze zakupiony. Wróć do szczegółów kursu, aby sfinalizować zakup."}
           </p>
           <div className="space-y-3">
             <Link

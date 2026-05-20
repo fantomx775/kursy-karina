@@ -1,4 +1,4 @@
-export const DEFAULT_COURSE_ACCESS_DURATION_MONTHS = 6;
+export const DEFAULT_COURSE_ACCESS_DURATION_MONTHS = 12;
 
 export function normalizeAccessDurationMonths(value: unknown): number {
   const parsed = typeof value === "number" ? value : Number(value);

@@ -1,10 +1,19 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
+import { getSaleWindowsByCourseIds } from "@/services/courseSaleWindows";
 import type { Course } from "@/types/course";
-import { isPromoActive, getEffectivePriceCents, getPromoLabel } from "@/lib/coursePromo";
-import { formatAccessDuration } from "@/lib/accessDuration";
+import {
+  isPromoActive,
+  getEffectivePriceCents,
+  getPromoLabel,
+} from "@/lib/coursePromo";
+import {
+  DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+  formatAccessDuration,
+} from "@/lib/accessDuration";
 import { getCourseDescriptionExcerpt } from "@/lib/courseDescription";
+import { resolveCourseSaleState } from "@/lib/courseSales";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +24,16 @@ export default async function CoursesPage() {
     .select("*")
     .eq("status", "active")
     .order("created_at", { ascending: false });
+  const windowsByCourseId = await getSaleWindowsByCourseIds(
+    admin,
+    (courses ?? []).map((course) => course.id),
+  );
+  const coursesWithSaleWindows = ((courses ?? []) as Course[]).map(
+    (course) => ({
+      ...course,
+      sale_windows: windowsByCourseId[course.id] ?? [],
+    }),
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--coffee-cream)] to-white py-10 sm:py-14 lg:py-20">
@@ -28,14 +47,15 @@ export default async function CoursesPage() {
           </p>
         </div>
 
-        {courses && courses.length > 0 ? (
+        {coursesWithSaleWindows.length > 0 ? (
           <div className="grid gap-5 sm:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {(courses as Course[]).map((course) => {
+            {coursesWithSaleWindows.map((course) => {
               const promoActive = isPromoActive(course);
               const effectiveCents = getEffectivePriceCents(course);
               const promoLabel = getPromoLabel(course);
               const hasStrikethrough =
                 promoActive && course.price !== effectiveCents;
+              const saleState = resolveCourseSaleState(course);
               return (
                 <div
                   key={course.id}
@@ -55,7 +75,9 @@ export default async function CoursesPage() {
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                       ) : (
-                        <span className="text-[var(--coffee-espresso)] text-lg">Kurs Image</span>
+                        <span className="text-[var(--coffee-espresso)] text-lg">
+                          Kurs Image
+                        </span>
                       )}
                     </div>
                     {promoActive && (
@@ -72,45 +94,54 @@ export default async function CoursesPage() {
                     )}
                   </Link>
                   <div className="p-5 sm:p-6 flex flex-col flex-1">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h2 className="text-lg sm:text-xl font-semibold text-[var(--coffee-charcoal)] leading-tight">
-                      {course.title}
-                    </h2>
-                    {promoActive && (
-                      <span className="shrink-0 flex flex-row flex-wrap gap-1.5 items-center">
-                        <span className="bg-[var(--coffee-mocha)] text-white px-2 py-0.5 text-xs font-semibold tracking-wider uppercase">
-                          PROMOCJA
-                        </span>
-                        {promoLabel && (
-                          <span className="bg-[var(--coffee-mocha)] text-white px-2 py-0.5 text-xs font-semibold">
-                            {promoLabel}
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <h2 className="text-lg sm:text-xl font-semibold text-[var(--coffee-charcoal)] leading-tight">
+                        {course.title}
+                      </h2>
+                      {promoActive && (
+                        <span className="shrink-0 flex flex-row flex-wrap gap-1.5 items-center">
+                          <span className="bg-[var(--coffee-mocha)] text-white px-2 py-0.5 text-xs font-semibold tracking-wider uppercase">
+                            PROMOCJA
                           </span>
-                        )}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-[var(--coffee-espresso)] flex-1 leading-relaxed">
-                    {getCourseDescriptionExcerpt(course.description)}
-                  </p>
-                  <p className="mt-3 text-sm text-[var(--coffee-espresso)]">
-                    Dostęp: {formatAccessDuration(course.access_duration_months ?? 6)}
-                  </p>
-                  <div className="mt-4 pt-4 border-t border-[var(--coffee-cappuccino)] flex items-center justify-between gap-3">
-                    <span className="text-lg sm:text-xl font-semibold text-[var(--coffee-charcoal)] whitespace-nowrap flex flex-wrap items-baseline gap-2">
-                      {hasStrikethrough && (
-                        <span className="line-through text-base font-normal text-[var(--coffee-espresso)]">
-                          {(course.price / 100).toFixed(2)} PLN
+                          {promoLabel && (
+                            <span className="bg-[var(--coffee-mocha)] text-white px-2 py-0.5 text-xs font-semibold">
+                              {promoLabel}
+                            </span>
+                          )}
                         </span>
                       )}
-                      {(effectiveCents / 100).toFixed(2)} PLN
-                    </span>
-                    <Link
-                      href={`/courses/${course.slug}`}
-                      className="bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-4 py-2.5 text-sm transition-colors min-h-[44px] flex items-center whitespace-nowrap border-radius"
-                    >
-                      Zobacz kurs
-                    </Link>
-                  </div>
+                    </div>
+                    <p className="text-sm text-[var(--coffee-espresso)] flex-1 leading-relaxed">
+                      {getCourseDescriptionExcerpt(course.description)}
+                    </p>
+                    <p className="mt-3 text-sm text-[var(--coffee-espresso)]">
+                      Dostęp:{" "}
+                      {formatAccessDuration(
+                        course.access_duration_months ??
+                          DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+                      )}
+                    </p>
+                    {!saleState.isOpen ? (
+                      <p className="mt-2 text-sm font-medium text-[var(--coffee-mocha)]">
+                        Sprzedaż wkrótce
+                      </p>
+                    ) : null}
+                    <div className="mt-4 pt-4 border-t border-[var(--coffee-cappuccino)] flex items-center justify-between gap-3">
+                      <span className="text-lg sm:text-xl font-semibold text-[var(--coffee-charcoal)] whitespace-nowrap flex flex-wrap items-baseline gap-2">
+                        {hasStrikethrough && (
+                          <span className="line-through text-base font-normal text-[var(--coffee-espresso)]">
+                            {(course.price / 100).toFixed(2)} PLN
+                          </span>
+                        )}
+                        {(effectiveCents / 100).toFixed(2)} PLN
+                      </span>
+                      <Link
+                        href={`/courses/${course.slug}`}
+                        className="bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-4 py-2.5 text-sm transition-colors min-h-[44px] flex items-center whitespace-nowrap border-radius"
+                      >
+                        Zobacz kurs
+                      </Link>
+                    </div>
                   </div>
                 </div>
               );

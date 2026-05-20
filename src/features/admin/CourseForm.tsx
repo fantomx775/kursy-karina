@@ -23,6 +23,7 @@ import type {
   CourseFormData,
   CourseFormItem,
   CourseFormQuiz,
+  CourseFormSaleWindow,
   CourseFormSection,
 } from "./course-form-types";
 
@@ -58,7 +59,10 @@ const fieldNames = {
   description: "description",
   price: "price",
   accessDurationMonths: "accessDurationMonths",
+  saleWindows: "saleWindows",
   promotionDiscountValue: "promotionDiscountValue",
+  saleWindowStart: (windowIndex: number) => `sale-window-${windowIndex}-start`,
+  saleWindowEnd: (windowIndex: number) => `sale-window-${windowIndex}-end`,
   sectionTitle: (sectionIndex: number) => `section-${sectionIndex}-title`,
   itemTitle: (sectionIndex: number, itemIndex: number) =>
     `section-${sectionIndex}-item-${itemIndex}-title`,
@@ -114,6 +118,23 @@ function toFormDate(iso: string | undefined | null): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
   return date.toISOString().slice(0, 10);
+}
+
+function toLocalDayIso(date: string, boundary: "start" | "end"): string {
+  const [year, month, day] = date.split("-").map(Number);
+  const localDate =
+    boundary === "start"
+      ? new Date(year, month - 1, day, 0, 0, 0, 0)
+      : new Date(year, month - 1, day, 23, 59, 59, 999);
+
+  return localDate.toISOString();
+}
+
+function createEmptySaleWindow(): CourseFormSaleWindow {
+  return {
+    startsAt: "",
+    endsAt: "",
+  };
 }
 
 function getItemKindLabel(kind: CourseFormItem["kind"]): string {
@@ -281,7 +302,18 @@ export function CourseForm({
   const [status, setStatus] = useState<"active" | "inactive">(
     initial?.status ?? "inactive",
   );
-  const [accessDurationMonths, setAccessDurationMonths] = useState(
+  const [saleMode, setSaleMode] = useState<"always_open" | "scheduled">(
+    initial?.sale_mode ?? "always_open",
+  );
+  const [saleWindows, setSaleWindows] = useState<CourseFormSaleWindow[]>(
+    initial?.sale_windows?.length
+      ? initial.sale_windows.map((window) => ({
+          startsAt: toFormDate(window.starts_at),
+          endsAt: toFormDate(window.ends_at),
+        }))
+      : [createEmptySaleWindow()],
+  );
+  const [accessDurationMonths] = useState(
     String(
       initial?.access_duration_months ?? DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
     ),
@@ -470,6 +502,31 @@ export function CourseForm({
       className,
     );
 
+  const setSaleWindow = (
+    index: number,
+    updates: Partial<CourseFormSaleWindow>,
+  ) => {
+    setSaleWindows((previous) =>
+      previous.map((window, current) =>
+        current === index ? { ...window, ...updates } : window,
+      ),
+    );
+    notifyChange();
+  };
+
+  const addSaleWindow = () => {
+    setSaleWindows((previous) => [...previous, createEmptySaleWindow()]);
+    notifyChange();
+  };
+
+  const removeSaleWindow = (index: number) => {
+    setSaleWindows((previous) => {
+      const next = previous.filter((_, current) => current !== index);
+      return next.length > 0 ? next : [createEmptySaleWindow()];
+    });
+    notifyChange();
+  };
+
   const toggleSectionCollapsed = useCallback((index: number) => {
     setCollapsedSections((previous) => {
       const next = new Set(previous);
@@ -631,6 +688,64 @@ export function CourseForm({
       return;
     }
 
+    const normalizedSaleWindows =
+      saleMode === "scheduled"
+        ? saleWindows
+            .map((window) => ({
+              startsAt: window.startsAt.trim(),
+              endsAt: window.endsAt.trim(),
+            }))
+            .filter((window) => window.startsAt || window.endsAt)
+        : [];
+
+    if (saleMode === "scheduled" && normalizedSaleWindows.length === 0) {
+      setValidationResult(
+        createFieldValidationError(
+          fieldNames.saleWindows,
+          "Dodaj co najmniej jedno okno sprzedaży.",
+        ),
+      );
+      return;
+    }
+
+    for (const [index, window] of normalizedSaleWindows.entries()) {
+      if (!window.startsAt) {
+        setValidationResult(
+          createFieldValidationError(
+            fieldNames.saleWindowStart(index),
+            "Podaj datę rozpoczęcia sprzedaży.",
+          ),
+        );
+        return;
+      }
+
+      if (!window.endsAt) {
+        setValidationResult(
+          createFieldValidationError(
+            fieldNames.saleWindowEnd(index),
+            "Podaj datę zakończenia sprzedaży.",
+          ),
+        );
+        return;
+      }
+
+      const startsAt = new Date(`${window.startsAt}T00:00:00`).getTime();
+      const endsAt = new Date(`${window.endsAt}T23:59:59`).getTime();
+      if (
+        Number.isNaN(startsAt) ||
+        Number.isNaN(endsAt) ||
+        endsAt <= startsAt
+      ) {
+        setValidationResult(
+          createFieldValidationError(
+            fieldNames.saleWindowEnd(index),
+            "Data zakończenia musi być późniejsza niż data rozpoczęcia.",
+          ),
+        );
+        return;
+      }
+    }
+
     const validSections = sections
       .map((section, sectionIndex) => ({ section, sectionIndex }))
       .filter(({ section }) => section.title.trim());
@@ -698,6 +813,11 @@ export function CourseForm({
       description: sanitizeCourseDescriptionHtml(description.trim()),
       price: priceValue,
       status,
+      saleMode,
+      saleWindows: normalizedSaleWindows.map((window) => ({
+        startsAt: toLocalDayIso(window.startsAt, "start"),
+        endsAt: toLocalDayIso(window.endsAt, "end"),
+      })),
       accessDurationMonths: accessDurationMonthsValue,
       mainImageUrl: mainImageUrl.trim() || undefined,
       certificateTemplateId,
@@ -859,7 +979,7 @@ export function CourseForm({
             htmlFor="access-duration-months"
             className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]"
           >
-            Czas dostepu (miesiace)
+            Czas dostępu po aktywacji (miesiące)
           </label>
           <input
             id="access-duration-months"
@@ -867,21 +987,152 @@ export function CourseForm({
             min={1}
             step={1}
             value={accessDurationMonths}
-            onChange={(event) => {
-              setAccessDurationMonths(event.target.value);
-              notifyChange();
-            }}
+            readOnly
             className={getFieldControlClass(
               fieldNames.accessDurationMonths,
-              "h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2",
+              "h-10 w-full border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] px-3 py-2",
             )}
             {...getFieldControlProps(fieldNames.accessDurationMonths)}
             required
           />
+          <p className="mt-1 text-sm text-[var(--coffee-espresso)]">
+            Stałe 12 miesięcy liczone od ręcznej aktywacji dostępu.
+          </p>
           <FieldError
             field={fieldNames.accessDurationMonths}
             message={getFieldError(fieldNames.accessDurationMonths)}
           />
+        </div>
+      </div>
+
+      <div className="border-t border-[var(--coffee-cappuccino)] pt-6">
+        <h3 className="mb-3 text-lg font-semibold text-[var(--coffee-charcoal)]">
+          Sprzedaż
+        </h3>
+        <div className="grid gap-4 md:grid-cols-[minmax(0,18rem)_1fr]">
+          <div>
+            <label
+              htmlFor="sale-mode"
+              className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]"
+            >
+              Tryb sprzedaży
+            </label>
+            <select
+              id="sale-mode"
+              value={saleMode}
+              onChange={(event) => {
+                setSaleMode(event.target.value as "always_open" | "scheduled");
+                notifyChange();
+              }}
+              className="h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
+            >
+              <option value="always_open">Sprzedaż zawsze otwarta</option>
+              <option value="scheduled">Okna sprzedażowe</option>
+            </select>
+          </div>
+
+          {saleMode === "scheduled" ? (
+            <div
+              className="space-y-3"
+              data-validation-field={fieldNames.saleWindows}
+            >
+              {saleWindows.map((window, windowIndex) => {
+                const startField = fieldNames.saleWindowStart(windowIndex);
+                const endField = fieldNames.saleWindowEnd(windowIndex);
+
+                return (
+                  <div
+                    key={windowIndex}
+                    className="grid gap-3 border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] p-3 md:grid-cols-[1fr_1fr_auto]"
+                  >
+                    <div>
+                      <label
+                        htmlFor={startField}
+                        className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]"
+                      >
+                        Sprzedaż od
+                      </label>
+                      <input
+                        id={startField}
+                        type="date"
+                        value={window.startsAt}
+                        onChange={(event) =>
+                          setSaleWindow(windowIndex, {
+                            startsAt: event.target.value,
+                          })
+                        }
+                        className={getFieldControlClass(
+                          startField,
+                          "h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2",
+                        )}
+                        {...getFieldControlProps(startField)}
+                      />
+                      <FieldError
+                        field={startField}
+                        message={getFieldError(startField)}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor={endField}
+                        className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]"
+                      >
+                        Sprzedaż do
+                      </label>
+                      <input
+                        id={endField}
+                        type="date"
+                        value={window.endsAt}
+                        onChange={(event) =>
+                          setSaleWindow(windowIndex, {
+                            endsAt: event.target.value,
+                          })
+                        }
+                        className={getFieldControlClass(
+                          endField,
+                          "h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2",
+                        )}
+                        {...getFieldControlProps(endField)}
+                      />
+                      <FieldError
+                        field={endField}
+                        message={getFieldError(endField)}
+                      />
+                    </div>
+
+                    <div className="flex items-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeSaleWindow(windowIndex)}
+                      >
+                        Usuń
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <FieldError
+                field={fieldNames.saleWindows}
+                message={getFieldError(fieldNames.saleWindows)}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={addSaleWindow}
+              >
+                + Dodaj okno sprzedaży
+              </Button>
+            </div>
+          ) : (
+            <p className="self-end text-sm text-[var(--coffee-espresso)]">
+              Kurs będzie dostępny do zakupu zawsze, gdy ma status aktywny.
+            </p>
+          )}
         </div>
       </div>
 

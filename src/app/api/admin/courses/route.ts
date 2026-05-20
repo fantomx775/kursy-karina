@@ -1,5 +1,10 @@
 import { courseInputSchema } from "@/lib/validators/course";
+import { DEFAULT_COURSE_ACCESS_DURATION_MONTHS } from "@/lib/accessDuration";
 import { authenticateAdmin } from "@/services/auth/server";
+import {
+  getSaleWindowsByCourseIds,
+  replaceCourseSaleWindows,
+} from "@/services/courseSaleWindows";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
 
 export async function GET() {
@@ -18,7 +23,18 @@ export async function GET() {
     return Response.json({ error: "Failed to fetch courses" }, { status: 500 });
   }
 
-  return Response.json({ courses: data ?? [] });
+  const courses = data ?? [];
+  const windowsByCourseId = await getSaleWindowsByCourseIds(
+    admin,
+    courses.map((course) => course.id),
+  );
+
+  return Response.json({
+    courses: courses.map((course) => ({
+      ...course,
+      sale_windows: windowsByCourseId[course.id] ?? [],
+    })),
+  });
 }
 
 export async function POST(request: Request) {
@@ -42,7 +58,8 @@ export async function POST(request: Request) {
     description,
     price,
     status,
-    accessDurationMonths,
+    saleMode,
+    saleWindows,
     mainImageUrl,
     certificateTemplateId,
     sections,
@@ -107,12 +124,25 @@ export async function POST(request: Request) {
       main_image_url: mainImageUrl ?? null,
       certificate_template_id: certificateTemplateId,
       certificate_template_key: certificateTemplateId,
-      access_duration_months: accessDurationMonths,
+      sale_mode: saleMode,
+      access_duration_months: DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
     })
     .eq("id", result.course_id);
   if (metadataError) {
     return Response.json(
       { error: "Course saved, but failed to persist course metadata" },
+      { status: 500 },
+    );
+  }
+
+  const { error: saleWindowsError } = await replaceCourseSaleWindows(
+    admin,
+    result.course_id,
+    saleMode === "scheduled" ? saleWindows : [],
+  );
+  if (saleWindowsError) {
+    return Response.json(
+      { error: "Course saved, but failed to persist sale windows" },
       { status: 500 },
     );
   }
@@ -131,5 +161,15 @@ export async function POST(request: Request) {
     );
   }
 
-  return Response.json({ course }, { status: 201 });
+  const windowsByCourseId = await getSaleWindowsByCourseIds(admin, [course.id]);
+
+  return Response.json(
+    {
+      course: {
+        ...course,
+        sale_windows: windowsByCourseId[course.id] ?? [],
+      },
+    },
+    { status: 201 },
+  );
 }

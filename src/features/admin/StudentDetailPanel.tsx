@@ -6,8 +6,10 @@ import type { StudentCourseProgress, StudentDetail } from "@/types/student";
 
 type Props = {
   student: StudentDetail;
+  onActivateAccess: (course: StudentCourseProgress) => void;
   onGrantCertificate: (course: StudentCourseProgress) => void;
   onAllowRegenerateCertificate: (course: StudentCourseProgress) => void;
+  activatingAccessCourseId: string | null;
   grantingCourseId: string | null;
   regeneratingCourseId: string | null;
 };
@@ -54,13 +56,19 @@ function formatAccessStatus(course: StudentCourseProgress): string {
     return date ? `Dostęp aktywny do ${date}.` : "Dostęp aktywny.";
   }
 
+  if (course.accessStatus === "pending") {
+    return "Dostęp oczekuje na ręczną aktywację.";
+  }
+
   return date ? `Dostęp wygasł ${date}.` : "Dostęp wygasł.";
 }
 
 export function StudentDetailPanel({
   student,
+  onActivateAccess,
   onGrantCertificate,
   onAllowRegenerateCertificate,
+  activatingAccessCourseId,
   grantingCourseId,
   regeneratingCourseId,
 }: Props) {
@@ -170,43 +178,55 @@ export function StudentDetailPanel({
                         ? formatCertificateDate(course.certificateGrantedAt)
                         : "Certyfikat oczekuje na decyzję administratora."}
                   </div>
-                  {course.certificateGenerated ? (
-                    <Button
-                      variant={
-                        course.certificateRegenerationAllowed
-                          ? "secondary"
-                          : "outline"
-                      }
-                      size="sm"
-                      loading={regeneratingCourseId === course.courseId}
-                      disabled={course.certificateRegenerationAllowed}
-                      onClick={() => onAllowRegenerateCertificate(course)}
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        <FiAward className="h-4 w-4" aria-hidden />
-                        {course.certificateRegenerationAllowed
-                          ? "Ponowne generowanie włączone"
-                          : "Pozwól wygenerować ponownie"}
-                      </span>
-                    </Button>
-                  ) : (
-                    <Button
-                      variant={
-                        course.certificateGranted ? "secondary" : "primary"
-                      }
-                      size="sm"
-                      loading={grantingCourseId === course.courseId}
-                      disabled={course.certificateGranted}
-                      onClick={() => onGrantCertificate(course)}
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        <FiAward className="h-4 w-4" aria-hidden />
-                        {course.certificateGranted
-                          ? "Certyfikat przyznany"
-                          : "Przyznaj certyfikat"}
-                      </span>
-                    </Button>
-                  )}
+                  <div className="flex flex-wrap justify-end gap-2">
+                    {course.accessStatus === "pending" ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        loading={activatingAccessCourseId === course.courseId}
+                        onClick={() => onActivateAccess(course)}
+                      >
+                        Aktywuj dostęp
+                      </Button>
+                    ) : null}
+                    {course.certificateGenerated ? (
+                      <Button
+                        variant={
+                          course.certificateRegenerationAllowed
+                            ? "secondary"
+                            : "outline"
+                        }
+                        size="sm"
+                        loading={regeneratingCourseId === course.courseId}
+                        disabled={course.certificateRegenerationAllowed}
+                        onClick={() => onAllowRegenerateCertificate(course)}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <FiAward className="h-4 w-4" aria-hidden />
+                          {course.certificateRegenerationAllowed
+                            ? "Ponowne generowanie włączone"
+                            : "Pozwól wygenerować ponownie"}
+                        </span>
+                      </Button>
+                    ) : (
+                      <Button
+                        variant={
+                          course.certificateGranted ? "secondary" : "primary"
+                        }
+                        size="sm"
+                        loading={grantingCourseId === course.courseId}
+                        disabled={course.certificateGranted}
+                        onClick={() => onGrantCertificate(course)}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <FiAward className="h-4 w-4" aria-hidden />
+                          {course.certificateGranted
+                            ? "Certyfikat przyznany"
+                            : "Przyznaj certyfikat"}
+                        </span>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </li>
             ))}
@@ -216,4 +236,3 @@ export function StudentDetailPanel({
     </div>
   );
 }
-

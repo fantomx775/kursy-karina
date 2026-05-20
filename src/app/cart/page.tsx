@@ -6,7 +6,10 @@ import Image from "next/image";
 import { useCart } from "@/features/cart/CartContext";
 import { useAuth } from "@/features/auth/AuthContext";
 import { TrashIcon } from "@/components/ui/Icon";
-import { formatAccessDuration } from "@/lib/accessDuration";
+import {
+  DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+  formatAccessDuration,
+} from "@/lib/accessDuration";
 import { cn } from "@/lib/utils";
 
 export default function CartPage() {
@@ -209,7 +212,11 @@ export default function CartPage() {
                         )}
                       </div>
                       <div className="mt-1 text-xs text-[var(--coffee-espresso)]">
-                        Dostęp: {formatAccessDuration(item.accessDurationMonths ?? 6)}
+                        Dostęp:{" "}
+                        {formatAccessDuration(
+                          item.accessDurationMonths ??
+                            DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+                        )}
                       </div>
                     </div>
                   </div>
@@ -245,7 +252,10 @@ export default function CartPage() {
                     <span className="text-[var(--coffee-charcoal)] line-clamp-2 min-w-0">
                       {item.title}
                       <span className="block text-xs text-[var(--coffee-espresso)]">
-                        {formatAccessDuration(item.accessDurationMonths ?? 6)}
+                        {formatAccessDuration(
+                          item.accessDurationMonths ??
+                            DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+                        )}
                       </span>
                     </span>
                     <span className="flex-shrink-0 text-right">

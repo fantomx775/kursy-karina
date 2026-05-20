@@ -1,6 +1,7 @@
 "server-only";
 
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
+import { getSaleWindowsByCourseIds } from "@/services/courseSaleWindows";
 import type { Course, CourseSection, CourseWithContent } from "@/types/course";
 
 export async function getCourseBySlug(slug: string): Promise<Course | null> {
@@ -15,7 +16,12 @@ export async function getCourseBySlug(slug: string): Promise<Course | null> {
     return null;
   }
 
-  return data;
+  const windowsByCourseId = await getSaleWindowsByCourseIds(admin, [data.id]);
+
+  return {
+    ...data,
+    sale_windows: windowsByCourseId[data.id] ?? [],
+  };
 }
 
 export async function getCourseWithContentBySlug(
@@ -32,6 +38,8 @@ export async function getCourseWithContentBySlug(
     return null;
   }
 
+  const windowsByCourseId = await getSaleWindowsByCourseIds(admin, [course.id]);
+
   const { data: sections, error: sectionsError } = await admin
     .from("course_sections")
     .select("id, course_id, title, position")
@@ -39,7 +47,11 @@ export async function getCourseWithContentBySlug(
     .order("position", { ascending: true });
 
   if (sectionsError || !sections) {
-    return { ...course, sections: [] };
+    return {
+      ...course,
+      sale_windows: windowsByCourseId[course.id] ?? [],
+      sections: [],
+    };
   }
 
   const sectionIds = sections.map((section) => section.id);
@@ -51,7 +63,11 @@ export async function getCourseWithContentBySlug(
     .order("position", { ascending: true });
 
   if (itemsError || !items) {
-    return { ...course, sections: sections.map((s) => ({ ...s, items: [] })) };
+    return {
+      ...course,
+      sale_windows: windowsByCourseId[course.id] ?? [],
+      sections: sections.map((s) => ({ ...s, items: [] })),
+    };
   }
 
   const itemsBySection = new Map<string, CourseSection["items"]>();
@@ -66,5 +82,9 @@ export async function getCourseWithContentBySlug(
     items: itemsBySection.get(section.id) ?? [],
   }));
 
-  return { ...course, sections: sectionsWithItems };
+  return {
+    ...course,
+    sale_windows: windowsByCourseId[course.id] ?? [],
+    sections: sectionsWithItems,
+  };
 }

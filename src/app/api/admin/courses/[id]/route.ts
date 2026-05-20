@@ -1,5 +1,10 @@
 import { courseInputSchema } from "@/lib/validators/course";
+import { DEFAULT_COURSE_ACCESS_DURATION_MONTHS } from "@/lib/accessDuration";
 import { authenticateAdmin } from "@/services/auth/server";
+import {
+  getSaleWindowsByCourseIds,
+  replaceCourseSaleWindows,
+} from "@/services/courseSaleWindows";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
 
 export async function GET(
@@ -37,8 +42,13 @@ export async function GET(
     .in("section_id", sectionIds)
     .order("position", { ascending: true });
 
+  const windowsByCourseId = await getSaleWindowsByCourseIds(admin, [id]);
+
   return Response.json({
-    course,
+    course: {
+      ...course,
+      sale_windows: windowsByCourseId[id] ?? [],
+    },
     sections:
       sections?.map((section) => ({
         ...section,
@@ -72,7 +82,8 @@ export async function PUT(
     description,
     price,
     status,
-    accessDurationMonths,
+    saleMode,
+    saleWindows,
     mainImageUrl,
     certificateTemplateId,
     sections,
@@ -142,12 +153,25 @@ export async function PUT(
       main_image_url: mainImageUrl ?? null,
       certificate_template_id: certificateTemplateId,
       certificate_template_key: certificateTemplateId,
-      access_duration_months: accessDurationMonths,
+      sale_mode: saleMode,
+      access_duration_months: DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
     })
     .eq("id", result.course_id);
   if (metadataError) {
     return Response.json(
       { error: "Course updated, but failed to persist course metadata" },
+      { status: 500 },
+    );
+  }
+
+  const { error: saleWindowsError } = await replaceCourseSaleWindows(
+    admin,
+    result.course_id,
+    saleMode === "scheduled" ? saleWindows : [],
+  );
+  if (saleWindowsError) {
+    return Response.json(
+      { error: "Course updated, but failed to persist sale windows" },
       { status: 500 },
     );
   }
@@ -166,5 +190,12 @@ export async function PUT(
     );
   }
 
-  return Response.json({ course });
+  const windowsByCourseId = await getSaleWindowsByCourseIds(admin, [course.id]);
+
+  return Response.json({
+    course: {
+      ...course,
+      sale_windows: windowsByCourseId[course.id] ?? [],
+    },
+  });
 }
