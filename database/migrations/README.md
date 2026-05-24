@@ -28,10 +28,12 @@ W podanej kolejnosci:
 16. **015_add_course_access_duration.sql** - czas dostepu do kursu i data wygasniecia pozycji zamowienia
 17. **016_tune_certificate_template_indexes_and_policies.sql** - indeksy i polityki dla szablonow certyfikatow
 18. **017_add_coupon_course_rules.sql** - przypisanie kuponow do kursow i wymagane kursy w koszyku
+19. **018_add_user_instagram_username.sql** - nazwa uzytkownika na Instagramie w profilu kursanta
+20. **019_optimize_course_progress_access_policies.sql** - aktualne polityki dostepu do postepu kursu
 
 ## Baza z juz dzialajacym projektem
 
-- Jesli masz juz schemat z `init.sql`: uruchom brakujace migracje po **001**. W aktualnej wersji zwykle beda to **002**-**016**.
+- Jesli masz juz schemat z `init.sql`: uruchom brakujace migracje po **001**. W aktualnej wersji zwykle beda to **002**-**019**.
 - Jesli brakuje tylko promocji: **003**, **004**, **005**.
 - Jesli brakuje tylko zdjec kursow: **002**, **006** oraz ewentualnie **004**/**005**, jesli RPC nie zapisuje jeszcze `main_image_url`.
 - Jesli chcesz wlaczyc admin-controlled certyfikaty na istniejacej bazie: uruchom co najmniej **007** i **010**.

@@ -23,6 +23,9 @@ export function AccountForm({ profile }: Props) {
   const { refreshProfile } = useAuth();
   const [firstName, setFirstName] = useState(profile.first_name);
   const [lastName, setLastName] = useState(profile.last_name);
+  const [instagramUsername, setInstagramUsername] = useState(
+    profile.instagram_username ?? "",
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
@@ -69,7 +72,11 @@ export function AccountForm({ profile }: Props) {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ first_name: f, last_name: l }),
+        body: JSON.stringify({
+          first_name: f,
+          last_name: l,
+          instagram_username: instagramUsername.trim() || null,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -158,6 +165,13 @@ export function AccountForm({ profile }: Props) {
           helperText="Skontaktuj się z administratorem w sprawie zmiany adresu email."
           className="border-radius bg-[var(--coffee-latte)] cursor-default"
           aria-readonly="true"
+        />
+        <Input
+          label="Nazwa użytkownika na Instagramie"
+          value={instagramUsername}
+          onChange={(e) => setInstagramUsername(e.target.value)}
+          helperText="Ułatwia kontakt i dodanie Cię do grupy kursowej na Insta."
+          className="border-radius"
         />
         {error && (
           <p className="text-sm text-[var(--error)]" role="alert">

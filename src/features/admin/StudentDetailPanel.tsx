@@ -1,6 +1,13 @@
 ﻿"use client";
 
-import { FiAward, FiBook, FiCalendar, FiLogIn, FiMail } from "react-icons/fi";
+import {
+  FiAward,
+  FiBook,
+  FiCalendar,
+  FiInstagram,
+  FiLogIn,
+  FiMail,
+} from "react-icons/fi";
 import { Button } from "@/components/ui";
 import type { StudentCourseProgress, StudentDetail } from "@/types/student";
 
@@ -98,6 +105,17 @@ export function StudentDetailPanel({
                   Rejestracja:{" "}
                 </span>
                 {formatDateTime(student.registrationDate)}
+              </span>
+            </li>
+            <li className="flex items-center gap-3 text-[var(--text-sm)] text-[var(--coffee-charcoal)]">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center border-radius bg-[var(--coffee-latte)] text-[var(--coffee-mocha)]">
+                <FiInstagram className="h-4 w-4" aria-hidden />
+              </span>
+              <span>
+                <span className="text-[var(--coffee-espresso)]">
+                  Instagram:{" "}
+                </span>
+                {student.instagramUsername ?? "—"}
               </span>
             </li>
             <li className="flex items-center gap-3 text-[var(--text-sm)] text-[var(--coffee-charcoal)]">
@@ -216,4 +234,3 @@ export function StudentDetailPanel({
     </div>
   );
 }
-

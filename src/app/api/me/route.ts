@@ -17,7 +17,9 @@ export async function GET() {
   const admin = createAdminSupabaseClient();
   const { data: profile, error: profileError } = await admin
     .from("users")
-    .select("id, email, first_name, last_name, role, created_at, updated_at")
+    .select(
+      "id, email, first_name, last_name, instagram_username, role, created_at, updated_at",
+    )
     .eq("id", user.id)
     .single();
 
@@ -30,13 +32,24 @@ export async function GET() {
   });
 }
 
-function isValidPatchBody(
-  body: unknown
-): body is { first_name?: string; last_name?: string } {
+function isValidPatchBody(body: unknown): body is {
+  first_name?: string;
+  last_name?: string;
+  instagram_username?: string | null;
+} {
   if (typeof body !== "object" || body === null) return false;
   const o = body as Record<string, unknown>;
-  if (o.first_name !== undefined && typeof o.first_name !== "string") return false;
-  if (o.last_name !== undefined && typeof o.last_name !== "string") return false;
+  if (o.first_name !== undefined && typeof o.first_name !== "string")
+    return false;
+  if (o.last_name !== undefined && typeof o.last_name !== "string")
+    return false;
+  if (
+    o.instagram_username !== undefined &&
+    o.instagram_username !== null &&
+    typeof o.instagram_username !== "string"
+  ) {
+    return false;
+  }
   return true;
 }
 
@@ -60,18 +73,25 @@ export async function PATCH(request: Request) {
 
   if (!isValidPatchBody(body)) {
     return NextResponse.json(
-      { error: "Body must contain optional first_name and/or last_name (strings)" },
-      { status: 400 }
+      {
+        error:
+          "Body must contain optional first_name and/or last_name (strings)",
+      },
+      { status: 400 },
     );
   }
 
-  const updates: { first_name?: string; last_name?: string } = {};
+  const updates: {
+    first_name?: string;
+    last_name?: string;
+    instagram_username?: string | null;
+  } = {};
   if (body.first_name !== undefined) {
     const trimmed = body.first_name.trim();
     if (!trimmed) {
       return NextResponse.json(
         { error: "first_name cannot be empty" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     updates.first_name = trimmed;
@@ -81,16 +101,23 @@ export async function PATCH(request: Request) {
     if (!trimmed) {
       return NextResponse.json(
         { error: "last_name cannot be empty" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     updates.last_name = trimmed;
   }
+  if (body.instagram_username !== undefined) {
+    const trimmed = body.instagram_username?.trim() ?? "";
+    updates.instagram_username = trimmed || null;
+  }
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json(
-      { error: "Provide at least one of first_name, last_name" },
-      { status: 400 }
+      {
+        error:
+          "Provide at least one of first_name, last_name, instagram_username",
+      },
+      { status: 400 },
     );
   }
 
@@ -98,13 +125,15 @@ export async function PATCH(request: Request) {
     .from("users")
     .update(updates)
     .eq("id", user.id)
-    .select("id, email, first_name, last_name, role, created_at, updated_at")
+    .select(
+      "id, email, first_name, last_name, instagram_username, role, created_at, updated_at",
+    )
     .single();
 
   if (updateError) {
     return NextResponse.json(
       { error: updateError.message ?? "Update failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 

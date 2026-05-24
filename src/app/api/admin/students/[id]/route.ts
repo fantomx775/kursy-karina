@@ -20,7 +20,7 @@ export async function GET(
 
   const { data: student, error: studentError } = await admin
     .from("users")
-    .select("id, first_name, last_name, email, created_at")
+    .select("id, first_name, last_name, email, instagram_username, created_at")
     .eq("id", id)
     .eq("role", "student")
     .single();
@@ -131,6 +131,7 @@ export async function GET(
       id: student.id,
       fullName: `${student.first_name} ${student.last_name}`,
       email: student.email,
+      instagramUsername: student.instagram_username,
       registrationDate: student.created_at,
       lastLogin,
       courses,

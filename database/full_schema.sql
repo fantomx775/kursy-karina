@@ -76,8 +76,11 @@ DECLARE
   user_name TEXT;
   first_name_part TEXT;
   last_name_part TEXT;
+  instagram_username_value TEXT;
 BEGIN
   user_name := COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email);
+  instagram_username_value :=
+    NULLIF(BTRIM(NEW.raw_user_meta_data->>'instagram_username'), '');
 
   IF user_name IS NULL OR user_name = '' THEN
     first_name_part := split_part(NEW.email, '@', 1);
@@ -91,12 +94,20 @@ BEGIN
     END IF;
   END IF;
 
-  INSERT INTO public.users (id, email, first_name, last_name, role)
+  INSERT INTO public.users (
+    id,
+    email,
+    first_name,
+    last_name,
+    instagram_username,
+    role
+  )
   VALUES (
     NEW.id,
     NEW.email,
     COALESCE(NULLIF(first_name_part, ''), 'User'),
     COALESCE(NULLIF(last_name_part, ''), 'User'),
+    instagram_username_value,
     'student'
   );
 
@@ -126,9 +137,12 @@ CREATE TABLE users (
   email TEXT NOT NULL,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
+  instagram_username TEXT,
   role user_role NOT NULL DEFAULT 'student',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT users_instagram_username_not_blank
+    CHECK (instagram_username IS NULL OR BTRIM(instagram_username) <> '')
 );
 
 CREATE TABLE certificate_templates (
@@ -504,7 +518,7 @@ CREATE POLICY "Order items viewable by owner" ON order_items
 CREATE POLICY "Users can view own progress" ON course_progress
   FOR SELECT
   USING (
-    auth.uid() = user_id
+    (SELECT auth.uid()) = user_id
     OR (SELECT current_user_role() = 'admin')
   );
 
@@ -512,12 +526,12 @@ CREATE POLICY "Users can insert own progress with active access" ON course_progr
   FOR INSERT
   WITH CHECK (
     (
-      auth.uid() = user_id
+      (SELECT auth.uid()) = user_id
       AND EXISTS (
         SELECT 1
         FROM orders AS o
         JOIN order_items AS oi ON oi.order_id = o.id
-        WHERE o.user_id = auth.uid()
+        WHERE o.user_id = (SELECT auth.uid())
           AND o.status = 'paid'
           AND oi.course_id = course_progress.course_id
           AND oi.access_expires_at > NOW()
@@ -529,17 +543,17 @@ CREATE POLICY "Users can insert own progress with active access" ON course_progr
 CREATE POLICY "Users can update own progress with active access" ON course_progress
   FOR UPDATE
   USING (
-    auth.uid() = user_id
+    (SELECT auth.uid()) = user_id
     OR (SELECT current_user_role() = 'admin')
   )
   WITH CHECK (
     (
-      auth.uid() = user_id
+      (SELECT auth.uid()) = user_id
       AND EXISTS (
         SELECT 1
         FROM orders AS o
         JOIN order_items AS oi ON oi.order_id = o.id
-        WHERE o.user_id = auth.uid()
+        WHERE o.user_id = (SELECT auth.uid())
           AND o.status = 'paid'
           AND oi.course_id = course_progress.course_id
           AND oi.access_expires_at > NOW()
@@ -552,12 +566,12 @@ CREATE POLICY "Users can delete own progress with active access" ON course_progr
   FOR DELETE
   USING (
     (
-      auth.uid() = user_id
+      (SELECT auth.uid()) = user_id
       AND EXISTS (
         SELECT 1
         FROM orders AS o
         JOIN order_items AS oi ON oi.order_id = o.id
-        WHERE o.user_id = auth.uid()
+        WHERE o.user_id = (SELECT auth.uid())
           AND o.status = 'paid'
           AND oi.course_id = course_progress.course_id
           AND oi.access_expires_at > NOW()

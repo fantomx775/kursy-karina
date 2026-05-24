@@ -44,6 +44,13 @@ export function StudentsTab({
     },
     { key: "email", title: "Email", dataIndex: "email", sortable: true },
     {
+      key: "instagramUsername",
+      title: "Instagram",
+      dataIndex: "instagramUsername",
+      render: (_, record) => record.instagramUsername ?? "—",
+      sortable: true,
+    },
+    {
       key: "lastLogin",
       title: "Ostatnie logowanie",
       dataIndex: "lastLogin",

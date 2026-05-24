@@ -2,6 +2,7 @@ export type StudentSummary = {
   id: string;
   fullName: string;
   email: string;
+  instagramUsername: string | null;
   registrationDate: string;
   lastLogin: string | null;
   coursesEnrolled: number;
@@ -28,6 +29,7 @@ export type StudentDetail = {
   id: string;
   fullName: string;
   email: string;
+  instagramUsername: string | null;
   registrationDate: string;
   lastLogin: string | null;
   courses: StudentCourseProgress[];

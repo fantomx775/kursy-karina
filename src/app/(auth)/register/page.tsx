@@ -9,7 +9,12 @@ import { Input, PasswordInput } from "@/components/ui";
 
 type RegisterFieldErrors = Partial<
   Record<
-    "firstName" | "lastName" | "email" | "password" | "confirmPassword",
+    | "firstName"
+    | "lastName"
+    | "instagramUsername"
+    | "email"
+    | "password"
+    | "confirmPassword",
     string
   >
 >;
@@ -20,6 +25,7 @@ export default function RegisterPage() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [instagramUsername, setInstagramUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -49,6 +55,10 @@ export default function RegisterPage() {
       nextErrors.lastName = "Podaj nazwisko.";
     }
 
+    if (!instagramUsername.trim()) {
+      nextErrors.instagramUsername = "Podaj nazwę użytkownika na Instagramie.";
+    }
+
     if (!email.trim()) {
       nextErrors.email = "Podaj email.";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
@@ -72,11 +82,15 @@ export default function RegisterPage() {
     const fullName = [firstName.trim(), lastName.trim()]
       .filter(Boolean)
       .join(" ");
+    const normalizedInstagramUsername = instagramUsername.trim();
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: {
+          full_name: fullName,
+          instagram_username: normalizedInstagramUsername,
+        },
       },
     });
 
@@ -144,6 +158,21 @@ export default function RegisterPage() {
             className="border-radius"
           />
         </div>
+        <Input
+          label="Nazwa użytkownika na Instagramie"
+          type="text"
+          value={instagramUsername}
+          onChange={(event) => {
+            setInstagramUsername(event.target.value);
+            setFieldErrors((previous) => ({
+              ...previous,
+              instagramUsername: undefined,
+            }));
+          }}
+          error={fieldErrors.instagramUsername}
+          helperText="To pole jest po to, żebym miała z Tobą kontakt i mogła dodać Cię do grupy na Insta."
+          required
+        />
         <Input
           label="Email"
           type="email"
