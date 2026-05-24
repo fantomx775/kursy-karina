@@ -30,14 +30,17 @@ W podanej kolejnosci:
 18. **017_add_coupon_course_rules.sql** - przypisanie kuponow do kursow i wymagane kursy w koszyku
 19. **018_add_user_instagram_username.sql** - nazwa uzytkownika na Instagramie w profilu kursanta
 20. **019_optimize_course_progress_access_policies.sql** - aktualne polityki dostepu do postepu kursu
+21. **020_add_course_sale_windows_and_manual_access.sql** - okna sprzedazy kursow i reczna aktywacja dostepu
+22. **021_add_company_invoice_tracking.sql** - status i dane zewnetrznej faktury firmowej
 
 ## Baza z juz dzialajacym projektem
 
-- Jesli masz juz schemat z `init.sql`: uruchom brakujace migracje po **001**. W aktualnej wersji zwykle beda to **002**-**019**.
+- Jesli masz juz schemat z `init.sql`: uruchom brakujace migracje po **001**. W aktualnej wersji zwykle beda to **002**-**021**.
 - Jesli brakuje tylko promocji: **003**, **004**, **005**.
 - Jesli brakuje tylko zdjec kursow: **002**, **006** oraz ewentualnie **004**/**005**, jesli RPC nie zapisuje jeszcze `main_image_url`.
 - Jesli chcesz wlaczyc admin-controlled certyfikaty na istniejacej bazie: uruchom co najmniej **007** i **010**.
 - Jesli chcesz wlaczyc czasowy dostep do kursow: uruchom **015_add_course_access_duration.sql**.
+- Jesli chcesz wlaczyc faktury firmowe z zewnetrznym dostawca: uruchom **021_add_company_invoice_tracking.sql**.
 
 ## Dane testowe
 

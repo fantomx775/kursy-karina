@@ -2,9 +2,14 @@ import { getEffectivePriceCents } from "@/lib/coursePromo";
 import { authenticateUser } from "@/services/auth/server";
 import { validateCoupon } from "@/services/coupons";
 import { getUserCourseAccessMap } from "@/services/courseAccess";
+import { getCompanyInvoiceProvider } from "@/services/invoicing/companyInvoiceProvider";
+import { getFakturowniaConfig } from "@/services/invoicing/fakturownia";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
 import { stripe } from "@/services/stripe";
-import { formatAccessDuration } from "@/lib/accessDuration";
+import {
+  DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+  formatAccessDuration,
+} from "@/lib/accessDuration";
 import type { Course } from "@/types/course";
 
 type CartItem = {
@@ -21,6 +26,23 @@ export async function POST(request: Request) {
 
   const { cart, couponCode, wantsCompanyInvoice } = await request.json();
   const shouldCreateCompanyInvoice = wantsCompanyInvoice === true;
+  let companyInvoiceProvider: "stripe" | "fakturownia" = "stripe";
+
+  if (shouldCreateCompanyInvoice) {
+    try {
+      companyInvoiceProvider = getCompanyInvoiceProvider();
+      if (companyInvoiceProvider === "fakturownia") {
+        getFakturowniaConfig();
+      }
+    } catch (error) {
+      console.error("Company invoice configuration is invalid", error);
+      return Response.json(
+        { error: "Konfiguracja fakturowania firmowego jest niekompletna." },
+        { status: 500 },
+      );
+    }
+  }
+
   if (!Array.isArray(cart) || cart.length === 0) {
     return Response.json({ error: "Koszyk jest pusty." }, { status: 400 });
   }
@@ -47,7 +69,8 @@ export async function POST(request: Request) {
       description: row.description,
       price: row.price,
       status: "active",
-      access_duration_months: row.access_duration_months ?? 6,
+      access_duration_months:
+        row.access_duration_months ?? DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
       promotion_discount_type: row.promotion_discount_type ?? null,
       promotion_discount_value: row.promotion_discount_value ?? null,
       promotion_start_date:
@@ -78,13 +101,15 @@ export async function POST(request: Request) {
   );
 
   const coursesToCharge = validCourses.filter(
-    (course) => !accessByCourseId[course.id]?.hasActiveAccess,
+    (course) =>
+      !accessByCourseId[course.id]?.hasActiveAccess &&
+      !accessByCourseId[course.id]?.hasPendingAccess,
   );
 
   if (coursesToCharge.length === 0) {
     return Response.json({
       alreadyPurchased: true,
-      message: "Wszystkie kursy są już zakupione.",
+      message: "Masz już aktywny lub oczekujący dostęp do tych kursów.",
     });
   }
 
@@ -166,7 +191,8 @@ export async function POST(request: Request) {
         product_data: {
           name: course.title,
           description: `${course.description} Dostęp: ${formatAccessDuration(
-            course.access_duration_months ?? 6,
+            course.access_duration_months ??
+              DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
           )}.`,
         },
         unit_amount: Math.round(course.finalPrice),
@@ -185,6 +211,9 @@ export async function POST(request: Request) {
       subtotal_amount: String(subtotalAmount),
       total_amount: String(subtotalAmount - discountAmount),
       company_invoice_requested: String(shouldCreateCompanyInvoice),
+      company_invoice_provider: shouldCreateCompanyInvoice
+        ? companyInvoiceProvider
+        : "",
     },
     customer_email: auth.user.email || undefined,
     ...(shouldCreateCompanyInvoice
@@ -195,24 +224,28 @@ export async function POST(request: Request) {
             enabled: true,
             required: "if_supported" as const,
           },
-          invoice_creation: {
-            enabled: true,
-            invoice_data: {
-              description: "Faktura za zakup kursu online",
-              metadata: {
-                user_id: auth.user.id,
-                course_ids: JSON.stringify(
-                  discountedCourses.map((course) => course.id),
-                ),
-              },
-            },
-          },
           custom_text: {
             submit: {
               message:
-                "Po opłaceniu zamówienia Stripe wyśle fakturę na podany adres e-mail.",
+                "Po opłaceniu zamówienia faktura zostanie wysłana na podany adres e-mail.",
             },
           },
+          ...(companyInvoiceProvider === "stripe"
+            ? {
+                invoice_creation: {
+                  enabled: true,
+                  invoice_data: {
+                    description: "Faktura za zakup kursu online",
+                    metadata: {
+                      user_id: auth.user.id,
+                      course_ids: JSON.stringify(
+                        discountedCourses.map((course) => course.id),
+                      ),
+                    },
+                  },
+                },
+              }
+            : {}),
         }
       : {}),
   });

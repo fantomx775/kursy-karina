@@ -57,6 +57,8 @@ export default async function DashboardPage() {
   let orderItems: {
     course_id: string;
     title: string;
+    access_status: string | null;
+    access_activated_at: string | null;
     access_expires_at: string | null;
   }[] = [];
   let adminCourseIds: string[] = [];
@@ -88,7 +90,9 @@ export default async function DashboardPage() {
   if (orderIds.length > 0) {
     const { data: purchasedItems, error: orderItemsError } = await supabase
       .from("order_items")
-      .select("course_id, title, access_expires_at")
+      .select(
+        "course_id, title, access_status, access_activated_at, access_expires_at",
+      )
       .in("order_id", orderIds);
 
     orderItems = purchasedItems ?? [];
@@ -184,7 +188,9 @@ export default async function DashboardPage() {
       purchasedCourseIds.map((courseId) => [
         courseId,
         resolveCourseAccessState(
-          orderItems.filter((item) => item.course_id === courseId) as CourseAccessOrderItem[],
+          orderItems.filter(
+            (item) => item.course_id === courseId,
+          ) as CourseAccessOrderItem[],
         ),
       ]),
     );
@@ -258,7 +264,12 @@ export default async function DashboardPage() {
         slug: course?.slug ?? "",
         status: course?.status ?? "inactive",
         adminAccess: isAdmin,
-        accessStatus: access.status === "active" ? "active" : "expired",
+        accessStatus:
+          access.status === "active"
+            ? "active"
+            : access.status === "pending"
+              ? "pending"
+              : "expired",
         accessExpiresAt:
           "activeExpiresAt" in access && access.activeExpiresAt
             ? access.activeExpiresAt

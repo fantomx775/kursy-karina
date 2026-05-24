@@ -11,7 +11,7 @@ import {
   normalizeAccessDurationMonths,
 } from "@/lib/accessDuration";
 
-type CourseAccessStatus = "none" | "active" | "expired";
+type CourseAccessStatus = "none" | "pending" | "active" | "expired";
 
 type Props = {
   course: Course;
@@ -52,6 +52,20 @@ export function CoursePurchaseCard({
         </Button>
         <p className="text-center text-xs text-[var(--coffee-espresso)]">
           Dostęp aktywny do: {formatDate(accessExpiresAt)}
+        </p>
+      </div>
+    );
+  }
+
+  if (accessStatus === "pending") {
+    return (
+      <div className="space-y-3">
+        <Button variant="secondary" fullWidth disabled>
+          Oczekuje na aktywację
+        </Button>
+        <p className="text-center text-xs text-[var(--coffee-espresso)]">
+          Zamówienie jest opłacone. Dostęp zostanie aktywowany przez
+          administrację.
         </p>
       </div>
     );

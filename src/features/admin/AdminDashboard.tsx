@@ -44,6 +44,9 @@ export function AdminDashboard({
     useState<StudentCourseProgress | null>(null);
   const [pendingRegenerationCourse, setPendingRegenerationCourse] =
     useState<StudentCourseProgress | null>(null);
+  const [activatingAccessCourseId, setActivatingAccessCourseId] = useState<
+    string | null
+  >(null);
   const [grantingCertificateCourseId, setGrantingCertificateCourseId] =
     useState<string | null>(null);
   const [regeneratingCertificateCourseId, setRegeneratingCertificateCourseId] =
@@ -87,6 +90,7 @@ export function AdminDashboard({
     closeCourseStatsDetail,
     markCertificateGranted,
     markCertificateRegenerationAllowed,
+    refreshStudentDetail,
   } = useAdminModals();
 
   const { handleSaveCoupon, handleDeleteCoupon } = useAdminActions();
@@ -169,7 +173,56 @@ export function AdminDashboard({
   const handleCloseStudentModal = () => {
     setPendingCertificateCourse(null);
     setPendingRegenerationCourse(null);
+    setActivatingAccessCourseId(null);
     closeStudentModal();
+  };
+
+  const handleActivateAccess = async (course: StudentCourseProgress) => {
+    if (!studentDetail) {
+      return;
+    }
+
+    setActivatingAccessCourseId(course.courseId);
+
+    try {
+      const response = await fetch(
+        `/api/admin/students/${studentDetail.id}/access`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ courseId: course.courseId }),
+        },
+      );
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(data?.error ?? "Nie udało się aktywować dostępu.");
+      }
+
+      await Promise.all([refreshStudentDetail(), loadStudents()]);
+      addToast({
+        type: "success",
+        title: data?.alreadyActive ? "Dostęp już aktywny" : "Dostęp aktywowany",
+        message: data?.accessExpiresAt
+          ? `Dostęp aktywny do ${new Date(
+              data.accessExpiresAt,
+            ).toLocaleDateString("pl-PL")}.`
+          : "Kursant może już korzystać z kursu.",
+      });
+    } catch (error) {
+      addToast({
+        type: "error",
+        title: "Błąd aktywacji dostępu",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się aktywować dostępu.",
+      });
+    } finally {
+      setActivatingAccessCourseId(null);
+    }
   };
 
   const handleRequestCertificateGrant = (course: StudentCourseProgress) => {
@@ -471,8 +524,10 @@ export function AdminDashboard({
         ) : studentDetail ? (
           <StudentDetailPanel
             student={studentDetail}
+            onActivateAccess={handleActivateAccess}
             onGrantCertificate={handleRequestCertificateGrant}
             onAllowRegenerateCertificate={handleRequestCertificateRegeneration}
+            activatingAccessCourseId={activatingAccessCourseId}
             grantingCourseId={grantingCertificateCourseId}
             regeneratingCourseId={regeneratingCertificateCourseId}
           />
