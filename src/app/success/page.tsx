@@ -12,7 +12,9 @@ export default function SuccessPage() {
   const searchParams = useSearchParams();
   const { user, isLoading } = useAuth();
   const { clearCart } = useCart();
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    "loading",
+  );
   const [message, setMessage] = useState("");
   const verificationAttempted = useRef(false);
 
@@ -56,7 +58,21 @@ export default function SuccessPage() {
 
       clearCart();
       setStatus("success");
-      setMessage("Płatność potwierdzona. Kurs jest dostępny w panelu.");
+      if (data.invoice?.status === "failed") {
+        setMessage(
+          "Płatność potwierdzona. Zamówienie jest zapisane, ale faktura wymaga ręcznego sprawdzenia.",
+        );
+        return;
+      }
+
+      if (data.invoice?.status === "issued") {
+        setMessage(
+          "Płatność potwierdzona. Zamówienie jest zapisane, a faktura zostanie wysłana e-mailem.",
+        );
+        return;
+      }
+
+      setMessage("Płatność potwierdzona. Zamówienie jest zapisane.");
     };
 
     verifyPayment();
@@ -68,7 +84,9 @@ export default function SuccessPage() {
         {status === "loading" && (
           <div className="flex flex-col items-center gap-4">
             <Spinner size="lg" />
-            <p className="text-[var(--coffee-espresso)]">Weryfikacja płatności...</p>
+            <p className="text-[var(--coffee-espresso)]">
+              Weryfikacja płatności...
+            </p>
           </div>
         )}
         {status === "success" && (

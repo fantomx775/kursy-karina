@@ -45,7 +45,9 @@ export async function GET(
   const orderIds = orders?.map((order) => order.id) ?? [];
   const { data: orderItems } = await admin
     .from("order_items")
-    .select("order_id, course_id, title, price, quantity, access_expires_at")
+    .select(
+      "order_id, course_id, title, price, quantity, access_status, access_activated_at, access_expires_at",
+    )
     .in("order_id", orderIds);
 
   const courseIds = Array.from(
@@ -115,7 +117,12 @@ export async function GET(
       totalItems,
       completedItems,
       completionPercentage,
-      accessStatus: access.hasActiveAccess ? "active" : "expired",
+      accessStatus:
+        access.status === "active"
+          ? "active"
+          : access.status === "pending"
+            ? "pending"
+            : "expired",
       accessExpiresAt: access.activeExpiresAt ?? access.lastExpiresAt,
       certificateGranted: certificateGrant.granted,
       certificateGrantedAt: certificateGrant.grantedAt,

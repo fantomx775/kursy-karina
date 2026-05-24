@@ -19,7 +19,7 @@ export type CourseCard = {
   slug: string;
   status: CourseStatus;
   adminAccess: boolean;
-  accessStatus: "active" | "expired";
+  accessStatus: "active" | "pending" | "expired";
   accessExpiresAt: string | null;
   completionPercentage: number;
   certificateGranted: boolean;
@@ -217,6 +217,10 @@ export function DashboardTabs({
                         <Badge rounded={false} variant="warning" size="sm">
                           Dostęp wygasł
                         </Badge>
+                      ) : course.accessStatus === "pending" ? (
+                        <Badge rounded={false} variant="secondary" size="sm">
+                          Oczekuje na aktywację
+                        </Badge>
                       ) : course.accessExpiresAt ? (
                         <Badge rounded={false} variant="secondary" size="sm">
                           Dostęp do {formatAccessDate(course.accessExpiresAt)}
@@ -248,7 +252,8 @@ export function DashboardTabs({
                             : "Certyfikat będzie dostępny po decyzji administratora."}
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3">
-                    {course.accessStatus === "expired" && !course.adminAccess ? (
+                    {course.accessStatus === "expired" &&
+                    !course.adminAccess ? (
                       <Link href={`/courses/${course.slug}`}>
                         <Button variant="primary">Przedłuż dostęp</Button>
                       </Link>
@@ -279,7 +284,8 @@ export function DashboardTabs({
                             );
                           }}
                         />
-                        {course.accessStatus === "active" || course.adminAccess ? (
+                        {course.accessStatus === "active" ||
+                        course.adminAccess ? (
                           <Link href={`/learn/${course.slug}`}>
                             <Button variant="outline">Otwórz kurs</Button>
                           </Link>
@@ -292,7 +298,8 @@ export function DashboardTabs({
                       </>
                     ) : (
                       <>
-                        {course.accessStatus === "active" || course.adminAccess ? (
+                        {course.accessStatus === "active" ||
+                        course.adminAccess ? (
                           <Link href={`/learn/${course.slug}`}>
                             <Button variant="primary">
                               {course.completionPercentage === 100
@@ -332,4 +339,3 @@ export function DashboardTabs({
     </>
   );
 }
-

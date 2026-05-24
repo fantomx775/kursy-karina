@@ -1,9 +1,10 @@
-export type CourseAccessStatus = "none" | "active" | "expired";
+export type CourseAccessStatus = "none" | "pending" | "active" | "expired";
 
 export type CourseAccessState = {
   status: CourseAccessStatus;
   hasEverPurchased: boolean;
   hasActiveAccess: boolean;
+  hasPendingAccess: boolean;
   activeExpiresAt: string | null;
   lastExpiresAt: string | null;
 };
@@ -14,13 +15,16 @@ type SupabaseQueryClient = {
 
 export type CourseAccessOrderItem = {
   course_id: string;
+  access_status?: string | null;
   access_expires_at: string | null;
+  access_activated_at?: string | null;
 };
 
 const EMPTY_ACCESS: CourseAccessState = {
   status: "none",
   hasEverPurchased: false,
   hasActiveAccess: false,
+  hasPendingAccess: false,
   activeExpiresAt: null,
   lastExpiresAt: null,
 };
@@ -40,14 +44,20 @@ export function resolveCourseAccessState(
     return EMPTY_ACCESS;
   }
 
+  const activatedItems = items.filter(
+    (item) => (item.access_status ?? "active") === "active",
+  );
+  const pendingItems = items.filter((item) => item.access_status === "pending");
+  const hasPendingAccess = pendingItems.length > 0;
+
   const lastExpiresAt =
-    items
+    activatedItems
       .map((item) => item.access_expires_at)
       .sort(compareIsoDates)
       .at(-1) ?? null;
 
   const activeExpiresAt =
-    items
+    activatedItems
       .map((item) => item.access_expires_at)
       .filter((expiresAt): expiresAt is string => {
         if (!expiresAt) return false;
@@ -59,9 +69,14 @@ export function resolveCourseAccessState(
   const hasActiveAccess = activeExpiresAt !== null;
 
   return {
-    status: hasActiveAccess ? "active" : "expired",
+    status: hasActiveAccess
+      ? "active"
+      : hasPendingAccess
+        ? "pending"
+        : "expired",
     hasEverPurchased: true,
     hasActiveAccess,
+    hasPendingAccess,
     activeExpiresAt,
     lastExpiresAt,
   };
@@ -92,7 +107,7 @@ export async function getUserCourseAccess(
 
   const { data } = await supabase
     .from("order_items")
-    .select("course_id, access_expires_at")
+    .select("course_id, access_status, access_activated_at, access_expires_at")
     .eq("course_id", courseId)
     .in("order_id", orderIds);
 
@@ -120,7 +135,7 @@ export async function getUserCourseAccessMap(
 
   const { data } = await supabase
     .from("order_items")
-    .select("course_id, access_expires_at")
+    .select("course_id, access_status, access_activated_at, access_expires_at")
     .in("course_id", uniqueCourseIds)
     .in("order_id", orderIds);
 
