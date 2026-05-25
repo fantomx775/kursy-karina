@@ -211,15 +211,17 @@ Najpierw dokładnie przyswajasz teorię, a moment wdrożenia jej w praktyce zale
                     className="block w-full h-auto md:hidden"
                     sizes="100vw"
                     priority
+                    unoptimized
                   />
                   <Image
-                    src="/main.JPG"
+                    src="/main.jpg"
                     alt="Karina Koziara – stylistka brwi, wielokrotna zwyciężczyni mistrzostw"
                     width={3024}
                     height={4032}
                     className="hidden md:block w-full h-auto"
                     sizes="(min-width: 768px) min(50vw, 28rem), 0px"
                     priority
+                    unoptimized
                   />
                 </div>
               </div>
