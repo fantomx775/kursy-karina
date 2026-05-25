@@ -6,6 +6,7 @@ import { authenticateUser } from "@/services/auth/server";
 import { getUserCourseAccess } from "@/services/courseAccess";
 import { getCourseWithContentBySlug } from "@/services/courses";
 import { CourseViewer } from "@/features/courses/CourseViewer";
+import { formatAccessDuration } from "@/lib/accessDuration";
 
 export default async function LearnPage({
   params,
@@ -33,12 +34,14 @@ export default async function LearnPage({
     ? "active"
     : "none";
   let accessExpiresAt: string | null = null;
+  let accessDurationMonths: number | null = null;
 
   if (!hasActiveAccess) {
     const access = await getUserCourseAccess(supabase, userId, course.id);
     hasActiveAccess = access.hasActiveAccess;
     accessStatus = access.status;
     accessExpiresAt = access.lastExpiresAt;
+    accessDurationMonths = access.accessDurationMonths;
   }
 
   if (!hasActiveAccess) {
@@ -62,7 +65,13 @@ export default async function LearnPage({
                     : ""
                 }. Przedłuż dostęp, aby wrócić do materiałów.`
               : isPending
-                ? "Zamówienie jest opłacone. Dostęp do kursu zostanie aktywowany przez administrację."
+                ? `Zakup jest potwierdzony. Dostęp do kursu zostanie aktywowany przez administrację.${
+                    accessDurationMonths
+                      ? ` ${formatAccessDuration(
+                          accessDurationMonths,
+                        )} zacznie się liczyć dopiero od aktywacji.`
+                      : ""
+                  }`
                 : "Ten kurs nie został jeszcze zakupiony. Wróć do szczegółów kursu, aby sfinalizować zakup."}
           </p>
           <div className="space-y-3">

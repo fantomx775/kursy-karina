@@ -35,10 +35,12 @@ export default async function CourseDetailPage({
 
   let accessStatus: "none" | "pending" | "active" | "expired" = "none";
   let accessExpiresAt: string | null = null;
+  let purchasedAccessDurationMonths: number | null = null;
   if (user) {
     const access = await getUserCourseAccess(supabase, user.id, course.id);
     accessStatus = access.status;
     accessExpiresAt = access.activeExpiresAt ?? access.lastExpiresAt;
+    purchasedAccessDurationMonths = access.accessDurationMonths;
   }
 
   // Pass only purchase-card fields to the client component to avoid exposing
@@ -141,6 +143,7 @@ export default async function CourseDetailPage({
                 course={purchaseCourse}
                 accessStatus={accessStatus}
                 accessExpiresAt={accessExpiresAt}
+                purchasedAccessDurationMonths={purchasedAccessDurationMonths}
               />
             </div>
             <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 text-sm text-[var(--coffee-espresso)] leading-relaxed">

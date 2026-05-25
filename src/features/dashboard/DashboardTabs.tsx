@@ -8,6 +8,7 @@ import {
   type AdminTabId,
 } from "@/features/admin/AdminDashboard";
 import { CertificateActions } from "@/features/certificates/CertificateActions";
+import { formatAccessDuration } from "@/lib/accessDuration";
 import { getCourseDescriptionExcerpt } from "@/lib/courseDescription";
 import type { CourseStatus } from "@/types/course";
 import type { UserProfile } from "@/types/user";
@@ -22,6 +23,9 @@ export type CourseCard = {
   adminAccess: boolean;
   accessStatus: "active" | "pending" | "expired";
   accessExpiresAt: string | null;
+  accessDurationMonths: number | null;
+  canRenewAccess: boolean;
+  saleStatus: "open" | "coming_soon" | "inactive";
   completionPercentage: number;
   certificateGranted: boolean;
   certificateGrantedAt: string | null;
@@ -96,6 +100,37 @@ function formatAccessDate(iso: string | null): string {
     month: "2-digit",
     year: "numeric",
   });
+}
+
+function getAccessNotice(course: CourseCard): string {
+  if (course.adminAccess) {
+    return "Masz techniczny podgląd admina. Uczestnik widzi materiały dopiero po aktywacji dostępu.";
+  }
+
+  if (course.accessStatus === "pending") {
+    const duration = course.accessDurationMonths
+      ? ` Po aktywacji dostęp będzie trwał ${formatAccessDuration(
+          course.accessDurationMonths,
+        )}.`
+      : "";
+
+    return `Zakup jest potwierdzony. Dostęp do materiałów uruchomi administrator.${duration} Czas dostępu zacznie się liczyć dopiero od aktywacji.`;
+  }
+
+  if (course.accessStatus === "active") {
+    return course.accessExpiresAt
+      ? `Dostęp aktywny do: ${formatAccessDate(course.accessExpiresAt)}.`
+      : "Dostęp aktywny.";
+  }
+
+  const expiredAt = course.accessExpiresAt
+    ? ` Dostęp był aktywny do: ${formatAccessDate(course.accessExpiresAt)}.`
+    : "";
+  const renewal = course.canRenewAccess
+    ? " Możesz przedłużyć dostęp teraz."
+    : " Przedłużenie będzie możliwe, gdy sprzedaż zostanie otwarta.";
+
+  return `Dostęp do materiałów wygasł.${expiredAt}${renewal} Postęp i certyfikat zostają zapisane.`;
 }
 
 export function DashboardTabs({
@@ -201,15 +236,6 @@ export function DashboardTabs({
                       {course.title}
                     </h3>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge
-                        rounded={false}
-                        variant={
-                          course.status === "active" ? "success" : "warning"
-                        }
-                        size="sm"
-                      >
-                        {course.status === "active" ? "Aktywny" : "Nieaktywny"}
-                      </Badge>
                       {course.adminAccess ? (
                         <Badge rounded={false} variant="secondary" size="sm">
                           Dostęp admina
@@ -219,12 +245,33 @@ export function DashboardTabs({
                           Dostęp wygasł
                         </Badge>
                       ) : course.accessStatus === "pending" ? (
-                        <Badge rounded={false} variant="secondary" size="sm">
-                          Oczekuje na aktywację
-                        </Badge>
+                        <>
+                          <Badge rounded={false} variant="success" size="sm">
+                            Zakup potwierdzony
+                          </Badge>
+                          <Badge rounded={false} variant="warning" size="sm">
+                            Dostęp oczekuje na aktywację
+                          </Badge>
+                        </>
                       ) : course.accessExpiresAt ? (
-                        <Badge rounded={false} variant="secondary" size="sm">
-                          Dostęp do {formatAccessDate(course.accessExpiresAt)}
+                        <>
+                          <Badge rounded={false} variant="success" size="sm">
+                            Dostęp aktywny
+                          </Badge>
+                          <Badge rounded={false} variant="secondary" size="sm">
+                            Do {formatAccessDate(course.accessExpiresAt)}
+                          </Badge>
+                        </>
+                      ) : (
+                        <Badge rounded={false} variant="success" size="sm">
+                          Dostęp aktywny
+                        </Badge>
+                      )}
+                      {!course.adminAccess &&
+                      course.accessStatus === "expired" &&
+                      course.saleStatus !== "open" ? (
+                        <Badge rounded={false} variant="outline" size="sm">
+                          Sprzedaż wkrótce
                         </Badge>
                       ) : null}
                     </div>
@@ -241,6 +288,9 @@ export function DashboardTabs({
                   <div className="mt-2 text-xs text-[var(--coffee-espresso)]">
                     Ukończono: {course.completionPercentage}%
                   </div>
+                  <div className="mt-3 rounded-md border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 text-sm text-[var(--coffee-espresso)]">
+                    {getAccessNotice(course)}
+                  </div>
                   <div className="mt-3 rounded-md border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] px-3 py-2 text-sm text-[var(--coffee-espresso)]">
                     {course.certificateRegenerationAllowed
                       ? "Administrator pozwolił wygenerować certyfikat ponownie."
@@ -254,7 +304,8 @@ export function DashboardTabs({
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3">
                     {course.accessStatus === "expired" &&
-                    !course.adminAccess ? (
+                    !course.adminAccess &&
+                    course.canRenewAccess ? (
                       <Link href={`/courses/${course.slug}`}>
                         <Button variant="primary">Przedłuż dostęp</Button>
                       </Link>

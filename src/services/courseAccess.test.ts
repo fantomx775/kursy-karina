@@ -21,11 +21,13 @@ describe("resolveCourseAccessState", () => {
             course_id: "course",
             access_status: "active",
             access_expires_at: "2026-06-17T10:00:00.000Z",
+            access_duration_months: 6,
           },
           {
             course_id: "course",
             access_status: "active",
             access_expires_at: "2026-07-17T10:00:00.000Z",
+            access_duration_months: 12,
           },
         ],
         now,
@@ -35,6 +37,7 @@ describe("resolveCourseAccessState", () => {
       hasActiveAccess: true,
       hasPendingAccess: false,
       activeExpiresAt: "2026-07-17T10:00:00.000Z",
+      accessDurationMonths: 12,
     });
   });
 
@@ -46,6 +49,7 @@ describe("resolveCourseAccessState", () => {
             course_id: "course",
             access_status: "pending",
             access_expires_at: null,
+            access_duration_months: 6,
           },
         ],
         now,
@@ -57,6 +61,7 @@ describe("resolveCourseAccessState", () => {
       hasEverPurchased: true,
       activeExpiresAt: null,
       lastExpiresAt: null,
+      accessDurationMonths: 6,
     });
   });
 
@@ -68,6 +73,7 @@ describe("resolveCourseAccessState", () => {
             course_id: "course",
             access_status: "active",
             access_expires_at: "2026-01-17T10:00:00.000Z",
+            access_duration_months: 3,
           },
         ],
         now,
@@ -78,6 +84,7 @@ describe("resolveCourseAccessState", () => {
       hasPendingAccess: false,
       hasEverPurchased: true,
       lastExpiresAt: "2026-01-17T10:00:00.000Z",
+      accessDurationMonths: 3,
     });
   });
 });
