@@ -313,7 +313,7 @@ export function CourseForm({
         }))
       : [createEmptySaleWindow()],
   );
-  const [accessDurationMonths] = useState(
+  const [accessDurationMonths, setAccessDurationMonths] = useState(
     String(
       initial?.access_duration_months ?? DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
     ),
@@ -987,16 +987,20 @@ export function CourseForm({
             min={1}
             step={1}
             value={accessDurationMonths}
-            readOnly
+            onChange={(event) => {
+              setAccessDurationMonths(event.target.value);
+              notifyChange();
+            }}
             className={getFieldControlClass(
               fieldNames.accessDurationMonths,
-              "h-10 w-full border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] px-3 py-2",
+              "h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2",
             )}
             {...getFieldControlProps(fieldNames.accessDurationMonths)}
             required
           />
           <p className="mt-1 text-sm text-[var(--coffee-espresso)]">
-            Stałe 12 miesięcy liczone od ręcznej aktywacji dostępu.
+            Zmiana dotyczy nowych zakupów. Istniejące dostępy zachowują swój
+            zapisany okres.
           </p>
           <FieldError
             field={fieldNames.accessDurationMonths}
