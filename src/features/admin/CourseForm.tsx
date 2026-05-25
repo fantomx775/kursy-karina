@@ -148,6 +148,23 @@ function getItemKindLabel(kind: CourseFormItem["kind"]): string {
   }
 }
 
+function moveArrayItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
+  if (
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= items.length ||
+    toIndex >= items.length ||
+    fromIndex === toIndex
+  ) {
+    return items;
+  }
+
+  const next = [...items];
+  const [movedItem] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, movedItem);
+  return next;
+}
+
 function normalizeQuiz(quiz: CourseFormQuiz | null): CourseFormQuiz {
   return quiz ?? createEmptyQuiz();
 }
@@ -568,6 +585,36 @@ export function CourseForm({
     notifyChange();
   };
 
+  const moveSection = (sectionIndex: number, direction: -1 | 1) => {
+    const targetIndex = sectionIndex + direction;
+
+    if (targetIndex < 0 || targetIndex >= sections.length) {
+      return;
+    }
+
+    setSections((previous) =>
+      moveArrayItem(previous, sectionIndex, targetIndex),
+    );
+    setCollapsedSections((previous) => {
+      const next = new Set<number>();
+      previous.forEach((current) => {
+        if (current === sectionIndex) {
+          next.add(targetIndex);
+          return;
+        }
+
+        if (current === targetIndex) {
+          next.add(sectionIndex);
+          return;
+        }
+
+        next.add(current);
+      });
+      return next;
+    });
+    notifyChange();
+  };
+
   const addItem = (sectionIndex: number, kind: CourseFormItem["kind"]) => {
     setSections((previous) =>
       previous.map((section, current) =>
@@ -591,6 +638,31 @@ export function CourseForm({
               items: section.items.filter(
                 (_, currentItem) => currentItem !== itemIndex,
               ),
+            }
+          : section,
+      ),
+    );
+    notifyChange();
+  };
+
+  const moveItem = (
+    sectionIndex: number,
+    itemIndex: number,
+    direction: -1 | 1,
+  ) => {
+    const targetIndex = itemIndex + direction;
+    const itemCount = sections[sectionIndex]?.items.length ?? 0;
+
+    if (targetIndex < 0 || targetIndex >= itemCount) {
+      return;
+    }
+
+    setSections((previous) =>
+      previous.map((section, currentSectionIndex) =>
+        currentSectionIndex === sectionIndex
+          ? {
+              ...section,
+              items: moveArrayItem(section.items, itemIndex, targetIndex),
             }
           : section,
       ),
@@ -1346,6 +1418,32 @@ export function CourseForm({
                         message={getFieldError(sectionTitleField)}
                       />
                     </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 w-9 p-0"
+                        aria-label="Przesuń sekcję w górę"
+                        title="Przesuń sekcję w górę"
+                        disabled={sectionIndex === 0}
+                        onClick={() => moveSection(sectionIndex, -1)}
+                      >
+                        <FiChevronUp className="h-4 w-4" aria-hidden />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 w-9 p-0"
+                        aria-label="Przesuń sekcję w dół"
+                        title="Przesuń sekcję w dół"
+                        disabled={sectionIndex === sections.length - 1}
+                        onClick={() => moveSection(sectionIndex, 1)}
+                      >
+                        <FiChevronDown className="h-4 w-4" aria-hidden />
+                      </Button>
+                    </div>
                     <Button
                       type="button"
                       variant="danger"
@@ -1404,8 +1502,48 @@ export function CourseForm({
                                     message={getFieldError(itemTitleField)}
                                   />
                                 </div>
-                                <div className="rounded bg-[var(--coffee-latte)] px-3 py-2 text-sm font-medium text-[var(--coffee-espresso)]">
-                                  {getItemKindLabel(item.kind)}
+                                <div className="flex shrink-0 items-center gap-2">
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-9 w-9 p-0"
+                                      aria-label="Przesuń lekcję w górę"
+                                      title="Przesuń lekcję w górę"
+                                      disabled={itemIndex === 0}
+                                      onClick={() =>
+                                        moveItem(sectionIndex, itemIndex, -1)
+                                      }
+                                    >
+                                      <FiChevronUp
+                                        className="h-4 w-4"
+                                        aria-hidden
+                                      />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-9 w-9 p-0"
+                                      aria-label="Przesuń lekcję w dół"
+                                      title="Przesuń lekcję w dół"
+                                      disabled={
+                                        itemIndex === section.items.length - 1
+                                      }
+                                      onClick={() =>
+                                        moveItem(sectionIndex, itemIndex, 1)
+                                      }
+                                    >
+                                      <FiChevronDown
+                                        className="h-4 w-4"
+                                        aria-hidden
+                                      />
+                                    </Button>
+                                  </div>
+                                  <div className="rounded bg-[var(--coffee-latte)] px-3 py-2 text-sm font-medium text-[var(--coffee-espresso)]">
+                                    {getItemKindLabel(item.kind)}
+                                  </div>
                                 </div>
                               </div>
 
