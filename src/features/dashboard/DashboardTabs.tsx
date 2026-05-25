@@ -8,6 +8,7 @@ import {
   type AdminTabId,
 } from "@/features/admin/AdminDashboard";
 import { CertificateActions } from "@/features/certificates/CertificateActions";
+import { getCourseDescriptionExcerpt } from "@/lib/courseDescription";
 import type { CourseStatus } from "@/types/course";
 import type { UserProfile } from "@/types/user";
 import { AccountForm } from "./AccountForm";
@@ -229,7 +230,7 @@ export function DashboardTabs({
                     </div>
                   </div>
                   <p className="text-sm text-[var(--coffee-espresso)] mt-2 leading-relaxed">
-                    {course.description}
+                    {getCourseDescriptionExcerpt(course.description)}
                   </p>
                   <div className="mt-4 h-2 bg-[var(--coffee-latte)] rounded-full overflow-hidden">
                     <div
