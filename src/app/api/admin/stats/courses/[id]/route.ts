@@ -53,7 +53,9 @@ export async function GET(
 
   const { data: orderItems } = await admin
     .from("order_items")
-    .select("order_id, course_id, access_expires_at")
+    .select(
+      "order_id, course_id, access_status, access_activated_at, access_expires_at",
+    )
     .eq("course_id", courseId)
     .in("order_id", orderIds);
 
@@ -66,15 +68,14 @@ export async function GET(
     const accessItems = accessItemsByUserId.get(order.user_id) ?? [];
     accessItems.push({
       course_id: item.course_id,
+      access_status: item.access_status,
+      access_activated_at: item.access_activated_at,
       access_expires_at: item.access_expires_at,
     });
     accessItemsByUserId.set(order.user_id, accessItems);
     const existing = userIdToPurchaseDate.get(order.user_id);
     const orderDate = order.created_at;
-    if (
-      !existing ||
-      new Date(orderDate) < new Date(existing)
-    ) {
+    if (!existing || new Date(orderDate) < new Date(existing)) {
       userIdToPurchaseDate.set(order.user_id, orderDate);
     }
   });
@@ -137,12 +138,15 @@ export async function GET(
     );
     return {
       userId,
-      fullName: u
-        ? `${u.first_name} ${u.last_name}`.trim() || u.email
-        : "—",
+      fullName: u ? `${u.first_name} ${u.last_name}`.trim() || u.email : "—",
       email: u?.email ?? "—",
       purchaseDate: userIdToPurchaseDate.get(userId) ?? "",
-      accessStatus: access.hasActiveAccess ? "active" : "expired",
+      accessStatus:
+        access.status === "active"
+          ? "active"
+          : access.status === "pending"
+            ? "pending"
+            : "expired",
       accessExpiresAt: access.activeExpiresAt ?? access.lastExpiresAt,
       completedItems,
       totalItems,

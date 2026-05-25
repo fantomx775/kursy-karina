@@ -58,7 +58,9 @@ export function CourseStatsDetailPanel({ detail }: Props) {
       render: (_, record) =>
         record.accessStatus === "active"
           ? `Aktywny do ${formatDate(record.accessExpiresAt)}`
-          : `Wygasł ${formatDate(record.accessExpiresAt)}`,
+          : record.accessStatus === "pending"
+            ? "Oczekuje na aktywację"
+            : `Wygasł ${formatDate(record.accessExpiresAt)}`,
     },
     {
       key: "progress",
@@ -86,7 +88,9 @@ export function CourseStatsDetailPanel({ detail }: Props) {
                 <FiCalendar className="w-4 h-4" aria-hidden />
               </span>
               <span>
-                <span className="text-[var(--coffee-espresso)]">Data dodania: </span>
+                <span className="text-[var(--coffee-espresso)]">
+                  Data dodania:{" "}
+                </span>
                 {formatDate(detail.createdAt)}
               </span>
             </li>
@@ -95,7 +99,9 @@ export function CourseStatsDetailPanel({ detail }: Props) {
                 <FiUsers className="w-4 h-4" aria-hidden />
               </span>
               <span>
-                <span className="text-[var(--coffee-espresso)]">Liczba kupujących: </span>
+                <span className="text-[var(--coffee-espresso)]">
+                  Liczba kupujących:{" "}
+                </span>
                 {detail.buyersCount}
               </span>
             </li>
@@ -104,7 +110,9 @@ export function CourseStatsDetailPanel({ detail }: Props) {
                 <FiUsers className="w-4 h-4" aria-hidden />
               </span>
               <span>
-                <span className="text-[var(--coffee-espresso)]">Aktywne dostępy: </span>
+                <span className="text-[var(--coffee-espresso)]">
+                  Aktywne dostępy:{" "}
+                </span>
                 {detail.activeAccessCount ?? 0}
               </span>
             </li>
@@ -122,11 +130,7 @@ export function CourseStatsDetailPanel({ detail }: Props) {
           </div>
         ) : (
           <div className="overflow-hidden bg-white border border-[var(--coffee-cappuccino)] border-radius">
-            <Table
-              data={detail.purchasers}
-              columns={columns}
-              size="sm"
-            />
+            <Table data={detail.purchasers} columns={columns} size="sm" />
           </div>
         )}
       </section>

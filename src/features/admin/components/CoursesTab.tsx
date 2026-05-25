@@ -5,6 +5,10 @@ import { useState, useEffect } from "react";
 import type { Course } from "@/types/course";
 import { Table, Badge } from "@/components/ui";
 import type { Column } from "@/components/ui/Table";
+import {
+  formatSaleWindowRange,
+  resolveCourseSaleState,
+} from "@/lib/courseSales";
 
 type CoursesTabProps = {
   courses: Course[];
@@ -29,10 +33,37 @@ export function CoursesTab({ courses, loading }: CoursesTabProps) {
       sortable: true,
       render: (_, record) =>
         record.status === "active" ? (
-          <Badge variant="success" appearance="button">Aktywny</Badge>
+          <Badge variant="success" appearance="button">
+            Aktywny
+          </Badge>
         ) : (
-          <Badge variant="error" appearance="button">Nieaktywny</Badge>
+          <Badge variant="error" appearance="button">
+            Nieaktywny
+          </Badge>
         ),
+    },
+    {
+      key: "sale",
+      title: "Sprzedaż",
+      dataIndex: "sale_mode",
+      render: (_, record) => {
+        const saleState = resolveCourseSaleState(record);
+        const nextWindow = formatSaleWindowRange(saleState.nextWindow);
+
+        if (record.sale_mode !== "scheduled") {
+          return <span>Otwarta stale</span>;
+        }
+
+        return saleState.isOpen ? (
+          <Badge variant="success" appearance="button">
+            Otwarta
+          </Badge>
+        ) : (
+          <span className="text-sm text-[var(--coffee-espresso)]">
+            Sprzedaż wkrótce{nextWindow ? `: ${nextWindow}` : ""}
+          </span>
+        );
+      },
     },
     {
       key: "price",

@@ -27,11 +27,18 @@ export type CourseFormSection = {
   items: CourseFormItem[];
 };
 
+export type CourseFormSaleWindow = {
+  startsAt: string;
+  endsAt: string;
+};
+
 export type CourseFormData = {
   title: string;
   description: string;
   price: number;
   status: "active" | "inactive";
+  saleMode: "always_open" | "scheduled";
+  saleWindows: CourseFormSaleWindow[];
   accessDurationMonths: number;
   mainImageUrl?: string;
   certificateTemplateId: CertificateTemplateId;

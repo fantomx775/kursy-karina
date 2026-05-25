@@ -16,10 +16,7 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (coursesError) {
-    return Response.json(
-      { error: "Failed to fetch courses" },
-      { status: 500 },
-    );
+    return Response.json({ error: "Failed to fetch courses" }, { status: 500 });
   }
 
   const { data: paidOrders } = await admin
@@ -44,7 +41,7 @@ export async function GET() {
 
   const { data: orderItems } = await admin
     .from("order_items")
-    .select("order_id, course_id, price, access_expires_at")
+    .select("order_id, course_id, price, access_status, access_expires_at")
     .in("order_id", orderIds);
 
   const orderById = new Map(paidOrders?.map((o) => [o.id, o]) ?? []);
@@ -75,14 +72,12 @@ export async function GET() {
     entry.userIds.add(order.user_id);
     if (
       item.access_expires_at &&
+      item.access_status === "active" &&
       new Date(item.access_expires_at).getTime() > now
     ) {
       entry.activeUserIds.add(order.user_id);
     }
-    if (
-      !entry.lastAt ||
-      new Date(order.created_at) > new Date(entry.lastAt)
-    ) {
+    if (!entry.lastAt || new Date(order.created_at) > new Date(entry.lastAt)) {
       entry.lastAt = order.created_at;
     }
     entry.revenue += item.price ?? 0;

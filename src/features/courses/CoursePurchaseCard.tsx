@@ -10,6 +10,10 @@ import {
   formatAccessDuration,
   normalizeAccessDurationMonths,
 } from "@/lib/accessDuration";
+import {
+  formatSaleWindowRange,
+  resolveCourseSaleState,
+} from "@/lib/courseSales";
 
 type CourseAccessStatus = "none" | "pending" | "active" | "expired";
 
@@ -39,6 +43,7 @@ export function CoursePurchaseCard({
   const accessDurationMonths = normalizeAccessDurationMonths(
     course.access_duration_months ?? DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
   );
+  const saleState = resolveCourseSaleState(course);
 
   if (accessStatus === "active") {
     return (
@@ -61,11 +66,29 @@ export function CoursePurchaseCard({
     return (
       <div className="space-y-3">
         <Button variant="secondary" fullWidth disabled>
-          Oczekuje na aktywację
+          Dostęp oczekuje na aktywację
         </Button>
         <p className="text-center text-xs text-[var(--coffee-espresso)]">
-          Zamówienie jest opłacone. Dostęp zostanie aktywowany przez
-          administrację.
+          Zakup został przyjęty. Dostęp zostanie uruchomiony przez organizatora,
+          a {formatAccessDuration(accessDurationMonths)} zacznie się liczyć od
+          aktywacji.
+        </p>
+      </div>
+    );
+  }
+
+  if (!saleState.isOpen) {
+    const nextWindow = formatSaleWindowRange(saleState.nextWindow);
+
+    return (
+      <div className="space-y-3">
+        <Button variant="secondary" fullWidth disabled>
+          Sprzedaż wkrótce
+        </Button>
+        <p className="text-center text-xs text-[var(--coffee-espresso)]">
+          {nextWindow
+            ? `Najbliższe okno sprzedaży: ${nextWindow}.`
+            : "Termin kolejnej sprzedaży pojawi się w opisie kursu."}
         </p>
       </div>
     );
@@ -97,7 +120,7 @@ export function CoursePurchaseCard({
         {cta}
       </Button>
       <p className="text-xs text-[var(--coffee-espresso)] text-center">
-        Dostęp po zakupie: {formatAccessDuration(accessDurationMonths)}.
+        Dostęp po aktywacji: {formatAccessDuration(accessDurationMonths)}.
       </p>
     </div>
   );

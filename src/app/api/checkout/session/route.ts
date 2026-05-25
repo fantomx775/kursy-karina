@@ -2,6 +2,7 @@ import { getEffectivePriceCents } from "@/lib/coursePromo";
 import { authenticateUser } from "@/services/auth/server";
 import { validateCoupon } from "@/services/coupons";
 import { getUserCourseAccessMap } from "@/services/courseAccess";
+import { getSaleWindowsByCourseIds } from "@/services/courseSaleWindows";
 import { getCompanyInvoiceProvider } from "@/services/invoicing/companyInvoiceProvider";
 import { getFakturowniaConfig } from "@/services/invoicing/fakturownia";
 import { createAdminSupabaseClient } from "@/services/supabase/admin";
@@ -10,6 +11,7 @@ import {
   DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
   formatAccessDuration,
 } from "@/lib/accessDuration";
+import { resolveCourseSaleState } from "@/lib/courseSales";
 import type { Course } from "@/types/course";
 
 type CartItem = {
@@ -55,7 +57,7 @@ export async function POST(request: Request) {
   const { data: courses } = await admin
     .from("courses")
     .select(
-      "id, slug, title, description, price, access_duration_months, promotion_discount_type, promotion_discount_value, promotion_start_date, promotion_end_date",
+      "id, slug, title, description, price, status, sale_mode, access_duration_months, promotion_discount_type, promotion_discount_value, promotion_start_date, promotion_end_date",
     )
     .in("id", uniqueCourseIds)
     .eq("status", "active");
@@ -68,7 +70,8 @@ export async function POST(request: Request) {
       title: row.title,
       description: row.description,
       price: row.price,
-      status: "active",
+      status: row.status,
+      sale_mode: row.sale_mode ?? "always_open",
       access_duration_months:
         row.access_duration_months ?? DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
       promotion_discount_type: row.promotion_discount_type ?? null,
@@ -90,6 +93,26 @@ export async function POST(request: Request) {
   if (validCourses.length === 0) {
     return Response.json(
       { error: "Brak aktywnych kursów w koszyku." },
+      { status: 400 },
+    );
+  }
+
+  const windowsByCourseId = await getSaleWindowsByCourseIds(
+    admin,
+    validCourses.map((course) => course.id),
+  );
+  validCourses.forEach((course) => {
+    course.sale_windows = windowsByCourseId[course.id] ?? [];
+  });
+
+  const unavailableCourses = validCourses.filter(
+    (course) => !resolveCourseSaleState(course).isOpen,
+  );
+  if (unavailableCourses.length > 0) {
+    return Response.json(
+      {
+        error: `Sprzedaż kursu "${unavailableCourses[0].title}" jest obecnie zamknięta.`,
+      },
       { status: 400 },
     );
   }
@@ -190,7 +213,7 @@ export async function POST(request: Request) {
         currency: "pln",
         product_data: {
           name: course.title,
-          description: `${course.description} Dostęp: ${formatAccessDuration(
+          description: `${course.description} Dostęp po aktywacji: ${formatAccessDuration(
             course.access_duration_months ??
               DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
           )}.`,

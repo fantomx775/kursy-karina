@@ -4,6 +4,7 @@ import type {
 } from "@/lib/certificateTemplates";
 
 export type CourseStatus = "active" | "inactive";
+export type CourseSaleMode = "always_open" | "scheduled";
 export type CourseItemKind = "svg" | "youtube" | "quiz";
 export type CourseQuizQuestionType = "single" | "multiple";
 
@@ -24,6 +25,15 @@ export type CourseQuiz = {
 
 export type PromotionDiscountType = "percentage" | "fixed";
 
+export type CourseSaleWindow = {
+  id?: string;
+  course_id?: string;
+  starts_at: string;
+  ends_at: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type Course = {
   id: string;
   title: string;
@@ -31,6 +41,8 @@ export type Course = {
   description: string;
   price: number;
   status: CourseStatus;
+  sale_mode?: CourseSaleMode | null;
+  sale_windows?: CourseSaleWindow[];
   access_duration_months?: number;
   main_image_url?: string;
   certificate_template_key?: CertificateTemplateKey | null;

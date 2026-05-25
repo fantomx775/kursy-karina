@@ -12,6 +12,7 @@ import {
   DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
   formatAccessDuration,
 } from "@/lib/accessDuration";
+import { resolveCourseSaleState } from "@/lib/courseSales";
 import type { Course } from "@/types/course";
 
 export const dynamic = "force-dynamic";
@@ -55,9 +56,12 @@ export default async function CourseDetailPage({
     promotion_start_date: course.promotion_start_date,
     promotion_end_date: course.promotion_end_date,
     access_duration_months: course.access_duration_months,
+    sale_mode: course.sale_mode,
+    sale_windows: course.sale_windows,
     created_at: course.created_at,
     updated_at: course.updated_at,
   };
+  const saleState = resolveCourseSaleState(course);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--coffee-cream)] to-white py-10 sm:py-14 lg:py-20">
@@ -149,6 +153,11 @@ export default async function CourseDetailPage({
                 )}
                 .
               </p>
+              {!saleState.isOpen ? (
+                <p className="mt-2 font-medium text-[var(--coffee-mocha)]">
+                  Sprzedaż wkrótce.
+                </p>
+              ) : null}
               <p className="mt-2">Śledzenie postępów w panelu kursanta.</p>
             </div>
           </aside>

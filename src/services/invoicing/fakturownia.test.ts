@@ -53,7 +53,7 @@ describe("Fakturownia config", () => {
 
 describe("FakturowniaClient", () => {
   it("creates invoices with the documented JSON envelope", async () => {
-    const fetcher = vi.fn(async () => {
+    const fetcher = vi.fn<typeof fetch>(async () => {
       return new Response(
         JSON.stringify({ id: 123, number: "FV/1/2026", token: "public" }),
         { status: 201 },
@@ -98,7 +98,9 @@ describe("FakturowniaClient", () => {
   });
 
   it("sends invoice emails through the provider endpoint", async () => {
-    const fetcher = vi.fn(async () => new Response("", { status: 200 }));
+    const fetcher = vi.fn<typeof fetch>(
+      async () => new Response("", { status: 200 }),
+    );
     const client = new FakturowniaClient(config, fetcher as typeof fetch);
 
     await client.sendInvoiceByEmail(123, "firma@example.com");

@@ -14,7 +14,7 @@ export type PurchaserWithProgress = {
   fullName: string;
   email: string;
   purchaseDate: string;
-  accessStatus: "active" | "expired";
+  accessStatus: "active" | "pending" | "expired";
   accessExpiresAt: string | null;
   completedItems: number;
   totalItems: number;
