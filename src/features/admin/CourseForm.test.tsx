@@ -74,6 +74,33 @@ describe("CourseForm", () => {
     );
   });
 
+  it("allows admins to set a custom access duration", async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn();
+
+    render(<CourseForm onCancel={vi.fn()} onSave={onSave} />);
+
+    await user.type(screen.getByLabelText("Tytuł"), "Kurs z dostępem");
+    await user.type(screen.getByLabelText("Opis"), "Opis kursu");
+    await user.type(screen.getByLabelText("Cena (PLN)"), "199");
+    await user.type(screen.getByPlaceholderText("Tytuł sekcji"), "Sekcja 1");
+    await user.clear(
+      screen.getByLabelText("Czas dostępu po aktywacji (miesiące)"),
+    );
+    await user.type(
+      screen.getByLabelText("Czas dostępu po aktywacji (miesiące)"),
+      "18",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Zapisz" }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accessDurationMonths: 18,
+      }),
+    );
+  });
+
   it("shows a validation error when quiz question has no correct answer", async () => {
     const user = userEvent.setup();
     const onSave = vi.fn();

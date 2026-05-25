@@ -1,5 +1,4 @@
 import { courseInputSchema } from "@/lib/validators/course";
-import { DEFAULT_COURSE_ACCESS_DURATION_MONTHS } from "@/lib/accessDuration";
 import { authenticateAdmin } from "@/services/auth/server";
 import {
   getSaleWindowsByCourseIds,
@@ -60,6 +59,7 @@ export async function POST(request: Request) {
     status,
     saleMode,
     saleWindows,
+    accessDurationMonths,
     mainImageUrl,
     certificateTemplateId,
     sections,
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
       certificate_template_id: certificateTemplateId,
       certificate_template_key: certificateTemplateId,
       sale_mode: saleMode,
-      access_duration_months: DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+      access_duration_months: accessDurationMonths,
     })
     .eq("id", result.course_id);
   if (metadataError) {
