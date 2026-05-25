@@ -213,7 +213,7 @@ Najpierw dokładnie przyswajasz teorię, a moment wdrożenia jej w praktyce zale
                     priority
                   />
                   <Image
-                    src="/main.jpg"
+                    src="/main.JPG"
                     alt="Karina Koziara – stylistka brwi, wielokrotna zwyciężczyni mistrzostw"
                     width={3024}
                     height={4032}
