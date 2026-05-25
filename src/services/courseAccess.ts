@@ -7,6 +7,7 @@ export type CourseAccessState = {
   hasPendingAccess: boolean;
   activeExpiresAt: string | null;
   lastExpiresAt: string | null;
+  accessDurationMonths: number | null;
 };
 
 type SupabaseQueryClient = {
@@ -18,6 +19,8 @@ export type CourseAccessOrderItem = {
   access_status?: string | null;
   access_expires_at: string | null;
   access_activated_at?: string | null;
+  access_duration_months?: number | null;
+  created_at?: string | null;
 };
 
 const EMPTY_ACCESS: CourseAccessState = {
@@ -27,6 +30,7 @@ const EMPTY_ACCESS: CourseAccessState = {
   hasPendingAccess: false,
   activeExpiresAt: null,
   lastExpiresAt: null,
+  accessDurationMonths: null,
 };
 
 function compareIsoDates(a: string | null, b: string | null): number {
@@ -34,6 +38,17 @@ function compareIsoDates(a: string | null, b: string | null): number {
   if (!a) return -1;
   if (!b) return 1;
   return new Date(a).getTime() - new Date(b).getTime();
+}
+
+function compareAccessItemsByDate(
+  a: CourseAccessOrderItem,
+  b: CourseAccessOrderItem,
+): number {
+  const aDate =
+    a.access_expires_at ?? a.access_activated_at ?? a.created_at ?? null;
+  const bDate =
+    b.access_expires_at ?? b.access_activated_at ?? b.created_at ?? null;
+  return compareIsoDates(aDate, bDate);
 }
 
 export function resolveCourseAccessState(
@@ -49,22 +64,23 @@ export function resolveCourseAccessState(
   );
   const pendingItems = items.filter((item) => item.access_status === "pending");
   const hasPendingAccess = pendingItems.length > 0;
+  const sortedActivatedItems = [...activatedItems].sort(
+    compareAccessItemsByDate,
+  );
+  const sortedPendingItems = [...pendingItems].sort(compareAccessItemsByDate);
 
-  const lastExpiresAt =
-    activatedItems
-      .map((item) => item.access_expires_at)
-      .sort(compareIsoDates)
-      .at(-1) ?? null;
+  const lastExpiresAt = sortedActivatedItems.at(-1)?.access_expires_at ?? null;
 
-  const activeExpiresAt =
-    activatedItems
-      .map((item) => item.access_expires_at)
-      .filter((expiresAt): expiresAt is string => {
-        if (!expiresAt) return false;
-        return new Date(expiresAt).getTime() > now.getTime();
+  const activeItem =
+    sortedActivatedItems
+      .filter((item) => {
+        if (!item.access_expires_at) return false;
+        return new Date(item.access_expires_at).getTime() > now.getTime();
       })
-      .sort(compareIsoDates)
       .at(-1) ?? null;
+  const pendingItem = sortedPendingItems.at(-1) ?? null;
+  const lastActivatedItem = sortedActivatedItems.at(-1) ?? null;
+  const activeExpiresAt = activeItem?.access_expires_at ?? null;
 
   const hasActiveAccess = activeExpiresAt !== null;
 
@@ -79,6 +95,11 @@ export function resolveCourseAccessState(
     hasPendingAccess,
     activeExpiresAt,
     lastExpiresAt,
+    accessDurationMonths:
+      activeItem?.access_duration_months ??
+      pendingItem?.access_duration_months ??
+      lastActivatedItem?.access_duration_months ??
+      null,
   };
 }
 
@@ -107,7 +128,9 @@ export async function getUserCourseAccess(
 
   const { data } = await supabase
     .from("order_items")
-    .select("course_id, access_status, access_activated_at, access_expires_at")
+    .select(
+      "course_id, access_status, access_activated_at, access_expires_at, access_duration_months, created_at",
+    )
     .eq("course_id", courseId)
     .in("order_id", orderIds);
 
@@ -135,7 +158,9 @@ export async function getUserCourseAccessMap(
 
   const { data } = await supabase
     .from("order_items")
-    .select("course_id, access_status, access_activated_at, access_expires_at")
+    .select(
+      "course_id, access_status, access_activated_at, access_expires_at, access_duration_months, created_at",
+    )
     .in("course_id", uniqueCourseIds)
     .in("order_id", orderIds);
 

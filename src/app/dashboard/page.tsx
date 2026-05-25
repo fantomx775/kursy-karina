@@ -9,7 +9,9 @@ import {
   resolveCourseAccessState,
   type CourseAccessOrderItem,
 } from "@/services/courseAccess";
+import { getSaleWindowsByCourseIds } from "@/services/courseSaleWindows";
 import { DashboardTabs } from "@/features/dashboard/DashboardTabs";
+import { resolveCourseSaleState } from "@/lib/courseSales";
 import type { CourseCard } from "@/features/dashboard/DashboardTabs";
 
 /** Always fetch fresh data so purchased courses appear immediately (no stale cache). */
@@ -60,6 +62,8 @@ export default async function DashboardPage() {
     access_status: string | null;
     access_activated_at: string | null;
     access_expires_at: string | null;
+    access_duration_months: number | null;
+    created_at: string | null;
   }[] = [];
   let adminCourseIds: string[] = [];
   let courseCards: CourseCard[] = [];
@@ -91,7 +95,7 @@ export default async function DashboardPage() {
     const { data: purchasedItems, error: orderItemsError } = await supabase
       .from("order_items")
       .select(
-        "course_id, title, access_status, access_activated_at, access_expires_at",
+        "course_id, title, access_status, access_activated_at, access_expires_at, access_duration_months, created_at",
       )
       .in("order_id", orderIds);
 
@@ -197,7 +201,7 @@ export default async function DashboardPage() {
 
     const { data: courses, error: coursesError } = await supabase
       .from("courses")
-      .select("id, slug, title, description, status")
+      .select("id, slug, title, description, status, sale_mode")
       .in("id", courseIds);
 
     // #region agent log
@@ -233,6 +237,10 @@ export default async function DashboardPage() {
       userId,
       courseIds,
     );
+    const saleWindowsByCourseId = await getSaleWindowsByCourseIds(
+      supabase,
+      courseIds,
+    );
     courseCards = courseIds.map((courseId) => {
       const course = courses?.find((item) => item.id === courseId);
       const courseTitle =
@@ -250,12 +258,25 @@ export default async function DashboardPage() {
         ? {
             status: "active" as const,
             activeExpiresAt: null,
+            accessDurationMonths: null,
           }
         : (purchasedAccessByCourseId.get(courseId) ?? {
             status: "expired" as const,
             activeExpiresAt: null,
             lastExpiresAt: null,
+            accessDurationMonths: null,
           });
+      const saleState = resolveCourseSaleState({
+        status: course?.status ?? "inactive",
+        sale_mode: course?.sale_mode ?? "always_open",
+        sale_windows: saleWindowsByCourseId[courseId] ?? [],
+      });
+      const accessStatus =
+        access.status === "active"
+          ? "active"
+          : access.status === "pending"
+            ? "pending"
+            : "expired";
 
       return {
         id: courseId,
@@ -264,18 +285,16 @@ export default async function DashboardPage() {
         slug: course?.slug ?? "",
         status: course?.status ?? "inactive",
         adminAccess: isAdmin,
-        accessStatus:
-          access.status === "active"
-            ? "active"
-            : access.status === "pending"
-              ? "pending"
-              : "expired",
+        accessStatus,
         accessExpiresAt:
           "activeExpiresAt" in access && access.activeExpiresAt
             ? access.activeExpiresAt
             : "lastExpiresAt" in access
               ? (access.lastExpiresAt ?? null)
               : null,
+        accessDurationMonths: access.accessDurationMonths,
+        canRenewAccess: accessStatus === "expired" && saleState.isOpen,
+        saleStatus: saleState.status,
         completionPercentage: completion.percentage,
         certificateGranted: certificateGrant.granted,
         certificateGrantedAt: certificateGrant.grantedAt,

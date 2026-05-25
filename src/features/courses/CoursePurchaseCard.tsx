@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCart } from "@/features/cart/CartContext";
-import { Button } from "@/components/ui";
+import { Badge, Button } from "@/components/ui";
 import type { Course } from "@/types/course";
 import { getEffectivePriceCents } from "@/lib/coursePromo";
 import {
@@ -21,6 +21,7 @@ type Props = {
   course: Course;
   accessStatus: CourseAccessStatus;
   accessExpiresAt: string | null;
+  purchasedAccessDurationMonths?: number | null;
 };
 
 function formatDate(iso: string | null): string {
@@ -36,12 +37,16 @@ export function CoursePurchaseCard({
   course,
   accessStatus,
   accessExpiresAt,
+  purchasedAccessDurationMonths,
 }: Props) {
   const router = useRouter();
   const { addToCart, isInCart } = useCart();
   const effectivePriceCents = getEffectivePriceCents(course);
   const accessDurationMonths = normalizeAccessDurationMonths(
     course.access_duration_months ?? DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+  );
+  const pendingAccessDurationMonths = normalizeAccessDurationMonths(
+    purchasedAccessDurationMonths ?? accessDurationMonths,
   );
   const saleState = resolveCourseSaleState(course);
 
@@ -65,13 +70,18 @@ export function CoursePurchaseCard({
   if (accessStatus === "pending") {
     return (
       <div className="space-y-3">
-        <Button variant="secondary" fullWidth disabled>
-          Dostęp oczekuje na aktywację
-        </Button>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Badge variant="success" rounded={false} size="md">
+            Zakup potwierdzony
+          </Badge>
+          <Badge variant="warning" rounded={false} size="md">
+            Dostęp oczekuje na aktywację
+          </Badge>
+        </div>
         <p className="text-center text-xs text-[var(--coffee-espresso)]">
-          Zakup został przyjęty. Dostęp zostanie uruchomiony przez organizatora,
-          a {formatAccessDuration(accessDurationMonths)} zacznie się liczyć od
-          aktywacji.
+          Dostęp do materiałów uruchomi administrator.{" "}
+          {formatAccessDuration(pendingAccessDurationMonths)} zacznie się liczyć
+          dopiero od aktywacji.
         </p>
       </div>
     );
