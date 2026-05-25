@@ -3,6 +3,43 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { CourseForm } from "./CourseForm";
+import type { Course } from "@/types/course";
+import type { CourseFormSection } from "./course-form-types";
+
+const baseCourse: Course = {
+  id: "course-1",
+  title: "Kurs testowy",
+  slug: "kurs-testowy",
+  description: "Opis kursu",
+  price: 14900,
+  status: "inactive",
+  sale_mode: "always_open",
+};
+
+const youtubeItem = (title: string) => ({
+  title,
+  kind: "youtube" as const,
+  assetPath: "",
+  youtubeUrl: "https://www.youtube.com/watch?v=dGcsHMXbSOA",
+  quiz: null,
+});
+
+function renderCourseFormWithSections(sections: CourseFormSection[]) {
+  const onSave = vi.fn();
+  const onChange = vi.fn();
+
+  render(
+    <CourseForm
+      initial={baseCourse}
+      initialSections={sections}
+      onCancel={vi.fn()}
+      onSave={onSave}
+      onChange={onChange}
+    />,
+  );
+
+  return { onSave, onChange };
+}
 
 describe("CourseForm", () => {
   it("submits quiz data in the same section payload as other lesson items", async () => {
@@ -170,5 +207,90 @@ describe("CourseForm", () => {
     expect(sectionTitle).toHaveAccessibleDescription(
       "Dodaj co najmniej jedną sekcję i podaj jej tytuł.",
     );
+  });
+
+  it("submits lesson items in the order selected with move buttons", async () => {
+    const user = userEvent.setup();
+    const { onSave, onChange } = renderCourseFormWithSections([
+      {
+        title: "Sekcja 1",
+        items: [youtubeItem("Pierwsza lekcja"), youtubeItem("Druga lekcja")],
+      },
+    ]);
+
+    await user.click(
+      screen.getAllByRole("button", { name: "Przesuń lekcję w górę" })[1],
+    );
+    await user.click(screen.getByRole("button", { name: "Zapisz" }));
+
+    expect(onChange).toHaveBeenCalled();
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sections: [
+          {
+            title: "Sekcja 1",
+            items: [
+              expect.objectContaining({ title: "Druga lekcja" }),
+              expect.objectContaining({ title: "Pierwsza lekcja" }),
+            ],
+          },
+        ],
+      }),
+    );
+  });
+
+  it("submits sections in the order selected with move buttons", async () => {
+    const user = userEvent.setup();
+    const { onSave, onChange } = renderCourseFormWithSections([
+      {
+        title: "Sekcja 1",
+        items: [youtubeItem("Lekcja 1")],
+      },
+      {
+        title: "Sekcja 2",
+        items: [youtubeItem("Lekcja 2")],
+      },
+    ]);
+
+    await user.click(
+      screen.getAllByRole("button", { name: "Przesuń sekcję w górę" })[1],
+    );
+    await user.click(screen.getByRole("button", { name: "Zapisz" }));
+
+    expect(onChange).toHaveBeenCalled();
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sections: [
+          expect.objectContaining({ title: "Sekcja 2" }),
+          expect.objectContaining({ title: "Sekcja 1" }),
+        ],
+      }),
+    );
+  });
+
+  it("disables move buttons at the start and end of section and lesson lists", () => {
+    renderCourseFormWithSections([
+      {
+        title: "Sekcja 1",
+        items: [youtubeItem("Pierwsza lekcja"), youtubeItem("Druga lekcja")],
+      },
+      {
+        title: "Sekcja 2",
+        items: [youtubeItem("Trzecia lekcja")],
+      },
+    ]);
+
+    expect(
+      screen.getAllByRole("button", { name: "Przesuń sekcję w górę" })[0],
+    ).toBeDisabled();
+    expect(
+      screen.getAllByRole("button", { name: "Przesuń sekcję w dół" })[1],
+    ).toBeDisabled();
+    expect(
+      screen.getAllByRole("button", { name: "Przesuń lekcję w górę" })[0],
+    ).toBeDisabled();
+    expect(
+      screen.getAllByRole("button", { name: "Przesuń lekcję w dół" })[1],
+    ).toBeDisabled();
   });
 });
