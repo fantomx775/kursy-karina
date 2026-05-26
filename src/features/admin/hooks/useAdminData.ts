@@ -4,6 +4,7 @@ import type { Coupon } from "@/types/coupon";
 import type { StudentSummary } from "@/types/student";
 import type { CourseStatsSummary } from "@/types/admin-stats";
 import type { CertificateAdminData } from "@/types/certificate";
+import type { PendingAccessRecord } from "@/types/pending-access";
 
 export function useAdminData() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -12,6 +13,9 @@ export function useAdminData() {
   const [courseStats, setCourseStats] = useState<CourseStatsSummary[]>([]);
   const [certificateData, setCertificateData] =
     useState<CertificateAdminData | null>(null);
+  const [pendingAccess, setPendingAccess] = useState<PendingAccessRecord[]>([]);
+  const [pendingAccessLoading, setPendingAccessLoading] = useState(false);
+  const [pendingAccessLoaded, setPendingAccessLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -114,12 +118,37 @@ export function useAdminData() {
     }
   }, []);
 
+  const loadPendingAccess = useCallback(async () => {
+    setPendingAccessLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/admin/access/pending");
+      if (!response.ok) {
+        throw new Error("Nie udało się pobrać oczekujących dostępów.");
+      }
+      const data = await response.json();
+      setPendingAccess(data.pendingAccess ?? []);
+      setPendingAccessLoaded(true);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Nie udało się pobrać oczekujących dostępów.",
+      );
+    } finally {
+      setPendingAccessLoading(false);
+    }
+  }, []);
+
   return {
     courses,
     students,
     coupons,
     courseStats,
     certificateData,
+    pendingAccess,
+    pendingAccessLoading,
+    pendingAccessLoaded,
     loading,
     error,
     loadCourses,
@@ -127,6 +156,7 @@ export function useAdminData() {
     loadCoupons,
     loadCourseStats,
     loadCertificates,
+    loadPendingAccess,
     clearError: () => setError(null),
   };
 }

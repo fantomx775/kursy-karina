@@ -15,6 +15,7 @@ import { CouponsTab } from "./components/CouponsTab";
 import { CoursesTab } from "./components/CoursesTab";
 import { CourseStatsDetailPanel } from "./components/CourseStatsDetailPanel";
 import { CourseStatsTab } from "./components/CourseStatsTab";
+import { PendingAccessTab } from "./components/PendingAccessTab";
 import { StudentsTab } from "./components/StudentsTab";
 import { TabNavigation } from "./components/TabNavigation";
 import { useAdminActions } from "./hooks/useAdminActions";
@@ -24,6 +25,7 @@ import { useAdminModals } from "./hooks/useAdminModals";
 export type AdminTabId =
   | "courses"
   | "students"
+  | "access"
   | "certificates"
   | "coupons"
   | "stats";
@@ -32,12 +34,14 @@ type AdminDashboardProps = {
   embedded?: boolean;
   activeAdminTab?: AdminTabId;
   onCertificateActionCountChange?: (count: number) => void;
+  onPendingAccessCountChange?: (count: number) => void;
 };
 
 export function AdminDashboard({
   embedded = false,
   activeAdminTab = "courses",
   onCertificateActionCountChange,
+  onPendingAccessCountChange,
 }: AdminDashboardProps = {}) {
   const [activeTab, setActiveTab] = useState<AdminTabId>("courses");
   const [pendingCertificateCourse, setPendingCertificateCourse] =
@@ -47,6 +51,9 @@ export function AdminDashboard({
   const [activatingAccessCourseId, setActivatingAccessCourseId] = useState<
     string | null
   >(null);
+  const [activatingPendingAccessIds, setActivatingPendingAccessIds] = useState<
+    string[]
+  >([]);
   const [grantingCertificateCourseId, setGrantingCertificateCourseId] =
     useState<string | null>(null);
   const [regeneratingCertificateCourseId, setRegeneratingCertificateCourseId] =
@@ -63,6 +70,9 @@ export function AdminDashboard({
     coupons,
     courseStats,
     certificateData,
+    pendingAccess,
+    pendingAccessLoading,
+    pendingAccessLoaded,
     loading,
     error,
     loadCourses,
@@ -70,6 +80,7 @@ export function AdminDashboard({
     loadCertificates,
     loadCoupons,
     loadCourseStats,
+    loadPendingAccess,
     clearError,
   } = useAdminData();
 
@@ -102,10 +113,22 @@ export function AdminDashboard({
   }, [certificateData, onCertificateActionCountChange]);
 
   useEffect(() => {
+    onPendingAccessCountChange?.(pendingAccess.length);
+  }, [onPendingAccessCountChange, pendingAccess.length]);
+
+  useEffect(() => {
+    if (!pendingAccessLoaded) {
+      void loadPendingAccess();
+    }
+  }, [loadPendingAccess, pendingAccessLoaded]);
+
+  useEffect(() => {
     if (effectiveTab === "courses" && courses.length === 0) {
       loadCourses();
     } else if (effectiveTab === "students" && students.length === 0) {
       loadStudents();
+    } else if (effectiveTab === "access") {
+      loadPendingAccess();
     } else if (effectiveTab === "certificates" && !certificateData) {
       loadCertificates();
     } else if (effectiveTab === "coupons") {
@@ -126,6 +149,7 @@ export function AdminDashboard({
     coupons.length,
     loadCourses,
     loadStudents,
+    loadPendingAccess,
     loadCertificates,
     loadCoupons,
     loadCourseStats,
@@ -201,7 +225,12 @@ export function AdminDashboard({
         throw new Error(data?.error ?? "Nie udało się aktywować dostępu.");
       }
 
-      await Promise.all([refreshStudentDetail(), loadStudents()]);
+      await Promise.all([
+        refreshStudentDetail(),
+        loadStudents(),
+        loadPendingAccess(),
+        loadCourseStats(),
+      ]);
       addToast({
         type: "success",
         title: data?.alreadyActive ? "Dostęp już aktywny" : "Dostęp aktywowany",
@@ -233,6 +262,67 @@ export function AdminDashboard({
     course: StudentCourseProgress,
   ) => {
     setPendingRegenerationCourse(course);
+  };
+
+  const handleActivatePendingAccess = async (itemIds: string[]) => {
+    if (itemIds.length === 0) {
+      return;
+    }
+
+    setActivatingPendingAccessIds(itemIds);
+
+    try {
+      const response = await fetch("/api/admin/access/pending", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ itemIds }),
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(data?.error ?? "Nie udało się aktywować dostępów.");
+      }
+
+      const activatedCount = Number(data?.activatedCount ?? 0);
+      const failedCount = Array.isArray(data?.results)
+        ? data.results.filter(
+            (result: { status?: string }) =>
+              result.status === "failed" || result.status === "not_found",
+          ).length
+        : 0;
+
+      await Promise.all([
+        loadPendingAccess(),
+        loadStudents(),
+        loadCourseStats(),
+        refreshStudentDetail(),
+      ]);
+
+      addToast({
+        type: failedCount > 0 ? "error" : "success",
+        title:
+          activatedCount === 1
+            ? "Dostęp aktywowany"
+            : "Aktywacja dostępów zakończona",
+        message:
+          failedCount > 0
+            ? `Aktywowano: ${activatedCount}. Niepowodzenia: ${failedCount}.`
+            : `Aktywowano dostępów: ${activatedCount}.`,
+      });
+    } catch (error) {
+      addToast({
+        type: "error",
+        title: "Błąd aktywacji dostępów",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się aktywować dostępów.",
+      });
+    } finally {
+      setActivatingPendingAccessIds([]);
+    }
   };
 
   const handleConfirmCertificateGrant = async () => {
@@ -432,6 +522,7 @@ export function AdminDashboard({
           activeTab={activeTab}
           onTabChange={setActiveTab}
           certificateActionCount={certificateData?.actionRequiredCount ?? null}
+          pendingAccessCount={pendingAccess.length}
         />
       )}
 
@@ -456,6 +547,16 @@ export function AdminDashboard({
           students={students}
           loading={loading}
           onViewStudent={openStudentModal}
+        />
+      )}
+
+      {effectiveTab === "access" && (
+        <PendingAccessTab
+          pendingAccess={pendingAccess}
+          loading={pendingAccessLoading}
+          activatingIds={activatingPendingAccessIds}
+          onRefresh={loadPendingAccess}
+          onActivate={handleActivatePendingAccess}
         />
       )}
 
