@@ -47,6 +47,7 @@ type TabId =
   | "account"
   | "admin-courses"
   | "admin-students"
+  | "admin-access"
   | "admin-certificates"
   | "admin-coupons"
   | "admin-stats";
@@ -59,6 +60,7 @@ const STUDENT_TABS: { key: TabId; label: string }[] = [
 const ADMIN_TABS: { key: TabId; label: string }[] = [
   { key: "admin-courses", label: "Zarządzanie kursami" },
   { key: "admin-students", label: "Kursanci" },
+  { key: "admin-access", label: "Dostępy" },
   { key: "admin-certificates", label: "Certyfikaty" },
   { key: "admin-coupons", label: "Kupony" },
   { key: "admin-stats", label: "Statystyki" },
@@ -70,6 +72,8 @@ function getAdminTabId(tab: TabId): AdminTabId | null {
       return "courses";
     case "admin-students":
       return "students";
+    case "admin-access":
+      return "access";
     case "admin-certificates":
       return "certificates";
     case "admin-coupons":
@@ -144,6 +148,9 @@ export function DashboardTabs({
   const [certificateActionCount, setCertificateActionCount] = useState<
     number | null
   >(null);
+  const [pendingAccessCount, setPendingAccessCount] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     setLocalCourseCards(courseCards);
@@ -168,6 +175,19 @@ export function DashboardTabs({
         }
       });
 
+    fetch("/api/admin/access/pending")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (active) {
+          setPendingAccessCount(data?.pendingAccess?.length ?? 0);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setPendingAccessCount(null);
+        }
+      });
+
     return () => {
       active = false;
     };
@@ -180,7 +200,7 @@ export function DashboardTabs({
 
   return (
     <>
-      <div className="mb-6 flex gap-3">
+      <div className="mb-6 flex flex-wrap gap-3">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -194,6 +214,13 @@ export function DashboardTabs({
           >
             <span className="inline-flex items-center gap-2">
               {tab.label}
+              {tab.key === "admin-access" &&
+              pendingAccessCount != null &&
+              pendingAccessCount > 0 ? (
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--coffee-mocha)] px-1.5 py-0.5 text-xs font-semibold text-white">
+                  {pendingAccessCount}
+                </span>
+              ) : null}
               {tab.key === "admin-certificates" &&
               certificateActionCount != null &&
               certificateActionCount > 0 ? (
@@ -386,6 +413,7 @@ export function DashboardTabs({
           embedded
           activeAdminTab={getAdminTabId(activeTab)!}
           onCertificateActionCountChange={setCertificateActionCount}
+          onPendingAccessCountChange={setPendingAccessCount}
         />
       )}
     </>
