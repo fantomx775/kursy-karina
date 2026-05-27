@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Input } from "@/components/ui";
+import { BlockingSpinner, Button, Input } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import type { Coupon } from "@/types/coupon";
 import type { Course } from "@/types/course";
@@ -24,7 +24,8 @@ type Props = {
   initial?: Coupon;
   courseOptions: Course[];
   onCancel: () => void;
-  onSave: (data: CouponFormData) => void;
+  onSave: (data: CouponFormData) => void | Promise<void>;
+  saving?: boolean;
 };
 
 type CouponFieldErrors = Partial<
@@ -57,6 +58,7 @@ export function CouponForm({
   courseOptions,
   onCancel,
   onSave,
+  saving = false,
 }: Props) {
   const [name, setName] = useState(initial?.name ?? "");
   const [code, setCode] = useState(initial?.code ?? "");
@@ -86,6 +88,8 @@ export function CouponForm({
     initial?.requiredCourseIds ?? [],
   );
   const [fieldErrors, setFieldErrors] = useState<CouponFieldErrors>({});
+  const [submitting, setSubmitting] = useState(false);
+  const isSaving = saving || submitting;
 
   const hintEndDate = "Puste = brak daty końcowej";
   const hintLimit = "Puste lub 0 = brak limitu";
@@ -113,8 +117,12 @@ export function CouponForm({
       className,
     );
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isSaving) {
+      return;
+    }
+
     const nextErrors: CouponFieldErrors = {};
 
     if (!name.trim()) {
@@ -160,27 +168,38 @@ export function CouponForm({
     }
 
     setFieldErrors({});
-    onSave({
-      name: name.trim(),
-      code: code.trim(),
-      discountType,
-      discountValue: valueNum,
-      startDate: startDate || new Date().toISOString().slice(0, 10),
-      endDate: endDate.trim() || null,
-      usageLimit: usageLimit.trim()
-        ? Math.max(1, parseInt(usageLimit, 10) || 0) || null
-        : null,
-      usageLimitPerUser: usageLimitPerUser.trim()
-        ? Math.max(1, parseInt(usageLimitPerUser, 10) || 0) || null
-        : null,
-      isActive,
-      applicableCourseIds,
-      requiredCourseIds,
-    });
+    setSubmitting(true);
+    try {
+      await onSave({
+        name: name.trim(),
+        code: code.trim(),
+        discountType,
+        discountValue: valueNum,
+        startDate: startDate || new Date().toISOString().slice(0, 10),
+        endDate: endDate.trim() || null,
+        usageLimit: usageLimit.trim()
+          ? Math.max(1, parseInt(usageLimit, 10) || 0) || null
+          : null,
+        usageLimitPerUser: usageLimitPerUser.trim()
+          ? Math.max(1, parseInt(usageLimitPerUser, 10) || 0) || null
+          : null,
+        isActive,
+        applicableCourseIds,
+        requiredCourseIds,
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-2" noValidate>
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 p-2"
+      noValidate
+      aria-busy={isSaving}
+    >
+      <BlockingSpinner show={isSaving} message="Zapisywanie kuponu..." />
       <div className="grid grid-cols-2 gap-4">
         <Input
           label="Nazwa"
@@ -433,19 +452,17 @@ export function CouponForm({
         </div>
       </div>
       <div className="flex gap-3 justify-end pt-2">
-        <button
+        <Button
           type="button"
           onClick={onCancel}
-          className="border border-[var(--coffee-cappuccino)] text-[var(--coffee-espresso)] px-4 py-2 border-radius"
+          variant="outline"
+          disabled={isSaving}
         >
           Anuluj
-        </button>
-        <button
-          type="submit"
-          className="bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-4 py-2 border-radius"
-        >
+        </Button>
+        <Button type="submit" variant="primary" loading={isSaving}>
           Zapisz
-        </button>
+        </Button>
       </div>
     </form>
   );

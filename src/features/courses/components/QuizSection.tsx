@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { BlockingSpinner } from "@/components/ui";
 import { evaluateQuizAttempt, type QuizSelections } from "@/lib/courseQuiz";
 import type { CourseItem, CourseQuizQuestion } from "@/types/course";
 
@@ -66,7 +67,10 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
     }));
   };
 
-  const toggleMultipleSelection = (questionIndex: number, answerIndex: number) => {
+  const toggleMultipleSelection = (
+    questionIndex: number,
+    answerIndex: number,
+  ) => {
     setSelections((previous) => {
       const current = previous[questionIndex] ?? [];
       const alreadySelected = current.includes(answerIndex);
@@ -99,6 +103,7 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
 
   return (
     <div className="space-y-4">
+      <BlockingSpinner show={isSubmitting} message="Zapisywanie wyniku..." />
       <div className="rounded border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] p-4">
         <div className="text-sm font-semibold text-[var(--coffee-charcoal)]">
           {statusText}
@@ -148,7 +153,10 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
                         onChange={() =>
                           question.type === "single"
                             ? setSingleSelection(questionIndex, answerIndex)
-                            : toggleMultipleSelection(questionIndex, answerIndex)
+                            : toggleMultipleSelection(
+                                questionIndex,
+                                answerIndex,
+                              )
                         }
                       />
                       <span>{answer.text}</span>

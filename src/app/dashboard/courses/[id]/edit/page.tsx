@@ -24,7 +24,7 @@ function mapApiSectionsToForm(
       youtube_url?: string | null;
       quiz_data?: CourseQuiz | null;
     }>;
-  }>
+  }>,
 ): CourseFormSection[] {
   return (sections ?? []).map((section) => ({
     title: section.title,
@@ -33,7 +33,7 @@ function mapApiSectionsToForm(
       kind: item.kind as "svg" | "youtube" | "quiz",
       assetPath: item.asset_path ?? "",
       youtubeUrl: item.youtube_url ?? "",
-      quiz: item.kind === "quiz" ? item.quiz_data ?? null : null,
+      quiz: item.kind === "quiz" ? (item.quiz_data ?? null) : null,
     })),
   }));
 }
@@ -45,13 +45,17 @@ export default function EditCoursePage() {
   const { handleSaveCourse } = useAdminActions();
 
   const [course, setCourse] = useState<Course | null>(null);
-  const [initialSections, setInitialSections] = useState<CourseFormSection[] | undefined>(undefined);
+  const [initialSections, setInitialSections] = useState<
+    CourseFormSection[] | undefined
+  >(undefined);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!id) {
@@ -187,6 +191,7 @@ export default function EditCoursePage() {
             onCancel={handleCancel}
             onSave={handleSave}
             onChange={handleFormChange}
+            saving={saving}
           />
         </div>
       </div>

@@ -3,7 +3,13 @@
 import React from "react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
-import { Button, Card, CardContent, FileUpload } from "@/components/ui";
+import {
+  BlockingSpinner,
+  Button,
+  Card,
+  CardContent,
+  FileUpload,
+} from "@/components/ui";
 import { cn } from "@/lib/utils";
 import {
   CERTIFICATE_TEMPLATE_OPTIONS,
@@ -31,8 +37,9 @@ type Props = {
   initial?: Course;
   initialSections?: CourseFormSection[];
   onCancel: () => void;
-  onSave: (data: CourseFormData) => void;
+  onSave: (data: CourseFormData) => void | Promise<void>;
   onChange?: () => void;
+  saving?: boolean;
 };
 
 const emptySection: CourseFormSection = {
@@ -310,6 +317,7 @@ export function CourseForm({
   onCancel,
   onSave,
   onChange,
+  saving = false,
 }: Props) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -382,8 +390,14 @@ export function CourseForm({
       : [{ ...emptySection }],
   );
   const [collapsedSections, setCollapsedSections] = useState<Set<number>>(
-    new Set(),
+    () =>
+      new Set(
+        initialSections?.length
+          ? initialSections.map((_, sectionIndex) => sectionIndex)
+          : [],
+      ),
   );
+  const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<CourseFieldErrors>({});
   const [firstErrorField, setFirstErrorField] = useState<string | null>(null);
@@ -402,6 +416,7 @@ export function CourseForm({
     certificateTemplates.length > 0
       ? certificateTemplates
       : fallbackCertificateTemplates;
+  const isSaving = saving || submitting;
 
   useEffect(() => {
     let active = true;
@@ -555,6 +570,14 @@ export function CourseForm({
       return next;
     });
   }, []);
+
+  const expandAllSections = () => {
+    setCollapsedSections(new Set());
+  };
+
+  const collapseAllSections = () => {
+    setCollapsedSections(new Set(sections.map((_, index) => index)));
+  };
 
   const addSection = () => {
     setSections((previous) => [...previous, { ...emptySection }]);
@@ -715,8 +738,12 @@ export function CourseForm({
     notifyChange();
   };
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    if (isSaving) {
+      return;
+    }
+
     setFormError(null);
     setFieldErrors({});
     setFirstErrorField(null);
@@ -880,7 +907,7 @@ export function CourseForm({
       };
     }
 
-    onSave({
+    const payload: CourseFormData = {
       title: title.trim(),
       description: sanitizeCourseDescriptionHtml(description.trim()),
       price: priceValue,
@@ -925,11 +952,47 @@ export function CourseForm({
             promotionStartDate: null,
             promotionEndDate: null,
           }),
-    });
+    };
+
+    setSubmitting(true);
+    try {
+      await onSave(payload);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 p-2" noValidate>
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6 p-2"
+      noValidate
+      aria-busy={isSaving}
+    >
+      <BlockingSpinner show={isSaving} message="Zapisywanie kursu..." />
+      <div className="sticky top-20 z-20 -mx-2 flex flex-col gap-3 border border-[var(--coffee-cappuccino)] bg-white/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between border-radius">
+        <div>
+          <p className="text-sm font-semibold text-[var(--coffee-charcoal)]">
+            Zmiany w kursie
+          </p>
+          <p className="text-xs text-[var(--coffee-espresso)]">
+            Sekcje lekcji są domyślnie zwinięte, a zapis jest zawsze pod ręką.
+          </p>
+        </div>
+        <div className="flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSaving}
+          >
+            Anuluj
+          </Button>
+          <Button type="submit" variant="primary" loading={isSaving}>
+            Zapisz
+          </Button>
+        </div>
+      </div>
       {formError ? (
         <div
           ref={formErrorRef}
@@ -1364,24 +1427,46 @@ export function CourseForm({
       </div>
 
       <div>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <h3 className="text-lg font-semibold text-[var(--coffee-charcoal)]">
             Sekcje i elementy lekcji
           </h3>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={addSection}
-          >
-            + Dodaj sekcje
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={expandAllSections}
+              disabled={sections.length === 0}
+            >
+              Rozwiń wszystkie
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={collapseAllSections}
+              disabled={sections.length === 0}
+            >
+              Zwiń wszystkie
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={addSection}
+            >
+              + Dodaj sekcje
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-6">
           {sections.map((section, sectionIndex) => {
             const isCollapsed = collapsedSections.has(sectionIndex);
             const sectionTitleField = fieldNames.sectionTitle(sectionIndex);
+            const sectionLabel =
+              section.title.trim() || `sekcję ${sectionIndex + 1}`;
 
             return (
               <Card
@@ -1395,6 +1480,11 @@ export function CourseForm({
                       type="button"
                       onClick={() => toggleSectionCollapsed(sectionIndex)}
                       aria-expanded={!isCollapsed}
+                      aria-label={
+                        isCollapsed
+                          ? `Rozwiń ${sectionLabel}`
+                          : `Zwiń ${sectionLabel}`
+                      }
                       className="shrink-0 border-radius p-1 text-[var(--coffee-charcoal)] hover:bg-[var(--coffee-cream)]"
                     >
                       {isCollapsed ? (
@@ -1421,6 +1511,11 @@ export function CourseForm({
                         field={sectionTitleField}
                         message={getFieldError(sectionTitleField)}
                       />
+                    </div>
+                    <div className="hidden shrink-0 text-xs font-medium text-[var(--coffee-espresso)] sm:block">
+                      {section.items.length === 1
+                        ? "1 element"
+                        : `${section.items.length} elementów`}
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
                       <Button
@@ -1744,15 +1839,6 @@ export function CourseForm({
             + Dodaj sekcje
           </Button>
         </div>
-      </div>
-
-      <div className="flex justify-end gap-3 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Anuluj
-        </Button>
-        <Button type="submit" variant="primary">
-          Zapisz
-        </Button>
       </div>
     </form>
   );

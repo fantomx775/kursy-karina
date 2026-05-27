@@ -3,7 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
-import { Input } from "@/components/ui";
+import { BlockingSpinner, Input } from "@/components/ui";
 
 export default function ForgotPasswordPage() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
@@ -50,6 +50,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="bg-white shadow-md border border-[var(--coffee-cappuccino)] p-8">
+      <BlockingSpinner show={isSubmitting} message="Wysyłanie linku..." />
       <h1 className="text-2xl font-bold text-[var(--coffee-charcoal)] mb-2 text-center">
         Reset hasła
       </h1>

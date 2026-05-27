@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui";
+import { BlockingSpinner, Button } from "@/components/ui";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { useToast } from "@/components/ui/Toast";
 
@@ -104,6 +104,7 @@ export function CertificateActions({
 
   return (
     <>
+      <BlockingSpinner show={loading} message="Generowanie certyfikatu..." />
       {isGenerated ? (
         <a href={certificateUrl} download>
           <Button variant="outline">Pobierz aktualny</Button>

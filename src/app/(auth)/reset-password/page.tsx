@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
+import { BlockingSpinner } from "@/components/ui";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 
 type ResetPasswordFieldErrors = Partial<
@@ -80,6 +81,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="bg-white shadow-md border border-[var(--coffee-cappuccino)] p-8">
+      <BlockingSpinner show={isSubmitting} message="Zapisywanie hasła..." />
       <h1 className="text-2xl font-bold text-[var(--coffee-charcoal)] mb-2 text-center">
         Ustaw nowe hasło
       </h1>

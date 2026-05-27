@@ -18,6 +18,8 @@ export type { CardProps, CardHeaderProps, CardContentProps, CardFooterProps } fr
 export { Spinner } from './Spinner';
 export type { SpinnerProps } from './Spinner';
 
+export { BlockingSpinner } from './BlockingSpinner';
+
 export { Badge } from './Badge';
 export type { BadgeProps } from './Badge';
 

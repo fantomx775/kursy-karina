@@ -1,7 +1,12 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { Input, PasswordInput, Spinner } from "@/components/ui";
+import {
+  BlockingSpinner,
+  Input,
+  PasswordInput,
+  Spinner,
+} from "@/components/ui";
 import { useAuth } from "@/features/auth/AuthContext";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
 import type { UserProfile } from "@/types/user";
@@ -124,6 +129,10 @@ export function AccountForm({ profile }: Props) {
 
   return (
     <div className="max-w-md space-y-8">
+      <BlockingSpinner
+        show={saving || passwordSaving}
+        message={saving ? "Zapisywanie danych..." : "Zapisywanie hasła..."}
+      />
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <Input
           label="Imię"

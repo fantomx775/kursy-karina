@@ -14,7 +14,10 @@ export default function CreateCoursePage() {
   const { handleSaveCourse } = useAdminActions();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(
+    null,
+  );
+  const [saving, setSaving] = useState(false);
 
   const handleCancel = () => {
     if (hasUnsavedChanges) {
@@ -26,12 +29,20 @@ export default function CreateCoursePage() {
   };
 
   const handleSave = async (data: CourseFormData) => {
-    const result = await handleSaveCourse(data, null);
-    if (result.success) {
-      setHasUnsavedChanges(false);
-      router.push("/dashboard");
-    } else {
-      alert(result.error ?? "Wystąpił błąd podczas tworzenia kursu. Spróbuj ponownie.");
+    setSaving(true);
+    try {
+      const result = await handleSaveCourse(data, null);
+      if (result.success) {
+        setHasUnsavedChanges(false);
+        router.push("/dashboard");
+      } else {
+        alert(
+          result.error ??
+            "Wystąpił błąd podczas tworzenia kursu. Spróbuj ponownie.",
+        );
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -52,12 +63,12 @@ export default function CreateCoursePage() {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = '';
+        e.returnValue = "";
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
   return (
@@ -79,13 +90,12 @@ export default function CreateCoursePage() {
                 }
               }}
             >
-              <Button variant="secondary">
-                Powrót do panelu
-              </Button>
+              <Button variant="secondary">Powrót do panelu</Button>
             </Link>
           </div>
           <p className="text-[var(--coffee-espresso)]">
-            Wypełnij poniższy formularz, aby stworzyć nowy kurs. Wszystkie pola oznaczone gwiazdką (*) są wymagane.
+            Wypełnij poniższy formularz, aby stworzyć nowy kurs. Wszystkie pola
+            oznaczone gwiazdką (*) są wymagane.
           </p>
         </div>
 
@@ -95,6 +105,7 @@ export default function CreateCoursePage() {
             onCancel={handleCancel}
             onSave={handleSave}
             onChange={handleFormChange}
+            saving={saving}
           />
         </div>
       </div>
