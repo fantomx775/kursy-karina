@@ -87,4 +87,58 @@ describe("resolveCourseAccessState", () => {
       accessDurationMonths: 3,
     });
   });
+
+  it("returns revoked when access was manually removed", () => {
+    expect(
+      resolveCourseAccessState(
+        [
+          {
+            course_id: "course",
+            access_status: "revoked",
+            access_activated_at: "2026-04-17T10:00:00.000Z",
+            access_expires_at: "2026-10-17T10:00:00.000Z",
+            access_duration_months: 6,
+          },
+        ],
+        now,
+      ),
+    ).toMatchObject({
+      status: "revoked",
+      hasActiveAccess: false,
+      hasPendingAccess: false,
+      hasEverPurchased: true,
+      lastActivatedAt: "2026-04-17T10:00:00.000Z",
+      lastExpiresAt: "2026-10-17T10:00:00.000Z",
+      accessDurationMonths: 6,
+    });
+  });
+
+  it("uses the latest historical access state after a revoked access", () => {
+    expect(
+      resolveCourseAccessState(
+        [
+          {
+            course_id: "course",
+            access_status: "revoked",
+            access_activated_at: "2026-01-17T10:00:00.000Z",
+            access_expires_at: "2026-04-17T10:00:00.000Z",
+            access_duration_months: 3,
+          },
+          {
+            course_id: "course",
+            access_status: "active",
+            access_activated_at: "2026-02-17T10:00:00.000Z",
+            access_expires_at: "2026-05-17T10:00:00.000Z",
+            access_duration_months: 3,
+          },
+        ],
+        now,
+      ),
+    ).toMatchObject({
+      status: "expired",
+      hasActiveAccess: false,
+      lastActivatedAt: "2026-02-17T10:00:00.000Z",
+      lastExpiresAt: "2026-05-17T10:00:00.000Z",
+    });
+  });
 });

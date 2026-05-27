@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCart } from "@/features/cart/CartContext";
 import { Badge, Button } from "@/components/ui";
+import type { CourseAccessStatus } from "@/services/courseAccess";
 import type { Course } from "@/types/course";
 import { getEffectivePriceCents } from "@/lib/coursePromo";
 import {
@@ -14,8 +15,6 @@ import {
   formatSaleWindowRange,
   resolveCourseSaleState,
 } from "@/lib/courseSales";
-
-type CourseAccessStatus = "none" | "pending" | "active" | "expired";
 
 type Props = {
   course: Course;

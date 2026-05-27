@@ -1,11 +1,18 @@
-export type CourseAccessStatus = "none" | "pending" | "active" | "expired";
+export type CourseAccessStatus =
+  | "none"
+  | "pending"
+  | "active"
+  | "expired"
+  | "revoked";
 
 export type CourseAccessState = {
   status: CourseAccessStatus;
   hasEverPurchased: boolean;
   hasActiveAccess: boolean;
   hasPendingAccess: boolean;
+  activeActivatedAt: string | null;
   activeExpiresAt: string | null;
+  lastActivatedAt: string | null;
   lastExpiresAt: string | null;
   accessDurationMonths: number | null;
 };
@@ -28,7 +35,9 @@ const EMPTY_ACCESS: CourseAccessState = {
   hasEverPurchased: false,
   hasActiveAccess: false,
   hasPendingAccess: false,
+  activeActivatedAt: null,
   activeExpiresAt: null,
+  lastActivatedAt: null,
   lastExpiresAt: null,
   accessDurationMonths: null,
 };
@@ -63,13 +72,20 @@ export function resolveCourseAccessState(
     (item) => (item.access_status ?? "active") === "active",
   );
   const pendingItems = items.filter((item) => item.access_status === "pending");
+  const revokedItems = items.filter((item) => item.access_status === "revoked");
   const hasPendingAccess = pendingItems.length > 0;
   const sortedActivatedItems = [...activatedItems].sort(
     compareAccessItemsByDate,
   );
   const sortedPendingItems = [...pendingItems].sort(compareAccessItemsByDate);
+  const sortedHistoricalAccessItems = [
+    ...activatedItems,
+    ...revokedItems,
+  ].sort(compareAccessItemsByDate);
 
-  const lastExpiresAt = sortedActivatedItems.at(-1)?.access_expires_at ?? null;
+  const lastAccessItem = sortedHistoricalAccessItems.at(-1) ?? null;
+  const lastExpiresAt = lastAccessItem?.access_expires_at ?? null;
+  const lastActivatedAt = lastAccessItem?.access_activated_at ?? null;
 
   const activeItem =
     sortedActivatedItems
@@ -81,6 +97,7 @@ export function resolveCourseAccessState(
   const pendingItem = sortedPendingItems.at(-1) ?? null;
   const lastActivatedItem = sortedActivatedItems.at(-1) ?? null;
   const activeExpiresAt = activeItem?.access_expires_at ?? null;
+  const activeActivatedAt = activeItem?.access_activated_at ?? null;
 
   const hasActiveAccess = activeExpiresAt !== null;
 
@@ -89,15 +106,20 @@ export function resolveCourseAccessState(
       ? "active"
       : hasPendingAccess
         ? "pending"
-        : "expired",
+        : lastAccessItem?.access_status === "revoked"
+          ? "revoked"
+          : "expired",
     hasEverPurchased: true,
     hasActiveAccess,
     hasPendingAccess,
+    activeActivatedAt,
     activeExpiresAt,
+    lastActivatedAt,
     lastExpiresAt,
     accessDurationMonths:
       activeItem?.access_duration_months ??
       pendingItem?.access_duration_months ??
+      lastAccessItem?.access_duration_months ??
       lastActivatedItem?.access_duration_months ??
       null,
   };

@@ -149,7 +149,7 @@ export default async function CoursesPage() {
           </div>
         ) : (
           <div className="bg-white border border-[var(--coffee-cappuccino)] p-8 sm:p-12 text-center text-[var(--coffee-espresso)]">
-            Aktualnie brak aktywnych kursów.
+            Aktualnie brak widocznych kursów.
           </div>
         )}
       </div>

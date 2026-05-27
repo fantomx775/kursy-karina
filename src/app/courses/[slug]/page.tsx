@@ -5,6 +5,7 @@ import { FaLock, FaPlay } from "react-icons/fa";
 import { createServerSupabaseClient } from "@/services/supabase/server";
 import { getCourseWithContentBySlug } from "@/services/courses";
 import { getUserCourseAccess } from "@/services/courseAccess";
+import type { CourseAccessStatus } from "@/services/courseAccess";
 import { CoursePurchaseCard } from "@/features/courses/CoursePurchaseCard";
 import { CourseDescription } from "@/features/courses/CourseDescription";
 import { isPromoActive, getEffectivePriceCents } from "@/lib/coursePromo";
@@ -33,7 +34,7 @@ export default async function CourseDetailPage({
     notFound();
   }
 
-  let accessStatus: "none" | "pending" | "active" | "expired" = "none";
+  let accessStatus: CourseAccessStatus = "none";
   let accessExpiresAt: string | null = null;
   let purchasedAccessDurationMonths: number | null = null;
   if (user) {

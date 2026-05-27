@@ -111,3 +111,90 @@ export async function POST(
     accessExpiresAt: updatedItem.access_expires_at,
   });
 }
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const auth = await authenticateAdmin();
+  if (!auth.success) {
+    return Response.json({ error: auth.error }, { status: auth.statusCode });
+  }
+
+  const { id: studentId } = await params;
+  const { courseId } = await request.json();
+
+  if (!courseId || typeof courseId !== "string") {
+    return Response.json({ error: "Missing courseId" }, { status: 400 });
+  }
+
+  const admin = createAdminSupabaseClient();
+  const { data: orders } = await admin
+    .from("orders")
+    .select("id")
+    .eq("user_id", studentId)
+    .eq("status", "paid");
+
+  const orderIds = orders?.map((order) => order.id) ?? [];
+  if (orderIds.length === 0) {
+    return Response.json(
+      { error: "Student has no paid order for this course" },
+      { status: 404 },
+    );
+  }
+
+  const nowIso = new Date().toISOString();
+  const { data: activeItems, error: activeError } = await admin
+    .from("order_items")
+    .select("id, access_activated_at, access_expires_at")
+    .eq("course_id", courseId)
+    .eq("access_status", "active")
+    .gt("access_expires_at", nowIso)
+    .in("order_id", orderIds)
+    .order("access_expires_at", { ascending: false });
+
+  if (activeError) {
+    console.error("Failed to check active access", activeError);
+    return Response.json(
+      { error: "Failed to check active access" },
+      { status: 500 },
+    );
+  }
+
+  if (!activeItems || activeItems.length === 0) {
+    return Response.json(
+      { error: "No active access found for this course" },
+      { status: 404 },
+    );
+  }
+
+  const activeItemIds = activeItems.map((item) => item.id);
+  const { data: updatedItems, error: updateError } = await admin
+    .from("order_items")
+    .update({
+      access_status: "revoked",
+    })
+    .in("id", activeItemIds)
+    .select("id, access_activated_at, access_expires_at");
+
+  if (updateError || !updatedItems) {
+    console.error("Failed to revoke access", updateError);
+    return Response.json(
+      { error: "Failed to revoke access" },
+      { status: 500 },
+    );
+  }
+
+  const latestItem = updatedItems.sort((a, b) => {
+    const aTime = new Date(a.access_expires_at ?? 0).getTime();
+    const bTime = new Date(b.access_expires_at ?? 0).getTime();
+    return bTime - aTime;
+  })[0];
+
+  return Response.json({
+    revoked: true,
+    revokedCount: updatedItems.length,
+    accessActivatedAt: latestItem?.access_activated_at ?? null,
+    accessExpiresAt: latestItem?.access_expires_at ?? null,
+  });
+}

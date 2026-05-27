@@ -143,7 +143,7 @@ export default async function HomePage() {
               })
             ) : (
               <div className="col-span-full bg-white/80 border border-[var(--coffee-cappuccino)] border-radius p-8 sm:p-12 text-center text-[var(--coffee-espresso)]">
-                Aktualnie brak aktywnych kursów. Wróć wkrótce.
+                Aktualnie brak widocznych kursów. Wróć wkrótce.
               </div>
             )}
           </div>

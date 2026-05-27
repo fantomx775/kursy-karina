@@ -34,11 +34,11 @@ export function CoursesTab({ courses, loading }: CoursesTabProps) {
       render: (_, record) =>
         record.status === "active" ? (
           <Badge variant="success" appearance="button">
-            Aktywny
+            Widoczny
           </Badge>
         ) : (
           <Badge variant="error" appearance="button">
-            Nieaktywny
+            Niewidoczny
           </Badge>
         ),
     },

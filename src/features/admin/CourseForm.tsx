@@ -1041,8 +1041,8 @@ export function CourseForm({
             }}
             className="h-10 w-full border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
           >
-            <option value="inactive">Nieaktywny</option>
-            <option value="active">Aktywny</option>
+            <option value="inactive">Niewidoczny</option>
+            <option value="active">Widoczny</option>
           </select>
         </div>
 
@@ -1206,7 +1206,7 @@ export function CourseForm({
             </div>
           ) : (
             <p className="self-end text-sm text-[var(--coffee-espresso)]">
-              Kurs będzie dostępny do zakupu zawsze, gdy ma status aktywny.
+              Kurs będzie dostępny do zakupu zawsze, gdy ma status widoczny.
             </p>
           )}
         </div>
