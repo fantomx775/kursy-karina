@@ -46,7 +46,7 @@ export async function GET(
   const { data: orderItems } = await admin
     .from("order_items")
     .select(
-      "order_id, course_id, title, price, quantity, access_status, access_activated_at, access_expires_at",
+      "order_id, course_id, title, price, quantity, access_status, access_activated_at, access_expires_at, access_duration_months, created_at",
     )
     .in("order_id", orderIds);
 
@@ -122,7 +122,10 @@ export async function GET(
           ? "active"
           : access.status === "pending"
             ? "pending"
-            : "expired",
+            : access.status === "revoked"
+              ? "revoked"
+              : "expired",
+      accessActivatedAt: access.activeActivatedAt ?? access.lastActivatedAt,
       accessExpiresAt: access.activeExpiresAt ?? access.lastExpiresAt,
       certificateGranted: certificateGrant.granted,
       certificateGrantedAt: certificateGrant.grantedAt,

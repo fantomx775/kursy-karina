@@ -48,7 +48,12 @@ export function AdminDashboard({
     useState<StudentCourseProgress | null>(null);
   const [pendingRegenerationCourse, setPendingRegenerationCourse] =
     useState<StudentCourseProgress | null>(null);
+  const [pendingAccessRevokeCourse, setPendingAccessRevokeCourse] =
+    useState<StudentCourseProgress | null>(null);
   const [activatingAccessCourseId, setActivatingAccessCourseId] = useState<
+    string | null
+  >(null);
+  const [revokingAccessCourseId, setRevokingAccessCourseId] = useState<
     string | null
   >(null);
   const [activatingPendingAccessIds, setActivatingPendingAccessIds] = useState<
@@ -197,7 +202,9 @@ export function AdminDashboard({
   const handleCloseStudentModal = () => {
     setPendingCertificateCourse(null);
     setPendingRegenerationCourse(null);
+    setPendingAccessRevokeCourse(null);
     setActivatingAccessCourseId(null);
+    setRevokingAccessCourseId(null);
     closeStudentModal();
   };
 
@@ -258,10 +265,65 @@ export function AdminDashboard({
     setPendingCertificateCourse(course);
   };
 
+  const handleRequestAccessRevoke = (course: StudentCourseProgress) => {
+    setPendingAccessRevokeCourse(course);
+  };
+
   const handleRequestCertificateRegeneration = (
     course: StudentCourseProgress,
   ) => {
     setPendingRegenerationCourse(course);
+  };
+
+  const handleConfirmAccessRevoke = async () => {
+    if (!studentDetail || !pendingAccessRevokeCourse) {
+      return;
+    }
+
+    setRevokingAccessCourseId(pendingAccessRevokeCourse.courseId);
+
+    try {
+      const response = await fetch(
+        `/api/admin/students/${studentDetail.id}/access`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ courseId: pendingAccessRevokeCourse.courseId }),
+        },
+      );
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(data?.error ?? "Nie udało się odebrać dostępu.");
+      }
+
+      setPendingAccessRevokeCourse(null);
+      await Promise.all([
+        refreshStudentDetail(),
+        loadStudents(),
+        loadPendingAccess(),
+        loadCourseStats(),
+      ]);
+      addToast({
+        type: "success",
+        title: "Dostęp odebrany",
+        message:
+          "Kursant nie może już korzystać z tego kursu. Postęp pozostał zapisany.",
+      });
+    } catch (error) {
+      addToast({
+        type: "error",
+        title: "Błąd odbierania dostępu",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się odebrać dostępu.",
+      });
+    } finally {
+      setRevokingAccessCourseId(null);
+    }
   };
 
   const handleActivatePendingAccess = async (itemIds: string[]) => {
@@ -626,9 +688,11 @@ export function AdminDashboard({
           <StudentDetailPanel
             student={studentDetail}
             onActivateAccess={handleActivateAccess}
+            onRevokeAccess={handleRequestAccessRevoke}
             onGrantCertificate={handleRequestCertificateGrant}
             onAllowRegenerateCertificate={handleRequestCertificateRegeneration}
             activatingAccessCourseId={activatingAccessCourseId}
+            revokingAccessCourseId={revokingAccessCourseId}
             grantingCourseId={grantingCertificateCourseId}
             regeneratingCourseId={regeneratingCertificateCourseId}
           />
@@ -653,6 +717,27 @@ export function AdminDashboard({
           </div>
         )}
       </Modal>
+
+      <ConfirmModal
+        isOpen={pendingAccessRevokeCourse !== null}
+        onClose={() => {
+          if (!revokingAccessCourseId) {
+            setPendingAccessRevokeCourse(null);
+          }
+        }}
+        onConfirm={handleConfirmAccessRevoke}
+        title="Odebrać dostęp do kursu?"
+        message={
+          pendingAccessRevokeCourse
+            ? `Kursant straci możliwość wejścia do kursu "${pendingAccessRevokeCourse.courseTitle}". Postęp zostanie zachowany, a zapisana data aktywacji i ważności nie zostanie zmieniona.`
+            : ""
+        }
+        confirmText="Odbierz dostęp"
+        cancelText="Anuluj"
+        variant="danger"
+        loading={revokingAccessCourseId !== null}
+        closeOnConfirm={false}
+      />
 
       <ConfirmModal
         isOpen={pendingCertificateCourse !== null}

@@ -10,6 +10,7 @@ import {
 import { CertificateActions } from "@/features/certificates/CertificateActions";
 import { formatAccessDuration } from "@/lib/accessDuration";
 import { getCourseDescriptionExcerpt } from "@/lib/courseDescription";
+import type { CourseAccessStatus } from "@/services/courseAccess";
 import type { CourseStatus } from "@/types/course";
 import type { UserProfile } from "@/types/user";
 import { AccountForm } from "./AccountForm";
@@ -21,7 +22,7 @@ export type CourseCard = {
   slug: string;
   status: CourseStatus;
   adminAccess: boolean;
-  accessStatus: "active" | "pending" | "expired";
+  accessStatus: Exclude<CourseAccessStatus, "none">;
   accessExpiresAt: string | null;
   accessDurationMonths: number | null;
   canRenewAccess: boolean;
@@ -125,6 +126,14 @@ function getAccessNotice(course: CourseCard): string {
     return course.accessExpiresAt
       ? `Dostęp aktywny do: ${formatAccessDate(course.accessExpiresAt)}.`
       : "Dostęp aktywny.";
+  }
+
+  if (course.accessStatus === "revoked") {
+    const revokedDate = course.accessExpiresAt
+      ? ` Poprzednia data ważności: ${formatAccessDate(course.accessExpiresAt)}.`
+      : "";
+
+    return `Dostęp do materiałów został odebrany przez administratora.${revokedDate} Postęp i certyfikat zostają zapisane.`;
   }
 
   const expiredAt = course.accessExpiresAt
@@ -267,6 +276,10 @@ export function DashboardTabs({
                         <Badge rounded={false} variant="secondary" size="sm">
                           Dostęp admina
                         </Badge>
+                      ) : course.accessStatus === "revoked" ? (
+                        <Badge rounded={false} variant="error" size="sm">
+                          Dostęp odebrany
+                        </Badge>
                       ) : course.accessStatus === "expired" ? (
                         <Badge rounded={false} variant="warning" size="sm">
                           Dostęp wygasł
@@ -330,11 +343,16 @@ export function DashboardTabs({
                             : "Certyfikat będzie dostępny po decyzji administratora."}
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3">
-                    {course.accessStatus === "expired" &&
+                    {(course.accessStatus === "expired" ||
+                      course.accessStatus === "revoked") &&
                     !course.adminAccess &&
                     course.canRenewAccess ? (
                       <Link href={`/courses/${course.slug}`}>
-                        <Button variant="primary">Przedłuż dostęp</Button>
+                        <Button variant="primary">
+                          {course.accessStatus === "revoked"
+                            ? "Kup dostęp ponownie"
+                            : "Przedłuż dostęp"}
+                        </Button>
                       </Link>
                     ) : null}
                     {course.certificateGranted ? (

@@ -7,6 +7,7 @@ import {
   FiInstagram,
   FiLogIn,
   FiMail,
+  FiSlash,
 } from "react-icons/fi";
 import { Button } from "@/components/ui";
 import type { StudentCourseProgress, StudentDetail } from "@/types/student";
@@ -14,9 +15,11 @@ import type { StudentCourseProgress, StudentDetail } from "@/types/student";
 type Props = {
   student: StudentDetail;
   onActivateAccess: (course: StudentCourseProgress) => void;
+  onRevokeAccess: (course: StudentCourseProgress) => void;
   onGrantCertificate: (course: StudentCourseProgress) => void;
   onAllowRegenerateCertificate: (course: StudentCourseProgress) => void;
   activatingAccessCourseId: string | null;
+  revokingAccessCourseId: string | null;
   grantingCourseId: string | null;
   regeneratingCourseId: string | null;
 };
@@ -51,7 +54,7 @@ function formatGeneratedCertificateDate(iso: string | null): string {
 }
 
 function formatAccessStatus(course: StudentCourseProgress): string {
-  const date = course.accessExpiresAt
+  const expiresAt = course.accessExpiresAt
     ? new Date(course.accessExpiresAt).toLocaleDateString("pl-PL", {
         day: "2-digit",
         month: "2-digit",
@@ -60,22 +63,32 @@ function formatAccessStatus(course: StudentCourseProgress): string {
     : null;
 
   if (course.accessStatus === "active") {
-    return date ? `Dostęp aktywny do ${date}.` : "Dostęp aktywny.";
+    return expiresAt
+      ? `Dostęp aktywny do ${expiresAt}.`
+      : "Dostęp aktywny.";
   }
 
   if (course.accessStatus === "pending") {
     return "Dostęp oczekuje na ręczną aktywację.";
   }
 
-  return date ? `Dostęp wygasł ${date}.` : "Dostęp wygasł.";
+  if (course.accessStatus === "revoked") {
+    return expiresAt
+      ? `Dostęp odebrany. Poprzednia data ważności: ${expiresAt}.`
+      : "Dostęp odebrany.";
+  }
+
+  return expiresAt ? `Dostęp wygasł ${expiresAt}.` : "Dostęp wygasł.";
 }
 
 export function StudentDetailPanel({
   student,
   onActivateAccess,
+  onRevokeAccess,
   onGrantCertificate,
   onAllowRegenerateCertificate,
   activatingAccessCourseId,
+  revokingAccessCourseId,
   grantingCourseId,
   regeneratingCourseId,
 }: Props) {
@@ -184,6 +197,11 @@ export function StudentDetailPanel({
                 <p className="mt-1 text-[var(--text-xs)] text-[var(--coffee-espresso)]">
                   {formatAccessStatus(course)}
                 </p>
+                {course.accessActivatedAt ? (
+                  <p className="mt-1 text-[var(--text-xs)] text-[var(--coffee-espresso)]">
+                    Aktywowany: {formatDateTime(course.accessActivatedAt)}
+                  </p>
+                ) : null}
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="text-[var(--text-xs)] text-[var(--coffee-espresso)]">
                     {course.certificateGenerated
@@ -205,6 +223,19 @@ export function StudentDetailPanel({
                         onClick={() => onActivateAccess(course)}
                       >
                         Aktywuj dostęp
+                      </Button>
+                    ) : null}
+                    {course.accessStatus === "active" ? (
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        loading={revokingAccessCourseId === course.courseId}
+                        onClick={() => onRevokeAccess(course)}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <FiSlash className="h-4 w-4" aria-hidden />
+                          Odbierz dostęp
+                        </span>
                       </Button>
                     ) : null}
                     {course.certificateGenerated ? (

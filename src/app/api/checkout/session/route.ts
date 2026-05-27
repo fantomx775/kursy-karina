@@ -92,7 +92,7 @@ export async function POST(request: Request) {
 
   if (validCourses.length === 0) {
     return Response.json(
-      { error: "Brak aktywnych kursów w koszyku." },
+      { error: "Brak widocznych kursów w koszyku." },
       { status: 400 },
     );
   }

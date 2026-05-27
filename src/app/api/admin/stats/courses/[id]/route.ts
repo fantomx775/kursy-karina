@@ -146,7 +146,9 @@ export async function GET(
           ? "active"
           : access.status === "pending"
             ? "pending"
-            : "expired",
+            : access.status === "revoked"
+              ? "revoked"
+              : "expired",
       accessExpiresAt: access.activeExpiresAt ?? access.lastExpiresAt,
       completedItems,
       totalItems,

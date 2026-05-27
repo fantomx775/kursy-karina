@@ -60,7 +60,9 @@ export function CourseStatsDetailPanel({ detail }: Props) {
           ? `Aktywny do ${formatDate(record.accessExpiresAt)}`
           : record.accessStatus === "pending"
             ? "Oczekuje na aktywację"
-            : `Wygasł ${formatDate(record.accessExpiresAt)}`,
+            : record.accessStatus === "revoked"
+              ? `Odebrany, ważny był do ${formatDate(record.accessExpiresAt)}`
+              : `Wygasł ${formatDate(record.accessExpiresAt)}`,
     },
     {
       key: "progress",

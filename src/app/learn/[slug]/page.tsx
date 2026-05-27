@@ -4,6 +4,7 @@ import { getCertificateGrant } from "@/services/certificate";
 import { createServerSupabaseClient } from "@/services/supabase/server";
 import { authenticateUser } from "@/services/auth/server";
 import { getUserCourseAccess } from "@/services/courseAccess";
+import type { CourseAccessStatus } from "@/services/courseAccess";
 import { getCourseWithContentBySlug } from "@/services/courses";
 import { CourseViewer } from "@/features/courses/CourseViewer";
 import { formatAccessDuration } from "@/lib/accessDuration";
@@ -30,9 +31,7 @@ export default async function LearnPage({
   }
 
   let hasActiveAccess = isAdmin;
-  let accessStatus: "none" | "pending" | "active" | "expired" = isAdmin
-    ? "active"
-    : "none";
+  let accessStatus: CourseAccessStatus = isAdmin ? "active" : "none";
   let accessExpiresAt: string | null = null;
   let accessDurationMonths: number | null = null;
 
@@ -47,6 +46,7 @@ export default async function LearnPage({
   if (!hasActiveAccess) {
     const isExpired = accessStatus === "expired";
     const isPending = accessStatus === "pending";
+    const isRevoked = accessStatus === "revoked";
     return (
       <div className="min-h-screen bg-gradient-to-b from-[var(--coffee-cream)] to-[var(--coffee-latte)] flex items-center justify-center page-width">
         <div className="max-w-md w-full bg-white border border-[var(--coffee-cappuccino)] border-radius shadow-md p-6 sm:p-8 text-center">
@@ -55,7 +55,9 @@ export default async function LearnPage({
               ? "Dostęp wygasł"
               : isPending
                 ? "Dostęp oczekuje na aktywację"
-                : "Brak dostępu"}
+                : isRevoked
+                  ? "Dostęp odebrany"
+                  : "Brak dostępu"}
           </h1>
           <p className="text-[var(--coffee-espresso)] mb-6">
             {isExpired
@@ -72,6 +74,8 @@ export default async function LearnPage({
                         )} zacznie się liczyć dopiero od aktywacji.`
                       : ""
                   }`
+                : isRevoked
+                  ? "Administrator odebrał dostęp do tego kursu. Postęp pozostaje zapisany, ale materiały są niedostępne."
                 : "Ten kurs nie został jeszcze zakupiony. Wróć do szczegółów kursu, aby sfinalizować zakup."}
           </p>
           <div className="space-y-3">
@@ -83,6 +87,8 @@ export default async function LearnPage({
                 ? "Przedłuż dostęp"
                 : isPending
                   ? "Wróć do szczegółów"
+                  : isRevoked
+                    ? "Wróć do szczegółów"
                   : "Przejdź do kursu"}
             </Link>
             <Link

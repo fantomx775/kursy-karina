@@ -276,7 +276,9 @@ export default async function DashboardPage() {
           ? "active"
           : access.status === "pending"
             ? "pending"
-            : "expired";
+            : access.status === "revoked"
+              ? "revoked"
+              : "expired";
 
       return {
         id: courseId,
@@ -293,7 +295,9 @@ export default async function DashboardPage() {
               ? (access.lastExpiresAt ?? null)
               : null,
         accessDurationMonths: access.accessDurationMonths,
-        canRenewAccess: accessStatus === "expired" && saleState.isOpen,
+        canRenewAccess:
+          (accessStatus === "expired" || accessStatus === "revoked") &&
+          saleState.isOpen,
         saleStatus: saleState.status,
         completionPercentage: completion.percentage,
         certificateGranted: certificateGrant.granted,
