@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { FiChevronLeft } from "react-icons/fi";
+import { FiChevronDown, FiChevronLeft, FiChevronUp } from "react-icons/fi";
 import type { CourseWithContent } from "@/types/course";
 import { CertificateActions } from "@/features/certificates/CertificateActions";
 import { useAuth } from "@/features/auth/AuthContext";
@@ -57,6 +57,7 @@ export function CourseViewer({
   const [activeItemId, setActiveItemId] = useState<string | null>(
     steps[0]?.id ?? null,
   );
+  const [isMobileContentOpen, setIsMobileContentOpen] = useState(false);
   const [certificateState, setCertificateState] = useState({
     generated: certificateGenerated,
     generatedAt: certificateGeneratedAt,
@@ -136,14 +137,26 @@ export function CourseViewer({
     );
   };
 
-  const onSelectItem = (itemId: string) => {
+  const scrollToItem = (itemId: string) => {
     const element = document.getElementById(itemId);
     if (!element) {
       return;
     }
 
-    element.scrollIntoView({ behavior: "smooth", block: "start" });
+    element.scrollIntoView({ behavior: "auto", block: "start" });
+  };
+
+  const onSelectItem = (itemId: string) => {
     setActiveItemId(itemId);
+    window.requestAnimationFrame(() => scrollToItem(itemId));
+  };
+
+  const onSelectMobileItem = (itemId: string) => {
+    setIsMobileContentOpen(false);
+    setActiveItemId(itemId);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => scrollToItem(itemId));
+    });
   };
 
   const onToggleCompleted = async (itemId: string) => {
@@ -248,7 +261,7 @@ export function CourseViewer({
           <aside className="sticky top-[calc(var(--sticky-top-offset)+0.75rem)] hidden self-start md:block">
             <div className="flex max-h-[calc(100dvh-var(--sticky-top-offset)-1.5rem)] flex-col overflow-hidden">
               <StepList
-                items={steps}
+                sections={course.sections}
                 activeItemId={activeItemId}
                 completedIds={completedIds}
                 onSelectItem={onSelectItem}
@@ -258,12 +271,48 @@ export function CourseViewer({
 
           <main>
             <div className="mb-4 md:hidden">
-              <StepList
-                items={steps}
-                activeItemId={activeItemId}
-                completedIds={completedIds}
-                onSelectItem={onSelectItem}
-              />
+              <button
+                type="button"
+                onClick={() => setIsMobileContentOpen((previous) => !previous)}
+                aria-expanded={isMobileContentOpen}
+                aria-controls="mobile-course-content"
+                className="flex w-full items-center justify-between gap-3 border-radius border border-[var(--coffee-cappuccino)] bg-white px-3 py-2 text-left shadow-sm"
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-[var(--coffee-charcoal)]">
+                    Lekcje kursu
+                  </span>
+                  <span className="block text-xs text-[var(--coffee-espresso)]">
+                    {completedCount}/{steps.length} ukończone
+                  </span>
+                </span>
+                {isMobileContentOpen ? (
+                  <FiChevronUp
+                    className="h-5 w-5 shrink-0 text-[var(--coffee-espresso)]"
+                    aria-hidden
+                  />
+                ) : (
+                  <FiChevronDown
+                    className="h-5 w-5 shrink-0 text-[var(--coffee-espresso)]"
+                    aria-hidden
+                  />
+                )}
+              </button>
+
+              {isMobileContentOpen ? (
+                <div
+                  id="mobile-course-content"
+                  className="mt-2 flex max-h-[70dvh] overflow-hidden"
+                >
+                  <StepList
+                    sections={course.sections}
+                    activeItemId={activeItemId}
+                    completedIds={completedIds}
+                    onSelectItem={onSelectMobileItem}
+                    onRequestClose={() => setIsMobileContentOpen(false)}
+                  />
+                </div>
+              ) : null}
             </div>
             <div className="mt-4 space-y-6 md:mt-0">
               {steps.length === 0 ? (

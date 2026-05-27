@@ -19,7 +19,7 @@ function getBadgeLabel(item: CourseItem): string {
     case "quiz":
       return "Quiz";
     default:
-      return "Tekst";
+      return "PDF";
   }
 }
 
@@ -43,7 +43,12 @@ export function CourseStepCard({
     <section
       id={item.id}
       data-step-id={item.id}
-      className="scroll-mt-24 border-radius border border-[var(--coffee-cappuccino)] bg-white p-4 shadow-sm"
+      className={[
+        "scroll-mt-24 border-radius border p-4 shadow-sm [contain-intrinsic-size:720px] [content-visibility:auto]",
+        isCompleted
+          ? "border-emerald-200 bg-emerald-50/80"
+          : "border-[var(--coffee-cappuccino)] bg-white",
+      ].join(" ")}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
@@ -66,7 +71,7 @@ export function CourseStepCard({
             onClick={() => onToggleCompleted(item.id)}
             className={`h-10 border-radius px-4 text-sm font-medium transition-colors ${
               isCompleted
-                ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                ? "border border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-100"
                 : "bg-[var(--coffee-mocha)] text-white hover:bg-[var(--coffee-espresso)]"
             }`}
           >
@@ -85,7 +90,11 @@ export function CourseStepCard({
         ) : null}
 
         {item.kind === "quiz" ? (
-          <QuizSection item={item} isCompleted={isCompleted} onPass={onQuizPassed} />
+          <QuizSection
+            item={item}
+            isCompleted={isCompleted}
+            onPass={onQuizPassed}
+          />
         ) : null}
       </div>
     </section>

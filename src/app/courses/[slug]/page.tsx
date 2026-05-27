@@ -147,7 +147,7 @@ export default async function CourseDetailPage({
               />
             </div>
             <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 text-sm text-[var(--coffee-espresso)] leading-relaxed">
-              <p>Pełny dostęp do materiałów SVG i video YouTube.</p>
+              <p>Pełny dostęp do materiałów PDF i video YouTube.</p>
               <p className="mt-2">
                 Dostęp po zakupie:{" "}
                 {formatAccessDuration(

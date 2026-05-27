@@ -144,7 +144,7 @@ function getItemKindLabel(kind: CourseFormItem["kind"]): string {
     case "quiz":
       return "Quiz";
     default:
-      return "Tekst";
+      return "PDF";
   }
 }
 
@@ -208,7 +208,7 @@ function getCourseValidationError(
       if (item.kind === "svg" && !item.assetPath.trim()) {
         return createFieldValidationError(
           fieldNames.itemAsset(sectionIndex, itemIndex),
-          "Każdy element typu Tekst musi mieć dodany plik SVG.",
+          "Każdy element typu PDF musi mieć dodany plik PDF.",
           sectionIndex,
         );
       }
@@ -1566,7 +1566,7 @@ export function CourseForm({
                                       })
                                     }
                                   />
-                                  Tekst
+                                  PDF
                                 </label>
                                 <label className="flex items-center gap-2 text-sm font-medium text-[var(--coffee-charcoal)]">
                                   <input
@@ -1608,7 +1608,7 @@ export function CourseForm({
                                   role="group"
                                 >
                                   <label className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]">
-                                    Plik SVG
+                                    Plik PDF
                                   </label>
                                   <FileUpload
                                     value={item.assetPath}
@@ -1714,7 +1714,7 @@ export function CourseForm({
                             size="sm"
                             onClick={() => addItem(sectionIndex, "svg")}
                           >
-                            Tekst
+                            PDF
                           </Button>
                           <Button
                             type="button"
