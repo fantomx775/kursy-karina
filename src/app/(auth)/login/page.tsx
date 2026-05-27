@@ -6,7 +6,12 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/AuthContext";
 import { setRememberMePreference } from "@/services/auth/rememberMe";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
-import { Checkbox, Input, PasswordInput } from "@/components/ui";
+import {
+  BlockingSpinner,
+  Checkbox,
+  Input,
+  PasswordInput,
+} from "@/components/ui";
 
 type LoginFieldErrors = Partial<Record<"email" | "password", string>>;
 
@@ -67,6 +72,7 @@ export default function LoginPage() {
 
   return (
     <div className="bg-white shadow-md border border-[var(--coffee-cappuccino)] p-8">
+      <BlockingSpinner show={isSubmitting} message="Logowanie..." />
       <h1 className="text-2xl font-bold text-[var(--coffee-charcoal)] mb-2 text-center">
         Logowanie
       </h1>

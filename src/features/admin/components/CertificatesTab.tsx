@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { FiAward, FiEdit2, FiFileText, FiUpload } from "react-icons/fi";
-import { Button, Input, Table } from "@/components/ui";
+import { BlockingSpinner, Button, Input, Table } from "@/components/ui";
 import type { Column } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
 import type {
@@ -254,6 +254,12 @@ export function CertificatesTab({
 
   return (
     <div className="space-y-6">
+      <BlockingSpinner
+        show={uploading || renamingId !== null}
+        message={
+          uploading ? "Wgrywanie certyfikatu..." : "Zapisywanie szablonu..."
+        }
+      />
       <section className="border border-[var(--coffee-cappuccino)] bg-white p-5 border-radius">
         <div className="mb-4 flex items-center gap-2">
           <FiUpload

@@ -218,6 +218,7 @@ describe("CourseForm", () => {
       },
     ]);
 
+    await user.click(screen.getByRole("button", { name: "Rozwiń Sekcja 1" }));
     await user.click(
       screen.getAllByRole("button", { name: "Przesuń lekcję w górę" })[1],
     );
@@ -268,7 +269,9 @@ describe("CourseForm", () => {
     );
   });
 
-  it("disables move buttons at the start and end of section and lesson lists", () => {
+  it("disables move buttons at the start and end of section and lesson lists", async () => {
+    const user = userEvent.setup();
+
     renderCourseFormWithSections([
       {
         title: "Sekcja 1",
@@ -279,6 +282,9 @@ describe("CourseForm", () => {
         items: [youtubeItem("Trzecia lekcja")],
       },
     ]);
+
+    await user.click(screen.getByRole("button", { name: "Rozwiń Sekcja 1" }));
+    await user.click(screen.getByRole("button", { name: "Rozwiń Sekcja 2" }));
 
     expect(
       screen.getAllByRole("button", { name: "Przesuń sekcję w górę" })[0],

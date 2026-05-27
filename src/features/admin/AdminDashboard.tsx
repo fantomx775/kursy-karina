@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Button, Spinner } from "@/components/ui";
+import { BlockingSpinner, Button, Spinner } from "@/components/ui";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
@@ -50,6 +50,11 @@ export function AdminDashboard({
     useState<StudentCourseProgress | null>(null);
   const [pendingAccessRevokeCourse, setPendingAccessRevokeCourse] =
     useState<StudentCourseProgress | null>(null);
+  const [pendingAccessCourse, setPendingAccessCourse] =
+    useState<StudentCourseProgress | null>(null);
+  const [pendingAccessActivationIds, setPendingAccessActivationIds] = useState<
+    string[] | null
+  >(null);
   const [activatingAccessCourseId, setActivatingAccessCourseId] = useState<
     string | null
   >(null);
@@ -66,6 +71,8 @@ export function AdminDashboard({
   const [grantingEligibleKey, setGrantingEligibleKey] = useState<string | null>(
     null,
   );
+  const [couponSaving, setCouponSaving] = useState(false);
+  const [deletingCouponId, setDeletingCouponId] = useState<string | null>(null);
   const effectiveTab = embedded ? activeAdminTab : activeTab;
   const { addToast } = useToast();
 
@@ -118,8 +125,10 @@ export function AdminDashboard({
   }, [certificateData, onCertificateActionCountChange]);
 
   useEffect(() => {
-    onPendingAccessCountChange?.(pendingAccess.length);
-  }, [onPendingAccessCountChange, pendingAccess.length]);
+    if (pendingAccessLoaded) {
+      onPendingAccessCountChange?.(pendingAccess.length);
+    }
+  }, [onPendingAccessCountChange, pendingAccess.length, pendingAccessLoaded]);
 
   useEffect(() => {
     if (!pendingAccessLoaded) {
@@ -161,41 +170,51 @@ export function AdminDashboard({
   ]);
 
   const handleSaveCouponWithRefresh = async (data: any) => {
-    const result = await handleSaveCoupon(data, editingCoupon);
-    if (result.success) {
-      addToast({
-        type: "success",
-        title: editingCoupon ? "Kupon zaktualizowany" : "Kupon dodany",
-        message: editingCoupon
-          ? "Kupon został pomyślnie zaktualizowany."
-          : "Nowy kupon został pomyślnie dodany.",
-      });
-      closeCouponModal();
-      await loadCoupons();
-    } else {
-      addToast({
-        type: "error",
-        title: "Błąd zapisu kuponu",
-        message: result.error,
-      });
+    setCouponSaving(true);
+    try {
+      const result = await handleSaveCoupon(data, editingCoupon);
+      if (result.success) {
+        addToast({
+          type: "success",
+          title: editingCoupon ? "Kupon zaktualizowany" : "Kupon dodany",
+          message: editingCoupon
+            ? "Kupon został pomyślnie zaktualizowany."
+            : "Nowy kupon został pomyślnie dodany.",
+        });
+        closeCouponModal();
+        await loadCoupons();
+      } else {
+        addToast({
+          type: "error",
+          title: "Błąd zapisu kuponu",
+          message: result.error,
+        });
+      }
+    } finally {
+      setCouponSaving(false);
     }
   };
 
   const handleDeleteCouponWithRefresh = async (couponId: string) => {
-    const result = await handleDeleteCoupon(couponId);
-    if (result.success) {
-      addToast({
-        type: "success",
-        title: "Kupon usunięty",
-        message: "Kupon został pomyślnie usunięty.",
-      });
-      await loadCoupons();
-    } else {
-      addToast({
-        type: "error",
-        title: "Błąd usuwania kuponu",
-        message: result.error,
-      });
+    setDeletingCouponId(couponId);
+    try {
+      const result = await handleDeleteCoupon(couponId);
+      if (result.success) {
+        addToast({
+          type: "success",
+          title: "Kupon usunięty",
+          message: "Kupon został pomyślnie usunięty.",
+        });
+        await loadCoupons();
+      } else {
+        addToast({
+          type: "error",
+          title: "Błąd usuwania kuponu",
+          message: result.error,
+        });
+      }
+    } finally {
+      setDeletingCouponId(null);
     }
   };
 
@@ -203,16 +222,18 @@ export function AdminDashboard({
     setPendingCertificateCourse(null);
     setPendingRegenerationCourse(null);
     setPendingAccessRevokeCourse(null);
+    setPendingAccessCourse(null);
     setActivatingAccessCourseId(null);
     setRevokingAccessCourseId(null);
     closeStudentModal();
   };
 
-  const handleActivateAccess = async (course: StudentCourseProgress) => {
-    if (!studentDetail) {
+  const handleConfirmActivateAccess = async () => {
+    if (!studentDetail || !pendingAccessCourse) {
       return;
     }
 
+    const course = pendingAccessCourse;
     setActivatingAccessCourseId(course.courseId);
 
     try {
@@ -247,6 +268,7 @@ export function AdminDashboard({
             ).toLocaleDateString("pl-PL")}.`
           : "Kursant może już korzystać z kursu.",
       });
+      setPendingAccessCourse(null);
     } catch (error) {
       addToast({
         type: "error",
@@ -290,7 +312,9 @@ export function AdminDashboard({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ courseId: pendingAccessRevokeCourse.courseId }),
+          body: JSON.stringify({
+            courseId: pendingAccessRevokeCourse.courseId,
+          }),
         },
       );
 
@@ -326,7 +350,16 @@ export function AdminDashboard({
     }
   };
 
-  const handleActivatePendingAccess = async (itemIds: string[]) => {
+  const handleRequestActivatePendingAccess = (itemIds: string[]) => {
+    if (itemIds.length === 0) {
+      return;
+    }
+
+    setPendingAccessActivationIds(itemIds);
+  };
+
+  const handleConfirmActivatePendingAccess = async () => {
+    const itemIds = pendingAccessActivationIds ?? [];
     if (itemIds.length === 0) {
       return;
     }
@@ -373,6 +406,7 @@ export function AdminDashboard({
             ? `Aktywowano: ${activatedCount}. Niepowodzenia: ${failedCount}.`
             : `Aktywowano dostępów: ${activatedCount}.`,
       });
+      setPendingAccessActivationIds(null);
     } catch (error) {
       addToast({
         type: "error",
@@ -535,6 +569,32 @@ export function AdminDashboard({
     }
   };
 
+  const pendingAccessActivationRecords = pendingAccessActivationIds
+    ? pendingAccess.filter((record) =>
+        pendingAccessActivationIds.includes(record.id),
+      )
+    : [];
+  const pendingAccessActivationCount = pendingAccessActivationIds?.length ?? 0;
+  const pendingAccessActivationMessage =
+    pendingAccessActivationCount === 1
+      ? pendingAccessActivationRecords[0]
+        ? `Aktywować dostęp dla ${pendingAccessActivationRecords[0].studentName} do kursu "${pendingAccessActivationRecords[0].courseTitle}"? Kursant od razu zobaczy materiały.`
+        : "Aktywować wybrany dostęp? Kursant od razu zobaczy materiały."
+      : `Aktywować ${pendingAccessActivationCount} zaznaczonych dostępów? Kursanci od razu zobaczą swoje materiały.`;
+  const adminBlockingMessage = deletingCouponId
+    ? "Usuwanie kuponu..."
+    : activatingAccessCourseId
+      ? "Aktywowanie dostępu..."
+      : revokingAccessCourseId
+        ? "Odbieranie dostępu..."
+        : activatingPendingAccessIds.length > 0
+          ? "Aktywowanie dostępów..."
+          : grantingCertificateCourseId || grantingEligibleKey
+            ? "Przyznawanie certyfikatu..."
+            : regeneratingCertificateCourseId
+              ? "Aktualizowanie certyfikatu..."
+              : null;
+
   const getAddButton = () => {
     if (effectiveTab === "courses") {
       return (
@@ -618,7 +678,7 @@ export function AdminDashboard({
           loading={pendingAccessLoading}
           activatingIds={activatingPendingAccessIds}
           onRefresh={loadPendingAccess}
-          onActivate={handleActivatePendingAccess}
+          onActivate={handleRequestActivatePendingAccess}
         />
       )}
 
@@ -653,23 +713,45 @@ export function AdminDashboard({
 
   const modals = (
     <>
+      <BlockingSpinner
+        show={adminBlockingMessage !== null}
+        message={adminBlockingMessage ?? undefined}
+      />
       <Modal
         isOpen={couponModalOpen}
-        onClose={closeCouponModal}
+        onClose={() => {
+          if (!couponSaving) {
+            closeCouponModal();
+          }
+        }}
         title={editingCoupon ? "Edytuj kupon" : "Dodaj kupon"}
         size="lg"
       >
         <CouponForm
           initial={editingCoupon ?? undefined}
           courseOptions={courses}
-          onCancel={closeCouponModal}
+          onCancel={() => {
+            if (!couponSaving) {
+              closeCouponModal();
+            }
+          }}
           onSave={handleSaveCouponWithRefresh}
+          saving={couponSaving}
         />
       </Modal>
 
       <Modal
         isOpen={studentModalOpen}
-        onClose={handleCloseStudentModal}
+        onClose={() => {
+          if (
+            !activatingAccessCourseId &&
+            !revokingAccessCourseId &&
+            !grantingCertificateCourseId &&
+            !regeneratingCertificateCourseId
+          ) {
+            handleCloseStudentModal();
+          }
+        }}
         title="Szczegóły kursanta"
         size="lg"
       >
@@ -687,7 +769,7 @@ export function AdminDashboard({
         ) : studentDetail ? (
           <StudentDetailPanel
             student={studentDetail}
-            onActivateAccess={handleActivateAccess}
+            onActivateAccess={setPendingAccessCourse}
             onRevokeAccess={handleRequestAccessRevoke}
             onGrantCertificate={handleRequestCertificateGrant}
             onAllowRegenerateCertificate={handleRequestCertificateRegeneration}
@@ -736,6 +818,48 @@ export function AdminDashboard({
         cancelText="Anuluj"
         variant="danger"
         loading={revokingAccessCourseId !== null}
+        closeOnConfirm={false}
+      />
+
+      <ConfirmModal
+        isOpen={pendingAccessCourse !== null}
+        onClose={() => {
+          if (!activatingAccessCourseId) {
+            setPendingAccessCourse(null);
+          }
+        }}
+        onConfirm={handleConfirmActivateAccess}
+        title="Potwierdź aktywację dostępu"
+        message={
+          pendingAccessCourse && studentDetail
+            ? `Aktywować dostęp dla ${studentDetail.fullName} do kursu "${pendingAccessCourse.courseTitle}"? Kursant od razu zobaczy materiały.`
+            : ""
+        }
+        confirmText="Aktywuj dostęp"
+        cancelText="Anuluj"
+        variant="warning"
+        loading={activatingAccessCourseId !== null}
+        closeOnConfirm={false}
+      />
+
+      <ConfirmModal
+        isOpen={pendingAccessActivationIds !== null}
+        onClose={() => {
+          if (activatingPendingAccessIds.length === 0) {
+            setPendingAccessActivationIds(null);
+          }
+        }}
+        onConfirm={handleConfirmActivatePendingAccess}
+        title="Potwierdź aktywację dostępów"
+        message={pendingAccessActivationMessage}
+        confirmText={
+          pendingAccessActivationCount === 1
+            ? "Aktywuj dostęp"
+            : "Aktywuj dostępy"
+        }
+        cancelText="Anuluj"
+        variant="warning"
+        loading={activatingPendingAccessIds.length > 0}
         closeOnConfirm={false}
       />
 

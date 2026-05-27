@@ -15,7 +15,7 @@ type PendingAccessTabProps = {
   loading: boolean;
   activatingIds: string[];
   onRefresh: () => Promise<void>;
-  onActivate: (itemIds: string[]) => Promise<void>;
+  onActivate: (itemIds: string[]) => void;
 };
 
 const PAGE_SIZE = 10;
@@ -105,11 +105,6 @@ export function PendingAccessTab({
 
       return Array.from(new Set([...previous, ...visibleIds]));
     });
-  };
-
-  const handleActivate = async (ids: string[]) => {
-    await onActivate(ids);
-    setSelectedIds((previous) => previous.filter((id) => !ids.includes(id)));
   };
 
   const columns: Column<PendingAccessRecord>[] = [
@@ -215,7 +210,7 @@ export function PendingAccessTab({
           disabled={activatingIds.length > 0 && !activatingSet.has(record.id)}
           onClick={(event) => {
             event.stopPropagation();
-            void handleActivate([record.id]);
+            onActivate([record.id]);
           }}
         >
           Aktywuj
@@ -285,7 +280,7 @@ export function PendingAccessTab({
             variant="primary"
             disabled={selectedVisibleIds.length === 0}
             loading={activatingIds.length > 1}
-            onClick={() => void handleActivate(selectedVisibleIds)}
+            onClick={() => onActivate(selectedVisibleIds)}
           >
             Aktywuj zaznaczone ({selectedVisibleIds.length})
           </Button>

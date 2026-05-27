@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
 import { useAuth } from "@/features/auth/AuthContext";
-import { Input, PasswordInput } from "@/components/ui";
+import { BlockingSpinner, Input, PasswordInput } from "@/components/ui";
 
 type RegisterFieldErrors = Partial<
   Record<
@@ -107,6 +107,7 @@ export default function RegisterPage() {
 
   return (
     <div className="bg-white shadow-md border border-[var(--coffee-cappuccino)] p-8">
+      <BlockingSpinner show={isSubmitting} message="Tworzenie konta..." />
       <h1 className="text-2xl font-bold text-[var(--coffee-charcoal)] mb-2 text-center">
         Rejestracja
       </h1>

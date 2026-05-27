@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useCart } from "@/features/cart/CartContext";
 import { useAuth } from "@/features/auth/AuthContext";
+import { BlockingSpinner } from "@/components/ui";
 import { TrashIcon } from "@/components/ui/Icon";
 import {
   DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
@@ -112,35 +113,42 @@ export default function CartPage() {
     }
     setCheckoutError(null);
     setIsCheckingOut(true);
+    let redirecting = false;
 
-    const response = await fetch("/api/checkout/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        cart,
-        couponCode: appliedCouponCode || null,
-        wantsCompanyInvoice,
-      }),
-    });
+    try {
+      const response = await fetch("/api/checkout/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cart,
+          couponCode: appliedCouponCode || null,
+          wantsCompanyInvoice,
+        }),
+      });
 
-    const data = await response.json();
-    if (data.alreadyPurchased) {
-      setCheckoutError(data.message ?? "Wszystkie kursy są już zakupione.");
-      setIsCheckingOut(false);
-      return;
-    }
+      const data = await response.json();
+      if (data.alreadyPurchased) {
+        setCheckoutError(data.message ?? "Wszystkie kursy są już zakupione.");
+        return;
+      }
 
-    if (!response.ok) {
-      setCheckoutError(data.error ?? "Nie udało się utworzyć płatności.");
-      setIsCheckingOut(false);
-      return;
-    }
+      if (!response.ok) {
+        setCheckoutError(data.error ?? "Nie udało się utworzyć płatności.");
+        return;
+      }
 
-    if (data.url) {
-      router.push(data.url);
-    } else {
-      setCheckoutError("Brak linku do płatności.");
-      setIsCheckingOut(false);
+      if (data.url) {
+        redirecting = true;
+        router.push(data.url);
+      } else {
+        setCheckoutError("Brak linku do płatności.");
+      }
+    } catch {
+      setCheckoutError("Nie udało się utworzyć płatności.");
+    } finally {
+      if (!redirecting) {
+        setIsCheckingOut(false);
+      }
     }
   };
 
@@ -167,6 +175,10 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--coffee-cream)] to-[var(--coffee-latte)] py-10 sm:py-14 lg:py-20">
+      <BlockingSpinner
+        show={isCheckingOut}
+        message="Przygotowujemy płatność..."
+      />
       <div className="page-width">
         <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--coffee-charcoal)] mb-6 sm:mb-8">
           Koszyk
