@@ -49,6 +49,29 @@ describe("Fakturownia config", () => {
       taxRate: 8,
     });
   });
+
+  it("uses zw as the default tax rate", () => {
+    expect(
+      getFakturowniaConfig({
+        FAKTUROWNIA_ACCOUNT_DOMAIN: "firma",
+        FAKTUROWNIA_API_TOKEN: "token",
+      }),
+    ).toMatchObject({
+      taxRate: "zw",
+    });
+  });
+
+  it("accepts zw from env as a tax rate", () => {
+    expect(
+      getFakturowniaConfig({
+        FAKTUROWNIA_ACCOUNT_DOMAIN: "firma",
+        FAKTUROWNIA_API_TOKEN: "token",
+        FAKTUROWNIA_DEFAULT_TAX_RATE: " zw ",
+      }),
+    ).toMatchObject({
+      taxRate: "zw",
+    });
+  });
 });
 
 describe("FakturowniaClient", () => {

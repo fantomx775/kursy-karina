@@ -224,7 +224,7 @@ function parseIntegerEnv(value: string | undefined, fallback: number): number {
 
 function parseTaxRate(value: string | undefined): FakturowniaTaxRate {
   if (!value?.trim()) {
-    return 23;
+    return "zw";
   }
 
   const parsed = Number(value);
