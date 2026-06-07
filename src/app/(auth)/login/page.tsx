@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/features/auth/AuthContext";
 import { setRememberMePreference } from "@/services/auth/rememberMe";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
@@ -12,11 +12,17 @@ import {
   Input,
   PasswordInput,
 } from "@/components/ui";
+import { buildAuthPath, getSafeRedirectPath } from "@/lib/authRedirect";
 
 type LoginFieldErrors = Partial<Record<"email" | "password", string>>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextParam = searchParams.get("next");
+  const intent = searchParams.get("intent");
+  const redirectPath = getSafeRedirectPath(nextParam);
+  const showPurchaseBanner = intent === "purchase";
   const { user, isLoading } = useAuth();
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const [email, setEmail] = useState("");
@@ -26,11 +32,16 @@ export default function LoginPage() {
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const registerHref = buildAuthPath("/register", {
+    next: nextParam ?? undefined,
+    intent: intent ?? undefined,
+  });
+
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace("/dashboard");
+      router.replace(redirectPath);
     }
-  }, [isLoading, user, router]);
+  }, [isLoading, user, router, redirectPath]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -67,7 +78,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(redirectPath);
   };
 
   return (
@@ -79,6 +90,12 @@ export default function LoginPage() {
       <p className="text-sm text-[var(--coffee-espresso)] text-center mb-6">
         Zaloguj się, aby kontynuować naukę.
       </p>
+
+      {showPurchaseBanner ? (
+        <div className="bg-[var(--coffee-latte)] border border-[var(--coffee-cappuccino)] text-[var(--coffee-charcoal)] px-3 py-2 mb-4 text-sm">
+          Zaloguj się, aby dokończyć zakup w koszyku.
+        </div>
+      ) : null}
 
       {error ? (
         <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 mb-4 text-sm">
@@ -137,7 +154,7 @@ export default function LoginPage() {
       <div className="mt-2 text-sm text-center text-[var(--coffee-espresso)]">
         Nie masz konta?{" "}
         <Link
-          href="/register"
+          href={registerHref}
           className="text-[var(--coffee-mocha)] hover:underline"
         >
           Zarejestruj się

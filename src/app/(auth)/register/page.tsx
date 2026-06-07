@@ -2,10 +2,11 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
 import { useAuth } from "@/features/auth/AuthContext";
 import { BlockingSpinner, Input, PasswordInput } from "@/components/ui";
+import { buildAuthPath, getSafeRedirectPath } from "@/lib/authRedirect";
 
 type RegisterFieldErrors = Partial<
   Record<
@@ -21,6 +22,12 @@ type RegisterFieldErrors = Partial<
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextParam = searchParams.get("next");
+  const intent = searchParams.get("intent");
+  const redirectPath = getSafeRedirectPath(nextParam);
+  const showPurchaseBanner =
+    intent === "purchase" || redirectPath === "/cart";
   const { user, isLoading } = useAuth();
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const [firstName, setFirstName] = useState("");
@@ -34,11 +41,16 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const loginHref = buildAuthPath("/login", {
+    next: nextParam ?? undefined,
+    intent: intent ?? undefined,
+  });
+
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace("/dashboard");
+      router.replace(redirectPath);
     }
-  }, [isLoading, user, router]);
+  }, [isLoading, user, router, redirectPath]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -100,9 +112,13 @@ export default function RegisterPage() {
       return;
     }
 
-    setSuccess("Konto utworzone. Przekierowanie do panelu...");
+    const successMessage =
+      redirectPath === "/cart"
+        ? "Konto utworzone. Wracasz do koszyka..."
+        : "Konto utworzone. Przekierowanie...";
+    setSuccess(successMessage);
     setIsSubmitting(false);
-    setTimeout(() => router.push("/dashboard"), 1500);
+    setTimeout(() => router.push(redirectPath), 1500);
   };
 
   return (
@@ -114,6 +130,13 @@ export default function RegisterPage() {
       <p className="text-sm text-[var(--coffee-espresso)] text-center mb-6">
         Załóż konto, aby kupować i śledzić kursy.
       </p>
+
+      {showPurchaseBanner ? (
+        <div className="bg-[var(--coffee-latte)] border border-[var(--coffee-cappuccino)] text-[var(--coffee-charcoal)] px-3 py-2 mb-4 text-sm">
+          <strong>Aby kupić kurs, załóż konto.</strong> Po rejestracji wrócisz
+          do koszyka i dokończysz płatność.
+        </div>
+      ) : null}
 
       {error ? (
         <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 mb-4 text-sm">
@@ -223,7 +246,7 @@ export default function RegisterPage() {
       <div className="mt-4 text-sm text-center text-[var(--coffee-espresso)]">
         Masz już konto?{" "}
         <Link
-          href="/login"
+          href={loginHref}
           className="text-[var(--coffee-mocha)] hover:underline"
         >
           Zaloguj się

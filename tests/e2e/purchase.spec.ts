@@ -121,6 +121,51 @@ test.describe("Zakup i koszyk", () => {
     await expect(page.getByRole("heading", { name: "Koszyk jest pusty" })).toBeVisible();
   });
 
+  test("pozwala gościowi zastosować kupon bez logowania", async ({ page }) => {
+    await goToCourseDetail(page, NODEJS_SLUG);
+    await page.getByRole("button", { name: "Dodaj do koszyka" }).click();
+
+    await mockCouponApi(page, "ok");
+    await page.locator('input[placeholder="Kod kuponu"]').fill(STARTUP_COUPON);
+    await page.getByRole("button", { name: "Zastosuj kupon" }).click();
+
+    await expect(page).toHaveURL("/cart");
+    await expect(
+      page.getByText(`Kod ${STARTUP_COUPON} został zastosowany.`),
+    ).toBeVisible();
+  });
+
+  test("przekierowuje gościa do rejestracji przy checkout", async ({ page }) => {
+    await goToCourseDetail(page, NODEJS_SLUG);
+    await page.getByRole("button", { name: "Dodaj do koszyka" }).click();
+
+    await page.getByRole("button", { name: "Przejdź do płatności" }).click();
+
+    await expect(page).toHaveURL(
+      "/register?next=%2Fcart&intent=purchase",
+    );
+    await expect(
+      page.getByText("Aby kupić kurs, załóż konto."),
+    ).toBeVisible();
+  });
+
+  test("utrzymuje kupon gościa po odświeżeniu strony", async ({ page }) => {
+    await goToCourseDetail(page, NODEJS_SLUG);
+    await page.getByRole("button", { name: "Dodaj do koszyka" }).click();
+
+    await mockCouponApi(page, "ok");
+    await page.locator('input[placeholder="Kod kuponu"]').fill(STARTUP_COUPON);
+    await page.getByRole("button", { name: "Zastosuj kupon" }).click();
+    await expect(
+      page.getByText(`Kod ${STARTUP_COUPON} został zastosowany.`),
+    ).toBeVisible();
+
+    await page.reload();
+    await expect(
+      page.getByText(`Kod ${STARTUP_COUPON} został zastosowany.`),
+    ).toBeVisible();
+  });
+
   test("blokuje płatność gdy kurs jest już zakupiony", async ({ page }) => {
     await loginAsStudentWithPurchases(page);
     await goToCourseDetail(page, NODEJS_SLUG);
