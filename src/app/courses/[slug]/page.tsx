@@ -76,7 +76,7 @@ export default async function CourseDetailPage({
           / {course.title}
         </nav>
 
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-[var(--coffee-charcoal)] mb-5 sm:mb-6">
+        <h1 className="hidden lg:block text-2xl sm:text-3xl lg:text-4xl font-semibold text-[var(--coffee-charcoal)] mb-5 sm:mb-6">
           {course.title}
         </h1>
 
@@ -93,6 +93,47 @@ export default async function CourseDetailPage({
                 />
               </div>
             ) : null}
+
+            <div className="space-y-4 lg:hidden">
+              <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 border-radius">
+                <div className="text-2xl sm:text-3xl font-semibold text-[var(--coffee-charcoal)] mb-4 flex flex-wrap items-baseline gap-2">
+                  {isPromoActive(course) &&
+                    course.price !== getEffectivePriceCents(course) && (
+                      <span className="line-through text-xl font-normal text-[var(--coffee-espresso)]">
+                        {(course.price / 100).toFixed(2)} PLN
+                      </span>
+                    )}
+                  {(getEffectivePriceCents(course) / 100).toFixed(2)} PLN
+                </div>
+                <CoursePurchaseCard
+                  course={purchaseCourse}
+                  accessStatus={accessStatus}
+                  accessExpiresAt={accessExpiresAt}
+                  purchasedAccessDurationMonths={purchasedAccessDurationMonths}
+                />
+              </div>
+              <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 text-sm text-[var(--coffee-espresso)] leading-relaxed">
+                <p>Pełny dostęp do materiałów SVG i video YouTube.</p>
+                <p className="mt-2">
+                  Dostęp po zakupie:{" "}
+                  {formatAccessDuration(
+                    course.access_duration_months ??
+                      DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
+                  )}
+                  .
+                </p>
+                {!saleState.isOpen ? (
+                  <p className="mt-2 font-medium text-[var(--coffee-mocha)]">
+                    Sprzedaż wkrótce.
+                  </p>
+                ) : null}
+                <p className="mt-2">Śledzenie postępów w panelu kursanta.</p>
+              </div>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--coffee-charcoal)] lg:hidden">
+              {course.title}
+            </h1>
 
             <CourseDescription description={course.description} />
 
@@ -129,7 +170,7 @@ export default async function CourseDetailPage({
             </div>
           </div>
 
-          <aside className="space-y-4 lg:sticky lg:top-24">
+          <aside className="hidden space-y-4 lg:block lg:sticky lg:top-24">
             <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 border-radius">
               <div className="text-2xl sm:text-3xl font-semibold text-[var(--coffee-charcoal)] mb-4 flex flex-wrap items-baseline gap-2">
                 {isPromoActive(course) &&
