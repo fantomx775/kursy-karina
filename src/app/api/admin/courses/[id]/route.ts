@@ -1,3 +1,4 @@
+import { revalidatePublicCoursePages } from "@/lib/revalidatePublicCoursePages";
 import { courseInputSchema } from "@/lib/validators/course";
 import { authenticateAdmin } from "@/services/auth/server";
 import {
@@ -75,6 +76,15 @@ export async function PUT(
   }
 
   const { id } = await params;
+  const admin = createAdminSupabaseClient();
+
+  const { data: existingCourse } = await admin
+    .from("courses")
+    .select("slug")
+    .eq("id", id)
+    .single();
+  const previousSlug = existingCourse?.slug;
+
   const {
     title,
     slug,
@@ -92,7 +102,6 @@ export async function PUT(
     promotionStartDate,
     promotionEndDate,
   } = parsed.data;
-  const admin = createAdminSupabaseClient();
 
   const hasPromo =
     promotionDiscountType != null &&
@@ -191,6 +200,8 @@ export async function PUT(
   }
 
   const windowsByCourseId = await getSaleWindowsByCourseIds(admin, [course.id]);
+
+  revalidatePublicCoursePages(course.slug, previousSlug);
 
   return Response.json({
     course: {

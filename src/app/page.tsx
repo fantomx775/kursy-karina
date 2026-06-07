@@ -6,7 +6,7 @@ import type { Course } from "@/types/course";
 import { isPromoActive, getEffectivePriceCents, getPromoLabel } from "@/lib/coursePromo";
 import { getCourseDescriptionExcerpt } from "@/lib/courseDescription";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 function CourseCard({
   title,

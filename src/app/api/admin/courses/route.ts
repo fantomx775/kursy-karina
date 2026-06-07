@@ -1,3 +1,4 @@
+import { revalidatePublicCoursePages } from "@/lib/revalidatePublicCoursePages";
 import { courseInputSchema } from "@/lib/validators/course";
 import { authenticateAdmin } from "@/services/auth/server";
 import {
@@ -162,6 +163,8 @@ export async function POST(request: Request) {
   }
 
   const windowsByCourseId = await getSaleWindowsByCourseIds(admin, [course.id]);
+
+  revalidatePublicCoursePages(course.slug);
 
   return Response.json(
     {

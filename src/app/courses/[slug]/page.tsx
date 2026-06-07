@@ -1,22 +1,28 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { FaLock, FaPlay } from "react-icons/fa";
-import { createServerSupabaseClient } from "@/services/supabase/server";
-import { getCourseWithContentBySlug } from "@/services/courses";
-import { getUserCourseAccess } from "@/services/courseAccess";
-import type { CourseAccessStatus } from "@/services/courseAccess";
-import { CoursePurchaseCard } from "@/features/courses/CoursePurchaseCard";
+import { getCachedCourseWithContentBySlug } from "@/services/coursesCache";
 import { CourseDescription } from "@/features/courses/CourseDescription";
-import { isPromoActive, getEffectivePriceCents } from "@/lib/coursePromo";
 import {
-  DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
-  formatAccessDuration,
-} from "@/lib/accessDuration";
-import { resolveCourseSaleState } from "@/lib/courseSales";
-import type { Course } from "@/types/course";
+  CourseAccessPurchasePanel,
+  CourseContentWithAccess,
+} from "@/features/courses/CourseDetailAccess";
+import { Spinner } from "@/components/ui/Spinner";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+
+function AccessSectionFallback() {
+  return (
+    <div
+      className="flex min-h-[12rem] items-center justify-center rounded border border-[var(--coffee-cappuccino)] bg-white p-6"
+      role="status"
+      aria-label="Ładowanie"
+    >
+      <Spinner size="md" />
+    </div>
+  );
+}
 
 export default async function CourseDetailPage({
   params,
@@ -24,47 +30,10 @@ export default async function CourseDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const course = await getCourseWithContentBySlug(slug);
+  const course = await getCachedCourseWithContentBySlug(slug);
   if (!course || course.status !== "active") {
     notFound();
   }
-
-  let accessStatus: CourseAccessStatus = "none";
-  let accessExpiresAt: string | null = null;
-  let purchasedAccessDurationMonths: number | null = null;
-  if (user) {
-    const access = await getUserCourseAccess(supabase, user.id, course.id);
-    accessStatus = access.status;
-    accessExpiresAt = access.activeExpiresAt ?? access.lastExpiresAt;
-    purchasedAccessDurationMonths = access.accessDurationMonths;
-  }
-
-  // Pass only purchase-card fields to the client component to avoid exposing
-  // full course content (e.g. item asset paths/URLs) in serialized props.
-  const purchaseCourse: Course = {
-    id: course.id,
-    title: course.title,
-    slug: course.slug,
-    description: course.description,
-    price: course.price,
-    status: course.status,
-    main_image_url: course.main_image_url,
-    promotion_discount_type: course.promotion_discount_type,
-    promotion_discount_value: course.promotion_discount_value,
-    promotion_start_date: course.promotion_start_date,
-    promotion_end_date: course.promotion_end_date,
-    access_duration_months: course.access_duration_months,
-    sale_mode: course.sale_mode,
-    sale_windows: course.sale_windows,
-    created_at: course.created_at,
-    updated_at: course.updated_at,
-  };
-  const saleState = resolveCourseSaleState(course);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--coffee-cream)] to-white py-10 sm:py-14 lg:py-20">
@@ -94,42 +63,9 @@ export default async function CourseDetailPage({
               </div>
             ) : null}
 
-            <div className="space-y-4 lg:hidden">
-              <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 border-radius">
-                <div className="text-2xl sm:text-3xl font-semibold text-[var(--coffee-charcoal)] mb-4 flex flex-wrap items-baseline gap-2">
-                  {isPromoActive(course) &&
-                    course.price !== getEffectivePriceCents(course) && (
-                      <span className="line-through text-xl font-normal text-[var(--coffee-espresso)]">
-                        {(course.price / 100).toFixed(2)} PLN
-                      </span>
-                    )}
-                  {(getEffectivePriceCents(course) / 100).toFixed(2)} PLN
-                </div>
-                <CoursePurchaseCard
-                  course={purchaseCourse}
-                  accessStatus={accessStatus}
-                  accessExpiresAt={accessExpiresAt}
-                  purchasedAccessDurationMonths={purchasedAccessDurationMonths}
-                />
-              </div>
-              <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 text-sm text-[var(--coffee-espresso)] leading-relaxed">
-                <p>Pełny dostęp do materiałów SVG i video YouTube.</p>
-                <p className="mt-2">
-                  Dostęp po zakupie:{" "}
-                  {formatAccessDuration(
-                    course.access_duration_months ??
-                      DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
-                  )}
-                  .
-                </p>
-                {!saleState.isOpen ? (
-                  <p className="mt-2 font-medium text-[var(--coffee-mocha)]">
-                    Sprzedaż wkrótce.
-                  </p>
-                ) : null}
-                <p className="mt-2">Śledzenie postępów w panelu kursanta.</p>
-              </div>
-            </div>
+            <Suspense fallback={<AccessSectionFallback />}>
+              <CourseAccessPurchasePanel course={course} variant="mobile" />
+            </Suspense>
 
             <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--coffee-charcoal)] lg:hidden">
               {course.title}
@@ -137,75 +73,14 @@ export default async function CourseDetailPage({
 
             <CourseDescription description={course.description} />
 
-            <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm overflow-hidden">
-              <div className="border-b border-[var(--coffee-cappuccino)] px-4 sm:px-5 py-3 text-[var(--coffee-charcoal)] font-semibold">
-                Zawartość kursu
-              </div>
-              <div className="divide-y divide-[var(--coffee-cappuccino)]">
-                {course.sections.map((section) => (
-                  <div key={section.id} className="p-4 sm:p-5">
-                    <h2 className="text-base sm:text-lg font-semibold text-[var(--coffee-charcoal)] mb-3">
-                      {section.title}
-                    </h2>
-                    <ul className="space-y-2">
-                      {section.items.map((item) => (
-                        <li
-                          key={item.id}
-                          className="flex items-center border-radius border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] px-3 py-2 text-sm"
-                        >
-                          <div className="flex items-center gap-2 text-[var(--coffee-charcoal)]">
-                            {accessStatus === "active" ? (
-                              <FaPlay className="text-[var(--coffee-mocha)]" />
-                            ) : (
-                              <FaLock className="text-[var(--coffee-espresso)]" />
-                            )}
-                            <span>{item.title}</span>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Suspense fallback={<AccessSectionFallback />}>
+              <CourseContentWithAccess course={course} />
+            </Suspense>
           </div>
 
-          <aside className="hidden space-y-4 lg:block lg:sticky lg:top-24">
-            <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 border-radius">
-              <div className="text-2xl sm:text-3xl font-semibold text-[var(--coffee-charcoal)] mb-4 flex flex-wrap items-baseline gap-2">
-                {isPromoActive(course) &&
-                  course.price !== getEffectivePriceCents(course) && (
-                    <span className="line-through text-xl font-normal text-[var(--coffee-espresso)]">
-                      {(course.price / 100).toFixed(2)} PLN
-                    </span>
-                  )}
-                {(getEffectivePriceCents(course) / 100).toFixed(2)} PLN
-              </div>
-              <CoursePurchaseCard
-                course={purchaseCourse}
-                accessStatus={accessStatus}
-                accessExpiresAt={accessExpiresAt}
-                purchasedAccessDurationMonths={purchasedAccessDurationMonths}
-              />
-            </div>
-            <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 text-sm text-[var(--coffee-espresso)] leading-relaxed">
-              <p>Pełny dostęp do materiałów SVG i video YouTube.</p>
-              <p className="mt-2">
-                Dostęp po zakupie:{" "}
-                {formatAccessDuration(
-                  course.access_duration_months ??
-                    DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
-                )}
-                .
-              </p>
-              {!saleState.isOpen ? (
-                <p className="mt-2 font-medium text-[var(--coffee-mocha)]">
-                  Sprzedaż wkrótce.
-                </p>
-              ) : null}
-              <p className="mt-2">Śledzenie postępów w panelu kursanta.</p>
-            </div>
-          </aside>
+          <Suspense fallback={<AccessSectionFallback />}>
+            <CourseAccessPurchasePanel course={course} variant="desktop" />
+          </Suspense>
         </div>
       </div>
     </div>
