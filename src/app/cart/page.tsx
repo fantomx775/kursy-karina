@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useCart } from "@/features/cart/CartContext";
+import { usePersistedCartCoupon } from "@/features/cart/usePersistedCartCoupon";
 import { useAuth } from "@/features/auth/AuthContext";
 import { BlockingSpinner } from "@/components/ui";
 import { TrashIcon } from "@/components/ui/Icon";
@@ -11,20 +12,14 @@ import {
   DEFAULT_COURSE_ACCESS_DURATION_MONTHS,
   formatAccessDuration,
 } from "@/lib/accessDuration";
+import { buildAuthPath } from "@/lib/authRedirect";
 import { cn } from "@/lib/utils";
 
 export default function CartPage() {
   const router = useRouter();
   const { cart, removeFromCart } = useCart();
   const { user } = useAuth();
-  const [couponCode, setCouponCode] = useState("");
-  const [discountAmount, setDiscountAmount] = useState(0);
-  const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(
-    null,
-  );
-  const [applyError, setApplyError] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [isApplying, setIsApplying] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [wantsCompanyInvoice, setWantsCompanyInvoice] = useState(false);
   const [hydratedImageUrls, setHydratedImageUrls] = useState<
@@ -54,61 +49,34 @@ export default function CartPage() {
     [cart],
   );
   const promotionDiscount = sumOriginal - subtotal;
-  const totalDiscount = promotionDiscount + discountAmount;
-  const total = subtotal - discountAmount;
   const cartCourseKey = useMemo(
     () => cart.map((item) => `${item.id}:${item.price}`).join("|"),
     [cart],
   );
-  const previousCartCourseKeyRef = useRef(cartCourseKey);
 
-  useEffect(() => {
-    if (previousCartCourseKeyRef.current === cartCourseKey) return;
-    previousCartCourseKeyRef.current = cartCourseKey;
-    if (!appliedCouponCode) return;
-    setDiscountAmount(0);
-    setAppliedCouponCode(null);
-    setApplyError("Zawartość koszyka się zmieniła. Zastosuj kupon ponownie.");
-  }, [appliedCouponCode, cartCourseKey]);
+  const {
+    couponCode,
+    setCouponCode,
+    discountAmount,
+    appliedCouponCode,
+    applyError,
+    setApplyError,
+    isApplying,
+    handleApplyCoupon,
+  } = usePersistedCartCoupon({
+    subtotal,
+    cart,
+    cartCourseKey,
+  });
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) {
-      setApplyError("Wpisz kod kuponu.");
-      return;
-    }
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    setApplyError(null);
-    setIsApplying(true);
-    const response = await fetch("/api/coupons/validate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        code: couponCode,
-        subtotalAmount: subtotal,
-        cartItems: cart.map((item) => ({
-          courseId: item.id,
-          amount: item.price,
-        })),
-      }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setApplyError(data.error ?? "Nie udało się zastosować kuponu.");
-      setDiscountAmount(0);
-      setAppliedCouponCode(null);
-    } else {
-      setDiscountAmount(data.discountAmount ?? 0);
-      setAppliedCouponCode(couponCode.trim().toUpperCase());
-    }
-    setIsApplying(false);
-  };
+  const totalDiscount = promotionDiscount + discountAmount;
+  const total = subtotal - discountAmount;
 
   const handleCheckout = async () => {
     if (!user) {
-      router.push("/login");
+      router.push(
+        buildAuthPath("/register", { next: "/cart", intent: "purchase" }),
+      );
       return;
     }
     setCheckoutError(null);
@@ -239,7 +207,7 @@ export default function CartPage() {
                   </div>
                   <button
                     type="button"
-                    className="text-red-600 hover:text-red-800 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0"
+                    className="text-[var(--coffee-espresso)] hover:text-[var(--coffee-charcoal)] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0"
                     onClick={() => removeFromCart(item.id)}
                     aria-label="Usuń z koszyka"
                   >

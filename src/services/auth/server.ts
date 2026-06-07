@@ -30,6 +30,30 @@ async function getUserProfile(userId: string): Promise<UserProfile | null> {
   return data;
 }
 
+export async function getOptionalAuthenticatedUser(): Promise<AuthenticatedUser | null> {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return null;
+  }
+
+  const profile = await getUserProfile(user.id);
+  if (!profile) {
+    return null;
+  }
+
+  return {
+    id: user.id,
+    email: user.email ?? "",
+    role: profile.role,
+    profile,
+  };
+}
+
 export async function authenticateUser(): Promise<AuthResult> {
   const supabase = await createServerSupabaseClient();
   const {

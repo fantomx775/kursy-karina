@@ -4,6 +4,7 @@ export const clearClientState = async (page: Page) => {
   await page.context().clearCookies();
   await page.evaluate(() => {
     localStorage.removeItem("cart");
+    localStorage.removeItem("cart-applied-coupon");
     sessionStorage.clear();
   });
 };

@@ -1,11 +1,8 @@
-import { authenticateUser } from "@/services/auth/server";
+import { getOptionalAuthenticatedUser } from "@/services/auth/server";
 import { validateCoupon } from "@/services/coupons";
 
 export async function POST(request: Request) {
-  const auth = await authenticateUser();
-  if (!auth.success) {
-    return Response.json({ error: auth.error }, { status: auth.statusCode });
-  }
+  const user = await getOptionalAuthenticatedUser();
 
   const { code, subtotalAmount, cartItems } = await request.json();
 
@@ -41,7 +38,7 @@ export async function POST(request: Request) {
 
   const result = await validateCoupon({
     code,
-    userId: auth.user.id,
+    userId: user?.id,
     subtotalAmount,
     cartItems,
   });
