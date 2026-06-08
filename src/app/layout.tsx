@@ -21,10 +21,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Kursy Karina Koziara",
   description: "Profesjonalne kursy stylizacji brwi od Kariny Koziara",
+  manifest: "/site.webmanifest",
   icons: {
-    icon: "/logo/sygnet-header.png",
-    shortcut: "/logo/sygnet-header.png",
-    apple: "/logo/sygnet-header.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
 };
 
