@@ -15,17 +15,14 @@ export function SvgSection({ src, alt }: Props) {
   }
 
   return (
-    <a
-      href={src}
-      target="_blank"
-      rel="noreferrer"
-      className="group block overflow-hidden border-radius border border-[var(--coffee-cappuccino)] bg-white"
-      title={alt ?? "SVG"}
-    >
-      <img src={src} alt={alt ?? "SVG"} loading="lazy" className="h-auto w-full" />
-      <div className="border-t border-[var(--coffee-cappuccino)] px-3 py-2 text-xs text-[var(--coffee-espresso)]">
-        {alt ?? src}
-      </div>
-    </a>
+    <div className="overflow-hidden border-radius border border-[var(--coffee-cappuccino)] bg-white">
+      <img
+        src={src}
+        alt={alt ?? "Materiał tekstowy"}
+        loading="lazy"
+        className="pointer-events-none h-auto w-full select-none"
+        draggable={false}
+      />
+    </div>
   );
 }
