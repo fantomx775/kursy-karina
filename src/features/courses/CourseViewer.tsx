@@ -304,7 +304,7 @@ export function CourseViewer({
           <aside className="sticky top-[calc(var(--sticky-top-offset)+0.75rem)] hidden self-start md:block">
             <div className="flex max-h-[calc(100dvh-var(--sticky-top-offset)-1.5rem)] flex-col overflow-hidden">
               <StepList
-                items={steps}
+                sections={course.sections}
                 activeItemId={activeItemId}
                 completedIds={completedIds}
                 onSelectItem={onSelectItem}
@@ -315,7 +315,7 @@ export function CourseViewer({
           <main>
             <div className="mb-4 md:hidden">
               <StepList
-                items={steps}
+                sections={course.sections}
                 activeItemId={activeItemId}
                 completedIds={completedIds}
                 onSelectItem={onSelectItem}

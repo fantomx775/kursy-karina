@@ -1,9 +1,11 @@
 "use client";
 
-import type { CourseItem } from "@/types/course";
+import { useEffect, useMemo, useState } from "react";
+import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import type { CourseItem, CourseSection } from "@/types/course";
 
 type Props = {
-  items: CourseItem[];
+  sections: CourseSection[];
   activeItemId: string | null;
   completedIds: Record<string, true>;
   onSelectItem: (itemId: string) => void;
@@ -16,22 +18,77 @@ function getBadgeLabel(kind: CourseItem["kind"]): string {
       return "Video";
     case "quiz":
       return "Quiz";
+    case "svg":
+      return "PDF";
     default:
-      return "Tekst";
+      return "PDF";
   }
 }
 
 export function StepList({
-  items,
+  sections,
   activeItemId,
   completedIds,
   onSelectItem,
   onRequestClose,
 }: Props) {
+  const items = useMemo(
+    () => sections.flatMap((section) => section.items),
+    [sections],
+  );
+
+  const itemGlobalIndex = useMemo(() => {
+    const indexById = new Map<string, number>();
+    items.forEach((item, index) => {
+      indexById.set(item.id, index);
+    });
+    return indexById;
+  }, [items]);
+
+  const [collapsedSectionIds, setCollapsedSectionIds] = useState<
+    Set<string>
+  >(() => new Set());
+
+  useEffect(() => {
+    if (!activeItemId) {
+      return;
+    }
+
+    const activeSection = sections.find((section) =>
+      section.items.some((item) => item.id === activeItemId),
+    );
+
+    if (!activeSection) {
+      return;
+    }
+
+    setCollapsedSectionIds((previous) => {
+      if (!previous.has(activeSection.id)) {
+        return previous;
+      }
+
+      const next = new Set(previous);
+      next.delete(activeSection.id);
+      return next;
+    });
+  }, [activeItemId, sections]);
+
   const completedCount = items.reduce(
     (accumulator, item) => accumulator + (completedIds[item.id] ? 1 : 0),
     0,
   );
+
+  const toggleSection = (sectionId: string) => {
+    setCollapsedSectionIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
+      return next;
+    });
+  };
 
   return (
     <nav
@@ -60,51 +117,95 @@ export function StepList({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <ul className="grid grid-cols-1 gap-2 p-2 sm:grid-cols-2 md:flex md:flex-col">
-          {items.map((item, index) => {
-            const isActive = item.id === activeItemId;
-            const isDone = Boolean(completedIds[item.id]);
-            const badge = getBadgeLabel(item.kind);
+        <div className="space-y-2 p-2">
+          {sections.map((section) => {
+            const isCollapsed = collapsedSectionIds.has(section.id);
+            const sectionCompletedCount = section.items.reduce(
+              (accumulator, item) =>
+                accumulator + (completedIds[item.id] ? 1 : 0),
+              0,
+            );
+            const sectionLabel =
+              section.title.trim() || "Sekcja bez tytułu";
 
             return (
-              <li key={item.id} className="min-w-0">
+              <section
+                key={section.id}
+                className="border-radius border border-[var(--coffee-cappuccino)] bg-white"
+              >
                 <button
                   type="button"
-                  onClick={() => onSelectItem(item.id)}
-                  className={[
-                    "group flex w-full items-center gap-3 border-radius border px-3 py-2 text-left transition-colors",
-                    isActive
-                      ? "border-[var(--coffee-mocha)] bg-[var(--coffee-cream)]"
-                      : "border-[var(--coffee-cappuccino)] bg-white hover:bg-[var(--coffee-cream)]",
-                  ].join(" ")}
+                  onClick={() => toggleSection(section.id)}
+                  aria-expanded={!isCollapsed}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-[var(--coffee-cream)]"
                 >
-                  <div
-                    className={[
-                      "flex h-7 w-7 items-center justify-center border-radius text-xs font-semibold",
-                      isDone
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-[var(--coffee-latte)] text-[var(--coffee-espresso)]",
-                    ].join(" ")}
-                  >
-                    {isDone ? "OK" : index + 1}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-[var(--coffee-charcoal)]">
-                      {item.title}
-                    </div>
-                    <div className="text-xs text-[var(--coffee-espresso)]">
-                      {badge}
-                      {isDone ? " • Ukończone" : ""}
-                    </div>
-                  </div>
-                  <div className="border-radius-sm bg-[var(--coffee-latte)] px-2 py-1 text-[11px] font-semibold text-[var(--coffee-espresso)]">
-                    {badge}
-                  </div>
+                  <span className="shrink-0 text-[var(--coffee-espresso)]">
+                    {isCollapsed ? (
+                      <FiChevronDown className="h-4 w-4" aria-hidden />
+                    ) : (
+                      <FiChevronUp className="h-4 w-4" aria-hidden />
+                    )}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--coffee-charcoal)]">
+                    {sectionLabel}
+                  </span>
+                  <span className="shrink-0 text-xs text-[var(--coffee-espresso)]">
+                    {sectionCompletedCount}/{section.items.length}
+                  </span>
                 </button>
-              </li>
+
+                {!isCollapsed ? (
+                  <ul className="grid grid-cols-1 gap-2 border-t border-[var(--coffee-cappuccino)] p-2 sm:grid-cols-2 md:flex md:flex-col">
+                    {section.items.map((item) => {
+                      const isActive = item.id === activeItemId;
+                      const isDone = Boolean(completedIds[item.id]);
+                      const badge = getBadgeLabel(item.kind);
+                      const globalIndex = itemGlobalIndex.get(item.id) ?? 0;
+
+                      return (
+                        <li key={item.id} className="min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => onSelectItem(item.id)}
+                            className={[
+                              "group flex w-full items-center gap-3 border-radius border px-3 py-2 text-left transition-colors",
+                              isActive
+                                ? "border-[var(--coffee-mocha)] bg-[var(--coffee-cream)]"
+                                : "border-[var(--coffee-cappuccino)] bg-white hover:bg-[var(--coffee-cream)]",
+                            ].join(" ")}
+                          >
+                            <div
+                              className={[
+                                "flex h-7 w-7 items-center justify-center border-radius text-xs font-semibold",
+                                isDone
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : "bg-[var(--coffee-latte)] text-[var(--coffee-espresso)]",
+                              ].join(" ")}
+                            >
+                              {isDone ? "OK" : globalIndex + 1}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-medium text-[var(--coffee-charcoal)]">
+                                {item.title}
+                              </div>
+                              <div className="text-xs text-[var(--coffee-espresso)]">
+                                {badge}
+                                {isDone ? " • Ukończone" : ""}
+                              </div>
+                            </div>
+                            <div className="border-radius-sm bg-[var(--coffee-latte)] px-2 py-1 text-[11px] font-semibold text-[var(--coffee-espresso)]">
+                              {badge}
+                            </div>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
+              </section>
             );
           })}
-        </ul>
+        </div>
       </div>
     </nav>
   );
