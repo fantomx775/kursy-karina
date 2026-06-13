@@ -4,6 +4,11 @@ import { useState, useEffect } from "react";
 import type { Coupon } from "@/types/coupon";
 import { Table, Badge } from "@/components/ui";
 import type { Column } from "@/components/ui/Table";
+import {
+  formatCouponValidityPeriod,
+  getCouponDisplayStatus,
+  type CouponDisplayStatus,
+} from "@/lib/couponStatus";
 
 type CouponsTabProps = {
   coupons: Coupon[];
@@ -22,6 +27,20 @@ function formatCourseRule(
   if (courses.length === 1) return courses[0].title;
   return `${courses[0].title} +${courses.length - 1}`;
 }
+
+const STATUS_BADGE: Record<
+  CouponDisplayStatus,
+  {
+    label: string;
+    variant: "success" | "error" | "warning" | "outline" | "secondary";
+  }
+> = {
+  active: { label: "Aktywny", variant: "success" },
+  inactive: { label: "Nieaktywny", variant: "error" },
+  expired: { label: "Wygasły", variant: "warning" },
+  scheduled: { label: "Zaplanowany", variant: "outline" },
+  exhausted: { label: "Wyczerpany", variant: "secondary" },
+};
 
 export function CouponsTab({
   coupons,
@@ -50,20 +69,30 @@ export function CouponsTab({
           : `${record.discountValue} PLN`,
     },
     {
-      key: "isActive",
+      key: "validity",
+      title: "Ważność",
+      dataIndex: "startDate",
+      sortable: true,
+      render: (_, record) => (
+        <span className="text-sm text-[var(--coffee-espresso)]">
+          {formatCouponValidityPeriod(record.startDate, record.endDate)}
+        </span>
+      ),
+    },
+    {
+      key: "status",
       title: "Status",
       dataIndex: "isActive",
       sortable: true,
-      render: (_, record) =>
-        record.isActive ? (
-          <Badge variant="success" appearance="button">
-            Aktywny
+      render: (_, record) => {
+        const status = getCouponDisplayStatus(record);
+        const badge = STATUS_BADGE[status];
+        return (
+          <Badge variant={badge.variant} appearance="button">
+            {badge.label}
           </Badge>
-        ) : (
-          <Badge variant="error" appearance="button">
-            Nieaktywny
-          </Badge>
-        ),
+        );
+      },
     },
     {
       key: "courseRules",
