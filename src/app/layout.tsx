@@ -3,6 +3,7 @@ import { Montserrat, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppFooter } from "@/components/AppFooter";
 import { AppHeader } from "@/components/AppHeader";
+import { NavigationProgress } from "@/components/NavigationProgress";
 import { MainTopSpacer } from "@/components/MainTopSpacer";
 import { Providers } from "./providers";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -46,6 +47,7 @@ export default function RootLayout({
           <ToastProvider>
             <Providers>
               <AppHeader />
+              <NavigationProgress />
               <main>
                 <MainTopSpacer>{children}</MainTopSpacer>
               </main>
