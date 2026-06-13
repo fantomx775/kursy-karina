@@ -6,6 +6,7 @@ import { FiChevronLeft } from "react-icons/fi";
 import type { CourseWithContent } from "@/types/course";
 import { CertificateActions } from "@/features/certificates/CertificateActions";
 import { useAuth } from "@/features/auth/AuthContext";
+import { useToast } from "@/components/ui/Toast";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
 import { CourseStepCard } from "./components/CourseStepCard";
 import { StepList } from "./components/StepList";
@@ -49,6 +50,7 @@ export function CourseViewer({
 }: Props) {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const { user, profile } = useAuth();
+  const { addToast } = useToast();
   const steps = useMemo(
     () => course.sections.flatMap((section) => section.items),
     [course.sections],
@@ -121,10 +123,10 @@ export function CourseViewer({
 
   const persistCompletion = async (itemId: string, completed: boolean) => {
     if (!user) {
-      return;
+      return { error: new Error("Brak zalogowanego użytkownika.") };
     }
 
-    await supabase.from("course_progress").upsert(
+    const { error } = await supabase.from("course_progress").upsert(
       {
         user_id: user.id,
         course_id: course.id,
@@ -134,6 +136,41 @@ export function CourseViewer({
       },
       { onConflict: "user_id,item_id" },
     );
+
+    return { error };
+  };
+
+  const revertCompletionIfUnchanged = (
+    itemId: string,
+    expectedCompleted: boolean,
+  ) => {
+    setCompletedIds((previous) => {
+      const isStillAsWeSet = expectedCompleted
+        ? previous[itemId] === true
+        : !previous[itemId];
+
+      if (!isStillAsWeSet) {
+        return previous;
+      }
+
+      const next = { ...previous };
+      if (expectedCompleted) {
+        delete next[itemId];
+      } else {
+        next[itemId] = true;
+      }
+      return next;
+    });
+  };
+
+  const showProgressSaveError = (message?: string) => {
+    addToast({
+      type: "error",
+      title: "Nie udało się zapisać postępu",
+      message:
+        message ??
+        "Sprawdź połączenie z internetem i spróbuj ponownie.",
+    });
   };
 
   const onSelectItem = (itemId: string) => {
@@ -163,7 +200,11 @@ export function CourseViewer({
       return next;
     });
 
-    await persistCompletion(itemId, shouldComplete);
+    const { error } = await persistCompletion(itemId, shouldComplete);
+    if (error) {
+      revertCompletionIfUnchanged(itemId, shouldComplete);
+      showProgressSaveError(error.message);
+    }
   };
 
   const onQuizPassed = async (itemId: string) => {
@@ -176,7 +217,11 @@ export function CourseViewer({
       [itemId]: true,
     }));
 
-    await persistCompletion(itemId, true);
+    const { error } = await persistCompletion(itemId, true);
+    if (error) {
+      revertCompletionIfUnchanged(itemId, true);
+      showProgressSaveError(error.message);
+    }
   };
 
   const completedCount = steps.reduce(
