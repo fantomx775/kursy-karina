@@ -1,6 +1,7 @@
 "use client";
 
 import type { CourseItem } from "@/types/course";
+import { LazyWhenVisible } from "./LazyWhenVisible";
 import { QuizSection } from "./QuizSection";
 import { SvgSection } from "./SvgSection";
 import { YouTubePlayer } from "./YouTubePlayer";
@@ -18,8 +19,10 @@ function getBadgeLabel(item: CourseItem): string {
       return "Video";
     case "quiz":
       return "Quiz";
+    case "svg":
+      return "PDF";
     default:
-      return "Tekst";
+      return "PDF";
   }
 }
 
@@ -75,19 +78,32 @@ export function CourseStepCard({
         )}
       </div>
 
-      <div className="mt-4">
-        {item.kind === "svg" ? (
-          <SvgSection src={item.asset_path ?? ""} alt={item.title} />
-        ) : null}
+      <LazyWhenVisible
+        placeholder={
+          <div
+            className="mt-4 min-h-[120px] border-radius border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)]"
+            aria-hidden
+          />
+        }
+      >
+        <div className="mt-4">
+          {item.kind === "svg" ? (
+            <SvgSection src={item.asset_path ?? ""} alt={item.title} />
+          ) : null}
 
-        {item.kind === "youtube" ? (
-          <YouTubePlayer url={item.youtube_url ?? ""} />
-        ) : null}
+          {item.kind === "youtube" ? (
+            <YouTubePlayer url={item.youtube_url ?? ""} />
+          ) : null}
 
-        {item.kind === "quiz" ? (
-          <QuizSection item={item} isCompleted={isCompleted} onPass={onQuizPassed} />
-        ) : null}
-      </div>
+          {item.kind === "quiz" ? (
+            <QuizSection
+              item={item}
+              isCompleted={isCompleted}
+              onPass={onQuizPassed}
+            />
+          ) : null}
+        </div>
+      </LazyWhenVisible>
     </section>
   );
 }

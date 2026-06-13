@@ -1,18 +1,30 @@
-export function toYouTubeEmbedUrl(url: string) {
+export function getYouTubeVideoId(url: string): string | null {
   try {
     const parsed = new URL(url);
     if (parsed.hostname.includes("youtu.be")) {
       const id = parsed.pathname.replace("/", "");
-      return id ? `https://www.youtube.com/embed/${id}` : url;
+      return id || null;
     }
 
     if (parsed.pathname.startsWith("/embed/")) {
-      return url;
+      const id = parsed.pathname.replace("/embed/", "");
+      return id || null;
     }
 
-    const videoId = parsed.searchParams.get("v");
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+    return parsed.searchParams.get("v");
   } catch {
-    return url;
+    return null;
   }
+}
+
+export function toYouTubeEmbedUrl(url: string) {
+  const videoId = getYouTubeVideoId(url);
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+}
+
+export function toYouTubeThumbnailUrl(
+  videoId: string,
+  quality: "default" | "hqdefault" = "hqdefault",
+) {
+  return `https://img.youtube.com/vi/${videoId}/${quality}.jpg`;
 }

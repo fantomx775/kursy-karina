@@ -179,7 +179,18 @@ export function CourseViewer({
       return;
     }
 
-    element.scrollIntoView({ behavior: "smooth", block: "start" });
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+
+    element.scrollIntoView({
+      behavior:
+        prefersReducedMotion || isCoarsePointer
+          ? ("instant" as ScrollBehavior)
+          : "smooth",
+      block: "start",
+    });
     setActiveItemId(itemId);
   };
 
