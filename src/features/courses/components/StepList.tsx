@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { FiChevronDown } from "react-icons/fi";
+import { cn } from "@/lib/utils";
 import type { CourseItem, CourseSection } from "@/types/course";
 
 type Props = {
@@ -137,14 +138,17 @@ export function StepList({
                   type="button"
                   onClick={() => toggleSection(section.id)}
                   aria-expanded={!isCollapsed}
+                  aria-controls={`section-panel-${section.id}`}
                   className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-[var(--coffee-cream)]"
                 >
                   <span className="shrink-0 text-[var(--coffee-espresso)]">
-                    {isCollapsed ? (
-                      <FiChevronDown className="h-4 w-4" aria-hidden />
-                    ) : (
-                      <FiChevronUp className="h-4 w-4" aria-hidden />
-                    )}
+                    <FiChevronDown
+                      aria-hidden
+                      className={cn(
+                        "h-4 w-4 transition-transform duration-300 ease-out motion-reduce:transition-none",
+                        !isCollapsed && "rotate-180",
+                      )}
+                    />
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--coffee-charcoal)]">
                     {sectionLabel}
@@ -154,9 +158,21 @@ export function StepList({
                   </span>
                 </button>
 
-                {!isCollapsed ? (
-                  <ul className="grid grid-cols-1 gap-2 border-t border-[var(--coffee-cappuccino)] p-2 sm:grid-cols-2 md:flex md:flex-col">
-                    {section.items.map((item) => {
+                <div
+                  id={`section-panel-${section.id}`}
+                  className={cn(
+                    "grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none",
+                    isCollapsed
+                      ? "grid-rows-[0fr] opacity-0"
+                      : "grid-rows-[1fr] opacity-100",
+                  )}
+                >
+                  <div className="overflow-hidden" inert={isCollapsed ? true : undefined}>
+                    <ul
+                      aria-hidden={isCollapsed}
+                      className="grid grid-cols-1 gap-2 border-t border-[var(--coffee-cappuccino)] p-2 sm:grid-cols-2 md:flex md:flex-col"
+                    >
+                      {section.items.map((item) => {
                       const isActive = item.id === activeItemId;
                       const isDone = Boolean(completedIds[item.id]);
                       const badge = getBadgeLabel(item.kind);
@@ -200,8 +216,9 @@ export function StepList({
                         </li>
                       );
                     })}
-                  </ul>
-                ) : null}
+                    </ul>
+                  </div>
+                </div>
               </section>
             );
           })}
