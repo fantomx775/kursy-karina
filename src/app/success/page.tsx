@@ -90,19 +90,17 @@ export default function SuccessPage() {
           </div>
         )}
         {status === "success" && (
-          <>
-            <div className="mb-6 flex justify-center">
-              <SuccessIcon
-                className="h-14 w-14 text-[var(--coffee-charcoal)]"
-                size="xl"
-                color="var(--coffee-charcoal)"
-                aria-hidden
-              />
-            </div>
+          <div className="flex flex-col items-center">
+            <SuccessIcon
+              className="mb-6 block h-14 w-14 shrink-0 text-[var(--coffee-charcoal)]"
+              size="xl"
+              color="var(--coffee-charcoal)"
+              aria-hidden
+            />
             <h1 className="text-2xl font-semibold text-[var(--coffee-charcoal)] tracking-tight mb-3">
               Sukces!!
             </h1>
-            <p className="text-[var(--coffee-espresso)] text-[15px] leading-relaxed mb-8 max-w-[280px] mx-auto">
+            <p className="text-[var(--coffee-espresso)] text-[15px] leading-relaxed mb-8 max-w-[280px] text-center">
               {message}
             </p>
             <Link
@@ -111,23 +109,21 @@ export default function SuccessPage() {
             >
               Przejdź do kursów
             </Link>
-          </>
+          </div>
         )}
         {status === "error" && (
-          <>
-            <div className="mb-4 flex justify-center">
-              <ErrorIcon
-                className="h-12 w-12"
-                size="xl"
-                color="var(--error)"
-                aria-hidden
-              />
-            </div>
+          <div className="flex flex-col items-center">
+            <ErrorIcon
+              className="mb-4 block h-12 w-12 shrink-0"
+              size="xl"
+              color="var(--error)"
+              aria-hidden
+            />
             <h1 className="text-2xl font-semibold text-[var(--coffee-charcoal)] mb-2">
               Wystąpił problem
             </h1>
-            <p className="text-[var(--coffee-espresso)] mb-6">{message}</p>
-            <div className="space-y-2">
+            <p className="text-[var(--coffee-espresso)] mb-6 text-center">{message}</p>
+            <div className="w-full space-y-2">
               <Link
                 href="/cart"
                 className="border-radius block bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-4 py-2"
@@ -141,7 +137,7 @@ export default function SuccessPage() {
                 Strona główna
               </Link>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>
