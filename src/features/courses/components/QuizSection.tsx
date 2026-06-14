@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { BlockingSpinner } from "@/components/ui";
 import { Badge } from "@/components/ui/Badge/Badge";
 import {
+  areQuizSelectionsEqual,
+  cloneQuizSelections,
   evaluateQuizAttempt,
   evaluateQuizQuestion,
   type QuizSelections,
@@ -53,15 +55,26 @@ function getQuestionTypeLabel(question: CourseQuizQuestion): string {
 export function QuizSection({ item, isCompleted, onPass }: Props) {
   const quiz = item.quiz_data;
   const [selections, setSelections] = useState<QuizSelections>({});
+  const [submittedSelections, setSubmittedSelections] =
+    useState<QuizSelections | null>(null);
   const [attempt, setAttempt] = useState<AttemptState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const showResults =
+    attempt !== null &&
+    submittedSelections !== null &&
+    areQuizSelectionsEqual(
+      selections,
+      submittedSelections,
+      quiz?.questions.length ?? 0,
+    );
 
   const statusText = isCompleted
     ? "Quiz zaliczony. Kolejne próby nie cofną progresu."
     : "Rozwiąż quiz i kliknij Sprawdź.";
 
   const attemptMessage = useMemo(() => {
-    if (!attempt) {
+    if (!showResults || !attempt) {
       return null;
     }
 
@@ -76,15 +89,15 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
     }
 
     return `Wynik: ${attempt.correctQuestions}/${attempt.totalQuestions}. Spróbuj ponownie.`;
-  }, [attempt, isCompleted]);
+  }, [attempt, isCompleted, showResults]);
 
   const attemptBreakdown = useMemo(() => {
-    if (!attempt) {
+    if (!showResults || !attempt) {
       return null;
     }
 
     return `${attempt.correctQuestions} dobrze, ${attempt.wrongQuestions} źle, ${attempt.unansweredQuestions} nieodpowiedziano`;
-  }, [attempt]);
+  }, [attempt, showResults]);
 
   if (!quiz || quiz.questions.length === 0) {
     return (
@@ -122,6 +135,7 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
   const handleSubmit = async () => {
     const result = evaluateQuizAttempt(quiz, selections);
     setAttempt(result);
+    setSubmittedSelections(cloneQuizSelections(selections));
 
     if (!result.isPassed || isCompleted) {
       return;
@@ -149,14 +163,17 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
 
       <div className="space-y-4">
         {quiz.questions.map((question, questionIndex) => {
-          const questionEvaluation = attempt
-            ? evaluateQuizQuestion(question, selections[questionIndex])
+          const questionEvaluation = showResults
+            ? evaluateQuizQuestion(
+                question,
+                submittedSelections?.[questionIndex],
+              )
             : null;
 
           return (
           <fieldset
             key={questionIndex}
-            className={cn("p-4", getQuestionFieldsetClassName(Boolean(attempt), questionEvaluation))}
+            className={cn("p-4", getQuestionFieldsetClassName(showResults, questionEvaluation))}
           >
             <legend className="flex w-full items-center justify-between gap-2 px-1 text-sm font-semibold text-[var(--coffee-charcoal)]">
               <span>Pytanie {questionIndex + 1}</span>

@@ -18,6 +18,36 @@ function normalizeSelection(selection: number[] | undefined): number[] {
   return Array.from(new Set(selection ?? [])).sort((left, right) => left - right);
 }
 
+export function areQuizSelectionsEqual(
+  left: QuizSelections,
+  right: QuizSelections,
+  questionCount: number,
+): boolean {
+  for (let index = 0; index < questionCount; index += 1) {
+    const leftSelection = normalizeSelection(left[index]);
+    const rightSelection = normalizeSelection(right[index]);
+
+    if (leftSelection.length !== rightSelection.length) {
+      return false;
+    }
+
+    if (leftSelection.some((value, position) => value !== rightSelection[position])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function cloneQuizSelections(selections: QuizSelections): QuizSelections {
+  return Object.fromEntries(
+    Object.entries(selections).map(([questionIndex, answerIndexes]) => [
+      Number(questionIndex),
+      [...answerIndexes],
+    ]),
+  );
+}
+
 function getCorrectAnswerIndexes(question: CourseQuizQuestion): number[] {
   return question.answers
     .map((answer, index) => (answer.isCorrect ? index : -1))

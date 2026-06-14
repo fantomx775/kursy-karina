@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { evaluateQuizAttempt } from "./courseQuiz";
+import {
+  areQuizSelectionsEqual,
+  evaluateQuizAttempt,
+} from "./courseQuiz";
 
 const quiz = {
   questions: [
@@ -52,5 +55,19 @@ describe("evaluateQuizAttempt", () => {
       unansweredQuestions: 0,
       isPassed: false,
     });
+  });
+});
+
+describe("areQuizSelectionsEqual", () => {
+  it("treats selections with the same answers as equal regardless of order", () => {
+    expect(
+      areQuizSelectionsEqual({ 0: [1, 0], 1: [2] }, { 0: [0, 1], 1: [2] }, 2),
+    ).toBe(true);
+  });
+
+  it("detects when a question answer changed", () => {
+    expect(
+      areQuizSelectionsEqual({ 0: [0] }, { 0: [1] }, 1),
+    ).toBe(false);
   });
 });

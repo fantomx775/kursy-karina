@@ -82,6 +82,32 @@ describe("QuizSection", () => {
     expect(screen.getByText("Dobrze!")).toBeInTheDocument();
   });
 
+  it("hides feedback after changing an answer until Sprawdź is clicked again", async () => {
+    const user = userEvent.setup();
+    const onPass = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <QuizSection item={createQuizItem()} isCompleted={false} onPass={onPass} />,
+    );
+
+    await user.click(screen.getByLabelText("app"));
+    await user.click(screen.getByRole("button", { name: "Sprawdź" }));
+
+    expect(screen.getByText("Dobrze!")).toBeInTheDocument();
+
+    await user.click(screen.getByLabelText("pages"));
+
+    expect(screen.queryByText("Dobrze!")).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Sprawdź" }));
+
+    expect(screen.getByText("Źle")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "0 dobrze, 1 źle, 1 nieodpowiedziano",
+    );
+  });
+
   it("keeps the quiz completed even if a later retry is incorrect", async () => {
     const user = userEvent.setup();
     const onPass = vi.fn().mockResolvedValue(undefined);
