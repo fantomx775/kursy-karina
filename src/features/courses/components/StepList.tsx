@@ -94,7 +94,7 @@ export function StepList({
   return (
     <nav
       aria-label="Course steps"
-      className="flex min-h-0 flex-1 flex-col border-radius border border-[var(--coffee-cappuccino)] bg-white shadow-sm"
+      className="flex min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-hidden border-radius border border-[var(--coffee-cappuccino)] bg-white shadow-sm"
     >
       <div className="flex shrink-0 items-center justify-between border-b border-[var(--coffee-cappuccino)] bg-white px-3 py-2">
         <div className="text-sm font-semibold text-[var(--coffee-charcoal)]">
@@ -117,8 +117,8 @@ export function StepList({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="space-y-2 p-2">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="min-w-0 space-y-2 p-2">
           {sections.map((section) => {
             const isCollapsed = collapsedSectionIds.has(section.id);
             const sectionCompletedCount = section.items.reduce(
@@ -132,7 +132,7 @@ export function StepList({
             return (
               <section
                 key={section.id}
-                className="border-radius border border-[var(--coffee-cappuccino)] bg-white"
+                className="min-w-0 border-radius border border-[var(--coffee-cappuccino)] bg-white"
               >
                 <button
                   type="button"
@@ -161,16 +161,19 @@ export function StepList({
                 <div
                   id={`section-panel-${section.id}`}
                   className={cn(
-                    "grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none",
+                    "grid min-w-0 transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none",
                     isCollapsed
                       ? "grid-rows-[0fr] opacity-0"
                       : "grid-rows-[1fr] opacity-100",
                   )}
                 >
-                  <div className="overflow-hidden" inert={isCollapsed ? true : undefined}>
+                  <div
+                    className="min-w-0 overflow-hidden"
+                    inert={isCollapsed ? true : undefined}
+                  >
                     <ul
                       aria-hidden={isCollapsed}
-                      className="grid grid-cols-1 gap-2 border-t border-[var(--coffee-cappuccino)] p-2 sm:grid-cols-2 md:flex md:flex-col"
+                      className="grid min-w-0 grid-cols-1 gap-2 border-t border-[var(--coffee-cappuccino)] p-2 md:flex md:flex-col"
                     >
                       {section.items.map((item) => {
                       const isActive = item.id === activeItemId;
@@ -184,7 +187,7 @@ export function StepList({
                             type="button"
                             onClick={() => onSelectItem(item.id)}
                             className={[
-                              "group flex w-full items-center gap-3 border-radius border px-3 py-2 text-left transition-colors",
+                              "group flex w-full min-w-0 max-w-full items-center gap-3 border-radius border px-3 py-2 text-left transition-colors",
                               isActive
                                 ? "border-[var(--coffee-mocha)] bg-[var(--coffee-cream)]"
                                 : "border-[var(--coffee-cappuccino)] bg-white hover:bg-[var(--coffee-cream)]",
@@ -209,7 +212,7 @@ export function StepList({
                                 {isDone ? " • Ukończone" : ""}
                               </div>
                             </div>
-                            <div className="border-radius-sm bg-[var(--coffee-latte)] px-2 py-1 text-[11px] font-semibold text-[var(--coffee-espresso)]">
+                            <div className="shrink-0 border-radius-sm bg-[var(--coffee-latte)] px-2 py-1 text-[11px] font-semibold text-[var(--coffee-espresso)]">
                               {badge}
                             </div>
                           </button>

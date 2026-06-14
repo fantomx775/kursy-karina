@@ -243,7 +243,7 @@ export function CourseViewer({
     steps.length > 0 ? Math.round((completedCount / steps.length) * 100) : 0;
 
   return (
-    <div className="min-h-dvh bg-[var(--coffee-cream)] text-[var(--coffee-charcoal)]">
+    <div className="min-h-dvh overflow-x-hidden bg-[var(--coffee-cream)] text-[var(--coffee-charcoal)]">
       <div className="page-width learn-page-content pb-5 sm:pb-6">
         <header className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -300,7 +300,7 @@ export function CourseViewer({
                 : "Certyfikat będzie dostępny po decyzji administratora."}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-[320px_1fr]">
+        <div className="grid min-w-0 gap-4 md:grid-cols-[320px_1fr]">
           <aside className="sticky top-[calc(var(--sticky-top-offset)+0.75rem)] hidden self-start md:block">
             <div className="flex max-h-[calc(100dvh-var(--sticky-top-offset)-1.5rem)] flex-col overflow-hidden">
               <StepList
@@ -312,8 +312,8 @@ export function CourseViewer({
             </div>
           </aside>
 
-          <main>
-            <div className="mb-4 md:hidden">
+          <main className="min-w-0">
+            <div className="mb-4 min-w-0 overflow-x-hidden md:hidden">
               <StepList
                 sections={course.sections}
                 activeItemId={activeItemId}
