@@ -243,7 +243,7 @@ export function CourseViewer({
     steps.length > 0 ? Math.round((completedCount / steps.length) * 100) : 0;
 
   return (
-    <div className="min-h-dvh overflow-x-hidden bg-[var(--coffee-cream)] text-[var(--coffee-charcoal)]">
+    <div className="min-h-dvh max-md:overflow-x-hidden bg-[var(--coffee-cream)] text-[var(--coffee-charcoal)]">
       <div className="page-width learn-page-content pb-5 sm:pb-6">
         <header className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
