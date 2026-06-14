@@ -59,7 +59,7 @@ describe("CourseForm", () => {
       "Quiz koncowy",
     );
     await user.type(
-      screen.getByPlaceholderText("Tresc pytania"),
+      screen.getByPlaceholderText("Treść pytania"),
       "Jak działa App Router?",
     );
     await user.type(
@@ -155,7 +155,7 @@ describe("CourseForm", () => {
     await user.click(screen.getByRole("button", { name: "Quiz" }));
     await user.type(screen.getByPlaceholderText("Tytuł elementu"), "Quiz");
     await user.type(
-      screen.getByPlaceholderText("Tresc pytania"),
+      screen.getByPlaceholderText("Treść pytania"),
       "Która odpowiedź jest poprawna?",
     );
     await user.type(screen.getByPlaceholderText("Odpowiedz 1"), "Opcja A");

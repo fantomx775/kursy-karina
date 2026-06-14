@@ -9,7 +9,7 @@ function createQuizItem(): CourseItem {
   return {
     id: "quiz-item-1",
     section_id: "section-1",
-    title: "Quiz podsumowujacy",
+    title: "Quiz podsumowujący",
     kind: "quiz",
     asset_path: null,
     youtube_url: null,

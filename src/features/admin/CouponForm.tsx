@@ -126,7 +126,7 @@ export function CouponForm({
     const nextErrors: CouponFieldErrors = {};
 
     if (!name.trim()) {
-      nextErrors.name = "Podaj nazwe kuponu.";
+      nextErrors.name = "Podaj nazwę kuponu.";
     }
 
     if (!code.trim()) {

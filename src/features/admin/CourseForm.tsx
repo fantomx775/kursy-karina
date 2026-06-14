@@ -235,7 +235,7 @@ function getCourseValidationError(
       if (!item.quiz || item.quiz.questions.length === 0) {
         return createFieldValidationError(
           fieldNames.itemTitle(sectionIndex, itemIndex),
-          "Quiz musi zawierac co najmniej jedno pytanie.",
+          "Quiz musi zawierać co najmniej jedno pytanie.",
           sectionIndex,
         );
       }
@@ -781,7 +781,7 @@ export function CourseForm({
       setValidationResult(
         createFieldValidationError(
           fieldNames.accessDurationMonths,
-          "Podaj czas dostepu jako liczbe miesiecy wieksza od 0.",
+          "Podaj czas dostępu jako liczbę miesięcy większą od 0.",
         ),
       );
       return;
@@ -1277,7 +1277,7 @@ export function CourseForm({
 
       <div>
         <label className="mb-1 block text-sm font-medium text-[var(--coffee-charcoal)]">
-          Zdjecie glowne kursu
+          Zdjęcie główne kursu
         </label>
         <FileUpload
           value={mainImageUrl}
@@ -1288,7 +1288,7 @@ export function CourseForm({
           accept="image/*"
         />
         <p className="mt-1 text-sm text-[var(--coffee-espresso)]">
-          Przeciagnij i upusc zdjecie kursu lub kliknij aby wybrac plik.
+          Przeciągnij i upuść zdjęcie kursu lub kliknij, aby wybrać plik.
         </p>
       </div>
 
@@ -1456,7 +1456,7 @@ export function CourseForm({
               size="sm"
               onClick={addSection}
             >
-              + Dodaj sekcje
+              + Dodaj sekcję
             </Button>
           </div>
         </div>
@@ -1549,7 +1549,7 @@ export function CourseForm({
                       size="sm"
                       onClick={() => removeSection(sectionIndex)}
                     >
-                      Usuń sekcje
+                      Usuń sekcję
                     </Button>
                   </div>
 
@@ -1836,7 +1836,7 @@ export function CourseForm({
             size="sm"
             onClick={addSection}
           >
-            + Dodaj sekcje
+            + Dodaj sekcję
           </Button>
         </div>
       </div>

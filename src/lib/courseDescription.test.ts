@@ -9,7 +9,7 @@ describe("courseDescription", () => {
   it("creates a plain text excerpt from rich text", () => {
     expect(
       getCourseDescriptionExcerpt(
-        "<h2>ETAP 1</h2><p>To jest bardzo dlugi opis kursu z formatowaniem.</p>",
+        "<h2>ETAP 1</h2><p>To jest bardzo długi opis kursu z formatowaniem.</p>",
         15,
       ),
     ).toBe("ETAP 1 To jest...");

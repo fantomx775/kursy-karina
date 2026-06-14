@@ -73,7 +73,7 @@ export function CourseStepCard({
                 : "bg-[var(--coffee-mocha)] text-white hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)]"
             }`}
           >
-            {isCompleted ? "Oznacz jako nieukonczone" : "Oznacz jako ukonczone"}
+            {isCompleted ? "Oznacz jako nieukończone" : "Oznacz jako ukończone"}
           </button>
         )}
       </div>

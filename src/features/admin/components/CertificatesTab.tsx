@@ -179,8 +179,8 @@ export function CertificatesTab({
             type="button"
             variant="outline"
             size="sm"
-            title="Zapisz nazwe"
-            aria-label="Zapisz nazwe"
+            title="Zapisz nazwę"
+            aria-label="Zapisz nazwę"
             loading={renamingId === template.id}
             onClick={() => handleRename(template)}
           >
@@ -380,7 +380,7 @@ export function CertificatesTab({
           loading={loading}
           empty={
             <div className="p-6 text-center text-sm text-[var(--coffee-espresso)]">
-              Brak kursantow wymagajacych przyznania certyfikatu.
+              Brak kursantów wymagających przyznania certyfikatu.
             </div>
           }
         />

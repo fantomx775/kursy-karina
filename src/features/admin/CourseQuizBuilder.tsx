@@ -259,7 +259,7 @@ export function CourseQuizBuilder({
                     onChange={(event) =>
                       setQuestionText(questionIndex, event.target.value)
                     }
-                    placeholder="Tresc pytania"
+                    placeholder="Treść pytania"
                     className={
                       getFieldControlClass?.(
                         questionField,

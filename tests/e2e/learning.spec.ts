@@ -39,7 +39,7 @@ test.describe("Interakcje z kursem po stronie kursanta", () => {
     const beforeMatch = (progressBefore ?? "").match(/(\d+)\/(\d+)/);
     const beforeValue = beforeMatch?.[1] ?? "0";
 
-    const completeButtons = page.locator('button:has-text("Oznacz jako ukonczone")');
+    const completeButtons = page.locator('button:has-text("Oznacz jako ukończone")');
     const total = await completeButtons.count();
     if (total === 0) {
       expect(beforeMatch).toBeTruthy();
@@ -82,7 +82,7 @@ test.describe("Interakcje z kursem po stronie kursanta", () => {
     await loginAsStudentWithPurchases(page);
     await goToLearning(page, OWNED_SLUG);
 
-    const remainingButtons = page.locator('button:has-text("Oznacz jako ukonczone")');
+    const remainingButtons = page.locator('button:has-text("Oznacz jako ukończone")');
     while ((await remainingButtons.count()) > 0) {
       await remainingButtons.first().click();
     }
@@ -104,7 +104,7 @@ test.describe("Interakcje z kursem po stronie kursanta", () => {
     const progressText = page.getByText(/Postęp:/);
     const progressBefore = await progressText.textContent();
 
-    const completeButtons = page.locator('button:has-text("Oznacz jako ukonczone")');
+    const completeButtons = page.locator('button:has-text("Oznacz jako ukończone")');
     if ((await completeButtons.count()) === 0) {
       expect(progressBefore).toContain("/");
       return;
@@ -112,7 +112,7 @@ test.describe("Interakcje z kursem po stronie kursanta", () => {
 
     await completeButtons.first().click();
     const undoButton = page
-      .locator('button:has-text("Oznacz jako nieukonczone")')
+      .locator('button:has-text("Oznacz jako nieukończone")')
       .first();
     await expect(undoButton).toBeVisible();
     await undoButton.click();

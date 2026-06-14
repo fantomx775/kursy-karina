@@ -30,7 +30,7 @@ describe("courseInputSchema", () => {
   it("accepts quiz items embedded directly inside lesson items", () => {
     const payload = createBaseCoursePayload();
     payload.sections[0].items.push({
-      title: "Quiz podsumowujacy",
+      title: "Quiz podsumowujący",
       kind: "quiz",
       assetPath: null,
       youtubeUrl: null,
