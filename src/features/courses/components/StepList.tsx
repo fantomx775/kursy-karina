@@ -108,7 +108,7 @@ export function StepList({
             <button
               type="button"
               onClick={onRequestClose}
-              className="inline-flex h-8 w-8 items-center justify-center border-radius border border-[var(--coffee-cappuccino)] bg-white text-sm text-[var(--coffee-espresso)] hover:bg-[var(--coffee-cream)]"
+              className="inline-flex h-8 w-8 items-center justify-center border-radius border border-[var(--coffee-cappuccino)] bg-white text-sm text-[var(--coffee-espresso)] hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-95 transition-all duration-200"
               aria-label="Zamknij kroki"
             >
               x
@@ -139,7 +139,7 @@ export function StepList({
                   onClick={() => toggleSection(section.id)}
                   aria-expanded={!isCollapsed}
                   aria-controls={`section-panel-${section.id}`}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-[var(--coffee-cream)]"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)]"
                 >
                   <span className="shrink-0 text-[var(--coffee-espresso)]">
                     <FiChevronDown
@@ -187,10 +187,10 @@ export function StepList({
                             type="button"
                             onClick={() => onSelectItem(item.id)}
                             className={[
-                              "group flex w-full min-w-0 max-w-full items-center gap-3 border-radius border px-3 py-2 text-left transition-colors",
+                              "group flex w-full min-w-0 max-w-full items-center gap-3 border-radius border px-3 py-2 text-left transition-all duration-200",
                               isActive
-                                ? "border-[var(--coffee-mocha)] bg-[var(--coffee-cream)]"
-                                : "border-[var(--coffee-cappuccino)] bg-white hover:bg-[var(--coffee-cream)]",
+                                ? "border-[var(--coffee-mocha)] bg-[var(--coffee-cream)] active:bg-[var(--coffee-cappuccino)]"
+                                : "border-[var(--coffee-cappuccino)] bg-white hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)]",
                             ].join(" ")}
                           >
                             <div

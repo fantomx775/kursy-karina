@@ -110,7 +110,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
       return (
         <label className={cn(
           'block p-4 border-2 border-radius cursor-pointer transition-all duration-200',
-          'hover:border-[var(--coffee-mocha)] hover:bg-[var(--coffee-cream)]',
+          'hover:border-[var(--coffee-mocha)] hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)]',
           currentChecked && 'border-[var(--coffee-mocha)] bg-[var(--coffee-cream)]',
           disabled && 'opacity-50 cursor-not-allowed',
           error && 'border-red-500',
@@ -141,7 +141,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
     return (
       <label
         className={cn(
-          'flex items-start gap-3 cursor-pointer',
+          'flex items-start gap-3 cursor-pointer active:opacity-80 transition-opacity duration-150',
           disabled && 'cursor-not-allowed',
         )}
       >

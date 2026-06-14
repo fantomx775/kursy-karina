@@ -33,10 +33,10 @@ export function TabNavigation({
       {tabs.map((tab) => (
         <button
           key={tab.key}
-          className={`px-4 py-2 border border-radius ${
+          className={`px-4 py-2 border border-radius transition-all duration-200 active:scale-[0.98] ${
             activeTab === tab.key
-              ? "border-[var(--coffee-mocha)] bg-[var(--coffee-cream)] text-[var(--coffee-mocha)]"
-              : "border-[var(--coffee-cappuccino)] text-[var(--coffee-espresso)] hover:bg-[var(--coffee-cream)]"
+              ? "border-[var(--coffee-mocha)] bg-[var(--coffee-cream)] text-[var(--coffee-mocha)] active:bg-[var(--coffee-cappuccino)]"
+              : "border-[var(--coffee-cappuccino)] text-[var(--coffee-espresso)] hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)]"
           }`}
           onClick={() => onTabChange(tab.key)}
         >

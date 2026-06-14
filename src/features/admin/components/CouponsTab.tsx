@@ -123,7 +123,7 @@ export function CouponsTab({
         <div className="flex gap-2">
           <button
             type="button"
-            className="border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] px-3 py-2 hover:bg-[var(--coffee-cream)] border-radius"
+            className="border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] px-3 py-2 hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-[0.98] border-radius transition-all duration-200"
             onClick={(e) => {
               e.stopPropagation();
               onEditCoupon(record);
@@ -133,7 +133,7 @@ export function CouponsTab({
           </button>
           <button
             type="button"
-            className="border border-red-500 text-red-600 px-3 py-2 hover:bg-red-50 border-radius"
+            className="border border-red-500 text-red-600 px-3 py-2 hover:bg-red-50 active:bg-red-100 active:scale-[0.98] border-radius transition-all duration-200"
             onClick={(e) => {
               e.stopPropagation();
               onDeleteCoupon(record.id);

@@ -39,7 +39,7 @@ export function CourseStatsDetailPanel({ detail }: Props) {
       render: (_, record) => (
         <a
           href={`mailto:${record.email}`}
-          className="text-[var(--coffee-mocha)] hover:underline"
+          className="text-[var(--coffee-mocha)] hover:underline active:opacity-70 transition-opacity duration-150"
         >
           {record.email}
         </a>

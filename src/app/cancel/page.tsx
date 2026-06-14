@@ -14,7 +14,7 @@ export default function CancelPage() {
         <div className="space-y-2">
           <Link
             href="/cart"
-            className="block bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-4 py-2"
+            className="block bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] active:scale-[0.98] text-white px-4 py-2 border-radius transition-all duration-200"
           >
             Wróć do koszyka
           </Link>

@@ -78,7 +78,7 @@ export function StudentsTab({
       render: (_, record) => (
         <button
           type="button"
-          className="border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] px-3 py-2 hover:bg-[var(--coffee-cream)] border-radius"
+          className="border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] px-3 py-2 hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-[0.98] border-radius transition-all duration-200"
           onClick={(e) => {
             e.stopPropagation();
             onViewStudent(record.id);

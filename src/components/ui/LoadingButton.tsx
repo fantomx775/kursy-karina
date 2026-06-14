@@ -18,9 +18,9 @@ export function LoadingButton({
       {...props}
       disabled={disabled || loading}
       className={`
-        relative inline-flex items-center justify-center
+        relative inline-flex items-center justify-center border-radius
         disabled:opacity-50 disabled:cursor-not-allowed
-        transition-colors duration-200
+        transition-all duration-200 active:scale-[0.98]
         ${className}
       `}
     >

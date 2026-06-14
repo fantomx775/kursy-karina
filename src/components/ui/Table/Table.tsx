@@ -136,7 +136,7 @@ const Table = <T extends Record<string, any>>({
       <button
         type="button"
         onClick={() => handleSort(column)}
-        className="inline-flex items-center gap-1.5 hover:text-[var(--coffee-mocha)] transition-colors duration-200"
+        className="inline-flex items-center gap-1.5 hover:text-[var(--coffee-mocha)] active:text-[var(--coffee-dark)] active:opacity-70 transition-colors duration-200"
       >
         {column.title}
         <span className="inline-flex shrink-0 flex-col items-center justify-center leading-none" aria-hidden>
@@ -224,8 +224,8 @@ const Table = <T extends Record<string, any>>({
               <tr
                 key={index}
                 className={cn(
-                  'border-t table-border-t hover:bg-[var(--coffee-cream)] transition-colors duration-150',
-                  onRowClick && 'cursor-pointer'
+                  'border-t table-border-t hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] transition-colors duration-150',
+                  onRowClick && 'cursor-pointer clickable'
                 )}
                 onClick={() => onRowClick?.(record, index)}
               >
@@ -260,7 +260,7 @@ const Table = <T extends Record<string, any>>({
               type="button"
               onClick={() => pagination.onChange(1)}
               disabled={pagination.current === 1}
-              className="px-3 py-1 text-sm border border-[var(--coffee-cappuccino)] border-radius hover:bg-[var(--coffee-cream)] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 text-sm border border-[var(--coffee-cappuccino)] border-radius hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Pierwsza
             </button>
@@ -269,7 +269,7 @@ const Table = <T extends Record<string, any>>({
               type="button"
               onClick={() => pagination.onChange(pagination.current - 1)}
               disabled={pagination.current === 1}
-              className="px-3 py-1 text-sm border border-[var(--coffee-cappuccino)] border-radius hover:bg-[var(--coffee-cream)] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 text-sm border border-[var(--coffee-cappuccino)] border-radius hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Poprzednia
             </button>
@@ -282,7 +282,7 @@ const Table = <T extends Record<string, any>>({
               type="button"
               onClick={() => pagination.onChange(pagination.current + 1)}
               disabled={pagination.current === totalPages}
-              className="px-3 py-1 text-sm border border-[var(--coffee-cappuccino)] border-radius hover:bg-[var(--coffee-cream)] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 text-sm border border-[var(--coffee-cappuccino)] border-radius hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Następna
             </button>
@@ -291,7 +291,7 @@ const Table = <T extends Record<string, any>>({
               type="button"
               onClick={() => pagination.onChange(totalPages)}
               disabled={pagination.current === totalPages}
-              className="px-3 py-1 text-sm border border-[var(--coffee-cappuccino)] border-radius hover:bg-[var(--coffee-cream)] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 text-sm border border-[var(--coffee-cappuccino)] border-radius hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Ostatnia
             </button>

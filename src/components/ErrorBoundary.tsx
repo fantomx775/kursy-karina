@@ -70,7 +70,7 @@ function DefaultErrorFallback({ error, reset }: { error?: Error; reset: () => vo
         </p>
         {process.env.NODE_ENV === "development" && error && (
           <details className="mb-4 p-3 bg-gray-100 border-radius text-sm">
-            <summary className="cursor-pointer font-medium">Szczegóły błędu</summary>
+            <summary className="cursor-pointer font-medium active:opacity-80 transition-opacity duration-150">Szczegóły błędu</summary>
             <pre className="mt-2 whitespace-pre-wrap text-red-600">
               {error.stack}
             </pre>
@@ -79,13 +79,13 @@ function DefaultErrorFallback({ error, reset }: { error?: Error; reset: () => vo
         <div className="flex gap-3">
           <button
             onClick={reset}
-            className="flex-1 border-radius bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-4 py-2 transition-colors"
+            className="flex-1 border-radius bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] active:scale-[0.98] text-white px-4 py-2 transition-all duration-200"
           >
             Spróbuj ponownie
           </button>
           <button
             onClick={() => window.location.reload()}
-            className="flex-1 border-radius border border-[var(--coffee-cappuccino)] text-[var(--coffee-espresso)] px-4 py-2 hover:bg-gray-50 transition-colors"
+            className="flex-1 border-radius border border-[var(--coffee-cappuccino)] text-[var(--coffee-espresso)] px-4 py-2 hover:bg-gray-50 active:bg-[var(--coffee-latte)] transition-all duration-200"
           >
             Odśwież stronę
           </button>

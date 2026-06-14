@@ -195,7 +195,7 @@ export function AccountForm({ profile }: Props) {
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center gap-2 bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-5 py-2.5 text-sm transition-colors min-h-[44px] border-radius disabled:opacity-70"
+          className="inline-flex items-center gap-2 bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] active:scale-[0.98] text-white px-5 py-2.5 text-sm transition-all duration-200 min-h-[44px] border-radius disabled:opacity-70"
         >
           {saving ? (
             <>
@@ -258,7 +258,7 @@ export function AccountForm({ profile }: Props) {
           <button
             type="submit"
             disabled={passwordSaving || !newPassword || !confirmPassword}
-            className="inline-flex items-center gap-2 bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-5 py-2.5 text-sm transition-colors min-h-[44px] border-radius disabled:opacity-70"
+            className="inline-flex items-center gap-2 bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] active:scale-[0.98] text-white px-5 py-2.5 text-sm transition-all duration-200 min-h-[44px] border-radius disabled:opacity-70"
           >
             {passwordSaving ? (
               <>

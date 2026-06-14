@@ -39,7 +39,7 @@ export default async function CourseDetailPage({
     <div className="min-h-screen bg-gradient-to-b from-[var(--coffee-cream)] to-white py-10 sm:py-14 lg:py-20">
       <div className="page-width">
         <nav className="text-sm text-[var(--coffee-espresso)] mb-4 sm:mb-6">
-          <Link href="/courses" className="hover:underline">
+          <Link href="/courses" className="hover:underline active:opacity-70 transition-opacity duration-150">
             Kursy
           </Link>{" "}
           / {course.title}

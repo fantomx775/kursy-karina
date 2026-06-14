@@ -237,7 +237,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white py-2 transition-colors disabled:opacity-50"
+          className="w-full bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] active:scale-[0.98] text-white py-2 transition-all duration-200 disabled:opacity-50"
         >
           {isSubmitting ? "Rejestrowanie..." : "Zarejestruj się"}
         </button>
@@ -247,7 +247,7 @@ export default function RegisterPage() {
         Masz już konto?{" "}
         <Link
           href={loginHref}
-          className="text-[var(--coffee-mocha)] hover:underline"
+          className="text-[var(--coffee-mocha)] hover:underline active:opacity-70 transition-opacity duration-150"
         >
           Zaloguj się
         </Link>

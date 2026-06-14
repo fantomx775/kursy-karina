@@ -146,7 +146,7 @@ export function PendingAccessTab({
           </p>
           <a
             href={`mailto:${record.studentEmail}`}
-            className="text-xs text-[var(--coffee-mocha)] hover:underline"
+            className="text-xs text-[var(--coffee-mocha)] hover:underline active:opacity-70 transition-opacity duration-150"
           >
             {record.studentEmail}
           </a>

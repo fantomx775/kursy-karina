@@ -12,7 +12,7 @@ export default function NotFoundPage() {
         </p>
         <Link
           href="/"
-          className="inline-block bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-4 py-2"
+          className="inline-block bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] active:scale-[0.98] text-white px-4 py-2 border-radius transition-all duration-200"
         >
           Wróć na stronę główną
         </Link>

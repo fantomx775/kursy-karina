@@ -41,7 +41,7 @@ function CourseCard({
       className="overflow-hidden flex flex-col transition-shadow duration-300 hover:shadow-[var(--shadow-lg)] group"
     >
       <div className="relative">
-        <Link href={`/courses/${slug}`} className="block relative w-full aspect-[640/905]">
+        <Link href={`/courses/${slug}`} className="block relative w-full aspect-[640/905] active:opacity-90 transition-opacity duration-150">
           <div className="absolute inset-0 bg-white flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] overflow-hidden">
             {mainImageUrl ? (
               <Image
@@ -89,7 +89,7 @@ function CourseCard({
           </span>
           <Link
             href={`/courses/${slug}`}
-            className="inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 border-radius bg-[var(--coffee-espresso)] text-white hover:bg-[var(--coffee-dark)] focus:ring-[var(--coffee-macchiato)] border border-[var(--coffee-espresso)] px-4 py-2 text-base min-h-[2.5rem] whitespace-nowrap text-sm"
+            className="inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 border-radius bg-[var(--coffee-espresso)] text-white hover:bg-[var(--coffee-dark)] active:bg-[var(--coffee-dark)] active:scale-[0.98] focus:ring-[var(--coffee-macchiato)] border border-[var(--coffee-espresso)] px-4 py-2 text-base min-h-[2.5rem] whitespace-nowrap text-sm"
           >
             Zobacz kurs
           </Link>

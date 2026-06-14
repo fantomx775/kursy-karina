@@ -70,7 +70,7 @@ const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
         {onRetry && (
           <button
             onClick={onRetry}
-            className="px-4 py-2 border-radius bg-[var(--coffee-espresso)] text-white hover:bg-[var(--coffee-dark)] transition-colors duration-200"
+            className="px-4 py-2 border-radius bg-[var(--coffee-espresso)] text-white hover:bg-[var(--coffee-dark)] active:bg-[var(--coffee-dark)] active:scale-[0.98] transition-all duration-200"
           >
             {retryText}
           </button>

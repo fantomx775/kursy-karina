@@ -48,7 +48,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
           <button
             type="button"
             onClick={() => setVisible((v) => !v)}
-            className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-10 text-[var(--coffee-macchiato)] hover:text-[var(--coffee-charcoal)] focus:outline-none focus:text-[var(--coffee-charcoal)] border-radius"
+            className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-10 text-[var(--coffee-macchiato)] hover:text-[var(--coffee-charcoal)] active:opacity-60 focus:outline-none focus:text-[var(--coffee-charcoal)] border-radius transition-opacity duration-200"
             aria-label={visible ? "Ukryj hasło" : "Pokaż hasło"}
           >
             {visible ? (

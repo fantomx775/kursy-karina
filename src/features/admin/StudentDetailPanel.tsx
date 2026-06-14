@@ -111,7 +111,7 @@ export function StudentDetailPanel({
                 <span className="text-[var(--coffee-espresso)]">Email: </span>
                 <a
                   href={`mailto:${student.email}`}
-                  className="text-[var(--coffee-mocha)] hover:underline"
+                  className="text-[var(--coffee-mocha)] hover:underline active:opacity-70 transition-opacity duration-150"
                 >
                   {student.email}
                 </a>

@@ -167,12 +167,12 @@ export function FileUpload({
       ) : (
         <Card
           variant={isDragging ? "elevated" : "default"}
-          className={`border-2 transition-colors cursor-pointer ${
+          className={`border-2 transition-all duration-200 cursor-pointer clickable ${
             shownError
               ? "border-[var(--error)] bg-red-50"
               : isDragging
                 ? "border-[var(--coffee-mocha)] bg-[var(--coffee-latte)]"
-                : "border-dashed border-[var(--coffee-cappuccino)] hover:border-[var(--coffee-macchiato)]"
+                : "border-dashed border-[var(--coffee-cappuccino)] hover:border-[var(--coffee-macchiato)] active:bg-[var(--coffee-latte)]"
           }`}
         >
           <CardContent className="p-8">

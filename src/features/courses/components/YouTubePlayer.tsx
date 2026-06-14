@@ -43,7 +43,7 @@ export function YouTubePlayer({ url }: Props) {
           <button
             type="button"
             onClick={() => setIsPlaying(true)}
-            className="group absolute inset-0 flex h-full w-full items-center justify-center overflow-hidden"
+            className="group absolute inset-0 flex h-full w-full items-center justify-center overflow-hidden active:opacity-90 transition-opacity duration-200"
             aria-label="Odtwórz wideo"
           >
             <img

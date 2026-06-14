@@ -64,7 +64,8 @@ const Pagination = React.forwardRef<HTMLDivElement, PaginationProps>(
             disabled={current === 1}
             className={cn(
               'p-2 border-radius border border-gray-300 bg-white hover:bg-gray-50',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
+              'active:bg-[var(--coffee-latte)] active:scale-[0.97]',
+              'disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200'
             )}
           >
             <ChevronLeftIcon><span className="w-4 h-4" /></ChevronLeftIcon>
@@ -76,10 +77,10 @@ const Pagination = React.forwardRef<HTMLDivElement, PaginationProps>(
                 key={page}
                 onClick={() => handlePageChange(page)}
                 className={cn(
-                  'px-3 py-1 text-sm border-radius border',
+                  'px-3 py-1 text-sm border-radius border transition-all duration-200',
                   current === page
-                    ? 'bg-blue-500 text-white border-blue-500'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    ? 'bg-blue-500 text-white border-blue-500 active:bg-blue-600 active:scale-[0.97]'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 active:bg-[var(--coffee-latte)] active:scale-[0.97]'
                 )}
               >
                 {page}
@@ -92,7 +93,8 @@ const Pagination = React.forwardRef<HTMLDivElement, PaginationProps>(
             disabled={current === totalPages}
             className={cn(
               'p-2 border-radius border border-gray-300 bg-white hover:bg-gray-50',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
+              'active:bg-[var(--coffee-latte)] active:scale-[0.97]',
+              'disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200'
             )}
           >
             <ChevronRightIcon><span className="w-4 h-4" /></ChevronRightIcon>

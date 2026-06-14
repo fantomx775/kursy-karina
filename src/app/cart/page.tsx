@@ -131,7 +131,7 @@ export default function CartPage() {
             Dodaj kursy, aby kontynuować.
           </p>
           <button
-            className="bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-5 py-2.5 text-sm transition-colors min-h-[44px]"
+            className="bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] active:scale-[0.98] text-white px-5 py-2.5 text-sm transition-all duration-200 min-h-[44px] border-radius"
             onClick={() => router.push("/courses")}
           >
             Przeglądaj kursy
@@ -207,7 +207,7 @@ export default function CartPage() {
                   </div>
                   <button
                     type="button"
-                    className="text-[var(--coffee-espresso)] hover:text-[var(--coffee-charcoal)] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0"
+                    className="text-[var(--coffee-espresso)] hover:text-[var(--coffee-charcoal)] active:opacity-60 transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 border-radius"
                     onClick={() => removeFromCart(item.id)}
                     aria-label="Usuń z koszyka"
                   >
@@ -330,7 +330,7 @@ export default function CartPage() {
                 aria-describedby={applyError ? "coupon-code-error" : undefined}
               />
               <button
-                className="w-full border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] py-2.5 text-sm hover:bg-[var(--coffee-mocha)] hover:text-white transition-colors min-h-[44px] disabled:opacity-50"
+                className="w-full border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] py-2.5 text-sm hover:bg-[var(--coffee-mocha)] hover:text-white active:bg-[var(--coffee-espresso)] active:scale-[0.98] transition-all duration-200 min-h-[44px] disabled:opacity-50 border-radius"
                 onClick={handleApplyCoupon}
                 disabled={isApplying}
               >
@@ -365,7 +365,7 @@ export default function CartPage() {
             ) : null}
 
             <button
-              className="w-full bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white py-3 text-sm font-medium transition-colors min-h-[48px] disabled:opacity-50"
+              className="w-full bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] active:scale-[0.98] text-white py-3 text-sm font-medium transition-all duration-200 min-h-[48px] disabled:opacity-50 border-radius"
               onClick={handleCheckout}
               disabled={isCheckingOut}
             >

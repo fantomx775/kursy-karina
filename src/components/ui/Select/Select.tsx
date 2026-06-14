@@ -209,7 +209,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           className={cn(
             "w-full px-4 py-2 text-left bg-white border border-radius shadow-sm",
             "focus:outline-none focus:ring-2 focus:ring-[var(--coffee-mocha)] focus:ring-offset-2",
-            "transition-colors duration-200",
+            "transition-all duration-200 active:bg-[var(--coffee-latte)] active:scale-[0.99]",
             "flex items-center justify-between gap-2",
             disabled && "opacity-50 cursor-not-allowed",
             error && "border-red-500 focus:ring-red-500",
@@ -244,7 +244,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
               <button
                 type="button"
                 onClick={handleClear}
-                className="p-1 text-gray-400 hover:text-gray-600 border-radius"
+                className="p-1 text-gray-400 hover:text-gray-600 active:opacity-60 active:bg-[var(--coffee-latte)] border-radius transition-all duration-200"
                 aria-label="Clear selection"
               >
                 <FiCheck className="w-3 h-3 rotate-45" />
@@ -291,10 +291,11 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                     role="option"
                     aria-selected={option.value === value}
                     className={cn(
-                      "px-4 py-2 text-sm cursor-pointer transition-colors duration-150",
+                      "px-4 py-2 text-sm cursor-pointer transition-all duration-150",
                       "flex items-center gap-2",
                       option.disabled && "opacity-50 cursor-not-allowed",
-                      !option.disabled && "hover:bg-[var(--coffee-cream)]",
+                      !option.disabled &&
+                        "hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-[0.99]",
                       option.value === value &&
                         "bg-[var(--coffee-cream)] text-[var(--coffee-mocha)]",
                       highlightedIndex === index &&

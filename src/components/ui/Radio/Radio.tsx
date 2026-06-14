@@ -77,7 +77,7 @@ const Radio = React.forwardRef<HTMLInputElement, RadioProps>(
     };
 
     return (
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 active:opacity-80 transition-opacity duration-150">
         <div className="relative">
           <input
             ref={ref}

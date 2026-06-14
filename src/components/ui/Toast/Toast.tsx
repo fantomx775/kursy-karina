@@ -192,7 +192,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
             <button
               onClick={toast.action.onClick}
               className={cn(
-                'mt-2 px-3 py-1 text-sm font-medium border-radius transition-colors duration-200',
+                'mt-2 px-3 py-1 text-sm font-medium border-radius transition-all duration-200 active:scale-[0.98]',
                 styles.action
               )}
             >
@@ -205,7 +205,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
         <button
           onClick={() => onRemove(toast.id)}
           className={cn(
-            'flex-shrink-0 ml-2 text-gray-400 hover:text-gray-600 transition-colors duration-200',
+            'flex-shrink-0 ml-2 text-gray-400 hover:text-gray-600 active:opacity-60 transition-all duration-200',
             'opacity-0'
           )}
           aria-label="Zamknij"

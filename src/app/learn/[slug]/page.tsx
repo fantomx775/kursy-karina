@@ -81,7 +81,7 @@ export default async function LearnPage({
           <div className="space-y-3">
             <Link
               href={`/courses/${slug}`}
-              className="block border-radius bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-4 py-2.5 text-sm transition-colors min-h-[44px] flex items-center justify-center"
+              className="block border-radius bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] active:scale-[0.98] text-white px-4 py-2.5 text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center"
             >
               {isExpired
                 ? "Przedłuż dostęp"
@@ -93,7 +93,7 @@ export default async function LearnPage({
             </Link>
             <Link
               href="/courses"
-              className="block border-radius border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] hover:bg-[var(--coffee-cream)] px-4 py-2.5 text-sm transition-colors min-h-[44px] flex items-center justify-center"
+              className="block border-radius border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-[0.98] px-4 py-2.5 text-sm transition-all duration-200 min-h-[44px] flex items-center justify-center"
             >
               Zobacz inne kursy
             </Link>

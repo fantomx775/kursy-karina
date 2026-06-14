@@ -217,7 +217,7 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
             type="button"
             onClick={handleToggle}
             disabled={disabled}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 active:opacity-60 disabled:opacity-50 transition-opacity duration-200"
             aria-label="Open calendar"
           >
             <FiCalendar className="w-4 h-4" />
@@ -235,7 +235,7 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
               <button
                 type="button"
                 onClick={handlePrevMonth}
-                className="p-2 text-gray-600 hover:text-[var(--coffee-mocha)] border-radius hover:bg-[var(--coffee-cream)]"
+                className="p-2 text-gray-600 hover:text-[var(--coffee-mocha)] border-radius hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-95 transition-all duration-200"
                 aria-label="Previous month"
               >
                 <FiChevronLeft className="w-4 h-4" />
@@ -249,7 +249,7 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="p-2 text-gray-600 hover:text-[var(--coffee-mocha)] border-radius hover:bg-[var(--coffee-cream)]"
+                className="p-2 text-gray-600 hover:text-[var(--coffee-mocha)] border-radius hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-95 transition-all duration-200"
                 aria-label="Next month"
               >
                 <FiChevronRight className="w-4 h-4" />
@@ -282,13 +282,13 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
                     !date && "invisible",
                     date &&
                       !isDateDisabled(date) &&
-                      "hover:bg-[var(--coffee-cream)] cursor-pointer",
+                      "hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] cursor-pointer",
                     date &&
                       isDateDisabled(date) &&
                       "text-gray-400 cursor-not-allowed",
                     date &&
                       isSelected(date) &&
-                      "bg-[var(--coffee-mocha)] text-white hover:bg-[var(--coffee-mocha)]",
+                      "bg-[var(--coffee-mocha)] text-white hover:bg-[var(--coffee-mocha)] active:bg-[var(--coffee-dark)]",
                     date &&
                       isToday(date) &&
                       !isSelected(date) &&

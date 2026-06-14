@@ -84,7 +84,7 @@ export function CourseStatsTab({
             e.stopPropagation();
             onViewDetails(record.id);
           }}
-          className="inline-block border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] px-3 py-2 hover:bg-[var(--coffee-cream)] border-radius"
+          className="inline-block border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] px-3 py-2 hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-[0.98] border-radius transition-all duration-200"
         >
           Szczegóły
         </button>

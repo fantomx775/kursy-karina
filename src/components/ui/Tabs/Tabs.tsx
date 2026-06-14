@@ -44,8 +44,8 @@ const Tab: React.FC<TabProps & { isActive: boolean; onClick: () => void }> = ({
         'focus:outline-none focus:ring-2 focus:ring-[var(--coffee-mocha)] focus:ring-offset-2',
         disabled && 'opacity-50 cursor-not-allowed',
         isActive
-          ? 'text-[var(--coffee-mocha)] bg-[var(--coffee-cream)]'
-          : 'text-[var(--coffee-macchiato)] hover:text-[var(--coffee-charcoal)] hover:bg-[var(--coffee-cream)]'
+          ? 'text-[var(--coffee-mocha)] bg-[var(--coffee-cream)] active:bg-[var(--coffee-cappuccino)]'
+          : 'text-[var(--coffee-macchiato)] hover:text-[var(--coffee-charcoal)] hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:text-[var(--coffee-charcoal)]'
       )}
     >
       {icon && (

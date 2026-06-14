@@ -137,7 +137,7 @@ export default async function CoursesPage() {
                       </span>
                       <Link
                         href={`/courses/${course.slug}`}
-                        className="bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white px-4 py-2.5 text-sm transition-colors min-h-[44px] flex items-center whitespace-nowrap border-radius"
+                        className="bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] active:scale-[0.98] text-white px-4 py-2.5 text-sm transition-all duration-200 min-h-[44px] flex items-center whitespace-nowrap border-radius"
                       >
                         Zobacz kurs
                       </Link>

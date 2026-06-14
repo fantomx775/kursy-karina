@@ -20,14 +20,20 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     children,
     ...props 
   }, ref) => {
-    const baseClasses = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed border-radius';
+    const baseClasses =
+      'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed border-radius active:scale-[0.98]';
     
     const variantClasses = {
-      primary: 'bg-[var(--coffee-espresso)] text-white hover:bg-[var(--coffee-dark)] focus:ring-[var(--coffee-macchiato)] border border-[var(--coffee-espresso)]',
-      secondary: 'bg-[var(--coffee-cream)] text-[var(--coffee-charcoal)] hover:bg-[var(--coffee-cappuccino)] focus:ring-[var(--coffee-macchiato)] border border-[var(--coffee-cappuccino)]',
-      outline: 'bg-transparent text-[var(--coffee-charcoal)] hover:bg-[var(--coffee-cream)] focus:ring-[var(--coffee-macchiato)] border border-[var(--coffee-cappuccino)]',
-      ghost: 'bg-transparent text-[var(--coffee-charcoal)] hover:bg-[var(--coffee-cream)] focus:ring-[var(--coffee-macchiato)] border border-transparent',
-      danger: 'bg-[var(--error)] text-white hover:bg-[var(--error-dark)] focus:ring-[var(--error-light)] border border-[var(--error)]',
+      primary:
+        'bg-[var(--coffee-espresso)] text-white hover:bg-[var(--coffee-dark)] active:bg-[var(--coffee-dark)] focus:ring-[var(--coffee-macchiato)] border border-[var(--coffee-espresso)]',
+      secondary:
+        'bg-[var(--coffee-cream)] text-[var(--coffee-charcoal)] hover:bg-[var(--coffee-cappuccino)] active:bg-[var(--coffee-macchiato)] focus:ring-[var(--coffee-macchiato)] border border-[var(--coffee-cappuccino)]',
+      outline:
+        'bg-transparent text-[var(--coffee-charcoal)] hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] focus:ring-[var(--coffee-macchiato)] border border-[var(--coffee-cappuccino)]',
+      ghost:
+        'bg-transparent text-[var(--coffee-charcoal)] hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] focus:ring-[var(--coffee-macchiato)] border border-transparent',
+      danger:
+        'bg-[var(--error)] text-white hover:bg-[var(--error-dark)] active:bg-[var(--error-dark)] focus:ring-[var(--error-light)] border border-[var(--error)]',
     };
     
     const sizeClasses = {

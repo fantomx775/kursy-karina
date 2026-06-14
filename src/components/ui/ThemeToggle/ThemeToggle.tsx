@@ -36,7 +36,7 @@ const ThemeToggle = React.forwardRef<HTMLButtonElement, ThemeToggleProps>(
         onClick={handleToggle}
         className={cn(
           'relative inline-flex items-center justify-center rounded-full border-2 transition-all duration-300',
-          'border-[var(--coffee-cappuccino)] bg-white hover:bg-[var(--coffee-cream)]',
+          'border-[var(--coffee-cappuccino)] bg-white hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-95',
           'focus:outline-none focus:ring-2 focus:ring-[var(--coffee-mocha)] focus:ring-offset-2',
           sizeClasses[size],
           className

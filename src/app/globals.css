@@ -87,6 +87,9 @@
   --transition-normal: 250ms;
   --transition-slow: 350ms;
 
+  /* Touch / press feedback */
+  --press-highlight: color-mix(in srgb, var(--coffee-mocha) 30%, transparent);
+
   --ease-linear: linear;
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
@@ -352,6 +355,52 @@ button:disabled {
 
 .clickable {
   cursor: pointer;
+}
+
+/* Visible press feedback on touch devices (hover alone is unreliable on mobile) */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+[role="tab"]:not([aria-disabled="true"]),
+[role="menuitem"]:not([aria-disabled="true"]),
+[role="option"]:not([aria-disabled="true"]),
+input[type="submit"]:not(:disabled),
+input[type="button"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+.clickable {
+  -webkit-tap-highlight-color: var(--press-highlight);
+  touch-action: manipulation;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active,
+  [role="tab"]:not([aria-disabled="true"]):active,
+  [role="menuitem"]:not([aria-disabled="true"]):active,
+  [role="option"]:not([aria-disabled="true"]):active,
+  input[type="submit"]:not(:disabled):active,
+  input[type="button"]:not(:disabled):active,
+  input[type="reset"]:not(:disabled):active,
+  .clickable:active {
+    transform: scale(0.97);
+    filter: brightness(0.9);
+    transition:
+      transform var(--transition-fast) var(--ease-out),
+      filter var(--transition-fast) var(--ease-out);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active,
+  [role="tab"]:not([aria-disabled="true"]):active,
+  [role="menuitem"]:not([aria-disabled="true"]):active,
+  [role="option"]:not([aria-disabled="true"]):active,
+  input[type="submit"]:not(:disabled):active,
+  input[type="button"]:not(:disabled):active,
+  input[type="reset"]:not(:disabled):active,
+  .clickable:active {
+    transform: none;
+  }
 }
 
 .modal-open {

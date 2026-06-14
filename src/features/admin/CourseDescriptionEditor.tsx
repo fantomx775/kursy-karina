@@ -140,7 +140,7 @@ export function CourseDescriptionEditor({
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => runCommand(action.command)}
         className={cn(
-          "flex h-9 w-9 items-center justify-center rounded border border-transparent text-[var(--coffee-charcoal)] transition hover:border-[var(--coffee-cappuccino)] hover:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--coffee-macchiato)]",
+          "flex h-9 w-9 items-center justify-center border-radius border border-transparent text-[var(--coffee-charcoal)] transition hover:border-[var(--coffee-cappuccino)] hover:bg-white active:bg-[var(--coffee-latte)] active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--coffee-macchiato)]",
           isActive &&
             "border-[var(--coffee-macchiato)] bg-white text-[var(--coffee-espresso)] shadow-sm",
         )}
@@ -162,7 +162,7 @@ export function CourseDescriptionEditor({
             value={currentBlock}
             onChange={(event) => formatBlock(event.target.value)}
             onFocus={syncToolbarState}
-            className="h-9 min-w-[150px] appearance-none rounded border border-[var(--coffee-cappuccino)] bg-white py-0 pl-3 pr-9 text-sm font-medium text-[var(--coffee-charcoal)] outline-none transition focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
+            className="h-9 min-w-[150px] appearance-none border-radius border border-[var(--coffee-cappuccino)] bg-white py-0 pl-3 pr-9 text-sm font-medium text-[var(--coffee-charcoal)] outline-none transition focus:border-transparent focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
           >
             {textStyles.map((style) => (
               <option key={style.value} value={style.value}>
@@ -191,7 +191,7 @@ export function CourseDescriptionEditor({
             aria-label="Akapit"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => formatBlock("p")}
-            className="flex h-9 w-9 items-center justify-center rounded border border-transparent text-[var(--coffee-charcoal)] transition hover:border-[var(--coffee-cappuccino)] hover:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
+            className="flex h-9 w-9 items-center justify-center border-radius border border-transparent text-[var(--coffee-charcoal)] transition hover:border-[var(--coffee-cappuccino)] hover:bg-white active:bg-[var(--coffee-latte)] active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
           >
             <LuPilcrow aria-hidden="true" className="h-4 w-4" />
           </button>
@@ -204,7 +204,7 @@ export function CourseDescriptionEditor({
               runCommand("removeFormat");
               formatBlock("p");
             }}
-            className="flex h-9 w-9 items-center justify-center rounded border border-transparent text-[var(--coffee-charcoal)] transition hover:border-[var(--coffee-cappuccino)] hover:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
+            className="flex h-9 w-9 items-center justify-center border-radius border border-transparent text-[var(--coffee-charcoal)] transition hover:border-[var(--coffee-cappuccino)] hover:bg-white active:bg-[var(--coffee-latte)] active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--coffee-macchiato)]"
           >
             <LuEraser aria-hidden="true" className="h-4 w-4" />
           </button>

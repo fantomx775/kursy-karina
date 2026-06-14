@@ -223,11 +223,11 @@ export const buttonVariants = {
     xl: 'px-8 py-4 text-xl',
   },
   variant: {
-    primary: 'bg-[var(--coffee-mocha)] text-white hover:bg-[var(--coffee-charcoal)]',
-    secondary: 'bg-[var(--coffee-cream)] text-[var(--coffee-mocha)] hover:bg-[var(--coffee-cappuccino)]',
-    outline: 'border-2 border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] hover:bg-[var(--coffee-cream)]',
-    ghost: 'text-[var(--coffee-mocha)] hover:bg-[var(--coffee-cream)]',
-    danger: 'bg-red-500 text-white hover:bg-red-600',
+    primary: 'bg-[var(--coffee-mocha)] text-white hover:bg-[var(--coffee-charcoal)] active:bg-[var(--coffee-dark)] active:scale-[0.98]',
+    secondary: 'bg-[var(--coffee-cream)] text-[var(--coffee-mocha)] hover:bg-[var(--coffee-cappuccino)] active:bg-[var(--coffee-macchiato)]',
+    outline: 'border-2 border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)]',
+    ghost: 'text-[var(--coffee-mocha)] hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)]',
+    danger: 'bg-red-500 text-white hover:bg-red-600 active:bg-red-700 active:scale-[0.98]',
   },
   fullWidth: {
     true: 'w-full',
@@ -266,7 +266,7 @@ export const cardVariants = {
     xl: 'p-10',
   },
   interactive: {
-    true: 'hover:shadow-lg transition-shadow duration-200 cursor-pointer',
+    true: 'hover:shadow-lg active:bg-[var(--coffee-latte)] transition-all duration-200 cursor-pointer',
     false: '',
   },
 };

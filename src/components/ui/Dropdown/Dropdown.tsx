@@ -92,7 +92,7 @@ const Dropdown: React.FC<DropdownProps> = ({
             toggleDropdown();
           }
         }}
-        className="cursor-pointer focus:outline-none"
+        className="clickable cursor-pointer focus:outline-none active:opacity-70"
         tabIndex={0}
         role="button"
         aria-haspopup="true"
@@ -115,8 +115,8 @@ const Dropdown: React.FC<DropdownProps> = ({
               key={item.key}
               onClick={() => handleItemClick(item)}
               className={cn(
-                'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-colors',
-                'hover:bg-[var(--coffee-cream)] focus:bg-[var(--coffee-cream)] focus:outline-none',
+                'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-all duration-150',
+                'hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-[0.99] focus:bg-[var(--coffee-cream)] focus:outline-none',
                 item.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent',
                 item.danger && 'text-red-600 hover:bg-red-50'
               )}

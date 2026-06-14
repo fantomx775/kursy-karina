@@ -112,10 +112,10 @@ export function CourseFilters({ courses, onFilteredCourses }: CourseFiltersProps
             <button
               key={key}
               onClick={() => handleSortChange(key as any)}
-              className={`px-3 py-1 border border-radius text-sm ${
+              className={`px-3 py-1 border border-radius text-sm transition-all duration-200 active:scale-[0.98] ${
                 sortBy === key
-                  ? "border-[var(--coffee-mocha)] text-[var(--coffee-mocha)]"
-                  : "border-[var(--coffee-cappuccino)] text-[var(--coffee-espresso)]"
+                  ? "border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] active:bg-[var(--coffee-latte)]"
+                  : "border-[var(--coffee-cappuccino)] text-[var(--coffee-espresso)] active:bg-[var(--coffee-latte)]"
               }`}
             >
               {label}
@@ -127,7 +127,7 @@ export function CourseFilters({ courses, onFilteredCourses }: CourseFiltersProps
 
       <button
         onClick={applyFilters}
-        className="w-full border-radius bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white py-2"
+        className="w-full border-radius bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] active:scale-[0.98] text-white py-2 transition-all duration-200"
       >
         Zastosuj filtry
       </button>

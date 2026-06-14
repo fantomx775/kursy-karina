@@ -78,7 +78,7 @@ export function Modal({
               <button
                 type="button"
                 onClick={onClose}
-                className="text-[var(--coffee-espresso)] hover:text-[var(--coffee-mocha)] transition-colors duration-200 p-1 border-radius hover:bg-[var(--coffee-cappuccino)]"
+                className="text-[var(--coffee-espresso)] hover:text-[var(--coffee-mocha)] active:opacity-60 active:bg-[var(--coffee-latte)] transition-all duration-200 p-1 border-radius hover:bg-[var(--coffee-cappuccino)]"
                 aria-label="Zamknij"
               >
                 <svg 

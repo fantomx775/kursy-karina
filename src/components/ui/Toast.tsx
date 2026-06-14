@@ -143,7 +143,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
       </div>
       <button
         onClick={() => onRemove(toast.id)}
-        className="flex-shrink-0 ml-2 text-current opacity-60 hover:opacity-100 transition-opacity"
+        className="flex-shrink-0 ml-2 text-current opacity-60 hover:opacity-100 active:opacity-40 transition-opacity duration-200"
         aria-label="Zamknij"
       >
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

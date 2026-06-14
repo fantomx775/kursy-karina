@@ -49,9 +49,9 @@ export function AppHeader() {
   }, [supabase, router]);
 
   const navLinkClass =
-    "h-11 flex items-center px-1 text-sm text-[var(--coffee-espresso)] hover:text-[var(--coffee-mocha)] transition-colors";
+    "h-11 flex items-center px-1 text-sm text-[var(--coffee-espresso)] hover:text-[var(--coffee-mocha)] active:text-[var(--coffee-dark)] active:opacity-80 transition-colors";
   const mobileNavLinkClass =
-    "block py-3 px-4 text-base text-[var(--coffee-espresso)] hover:text-[var(--coffee-mocha)] hover:bg-[var(--coffee-latte)] transition-colors min-h-[44px]";
+    "block py-3 px-4 text-base text-[var(--coffee-espresso)] hover:text-[var(--coffee-mocha)] hover:bg-[var(--coffee-latte)] active:bg-[var(--coffee-cappuccino)] transition-colors min-h-[44px]";
   const cartLinkClass =
     "gap-2 border-radius items-baseline";
 
@@ -71,7 +71,7 @@ export function AppHeader() {
       <div className="page-width flex items-center justify-between h-16">
         <Link
           href="/"
-          className="flex items-center text-[var(--coffee-charcoal)] hover:opacity-90 transition-opacity"
+          className="flex items-center text-[var(--coffee-charcoal)] hover:opacity-90 active:opacity-70 transition-opacity"
           aria-label="Strona główna – Kursy"
         >
           <Image
@@ -104,7 +104,7 @@ export function AppHeader() {
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="h-11 flex items-center px-3 text-sm text-[var(--coffee-mocha)] hover:text-white hover:bg-[var(--coffee-mocha)] border border-[var(--coffee-mocha)] transition-colors border-radius"
+                className="h-11 flex items-center px-3 text-sm text-[var(--coffee-mocha)] hover:text-white hover:bg-[var(--coffee-mocha)] active:bg-[var(--coffee-espresso)] active:text-white active:border-[var(--coffee-espresso)] border border-[var(--coffee-mocha)] transition-colors border-radius"
               >
                 Wyloguj
               </button>
@@ -123,7 +123,7 @@ export function AppHeader() {
               </Link>
               <Link
                 href="/register"
-                className="h-11 flex items-center px-4 text-sm text-white bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] transition-colors border-radius"
+                className="h-11 flex items-center px-4 text-sm text-white bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] transition-colors border-radius"
               >
                 Rejestracja
               </Link>
@@ -135,7 +135,7 @@ export function AppHeader() {
         <button
           type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="sm:hidden flex flex-col justify-center items-center w-11 h-11 gap-[5px] -mr-2"
+          className="sm:hidden flex flex-col justify-center items-center w-11 h-11 gap-[5px] -mr-2 active:opacity-60 transition-opacity"
           aria-label={mobileMenuOpen ? "Zamknij menu" : "Otwórz menu"}
           aria-expanded={mobileMenuOpen}
         >
@@ -193,7 +193,7 @@ export function AppHeader() {
                 <button
                   type="button"
                   onClick={handleSignOut}
-                  className="w-full py-3 text-sm text-[var(--coffee-mocha)] border border-[var(--coffee-mocha)] hover:bg-[var(--coffee-mocha)] hover:text-white transition-colors border-radius"
+                  className="w-full py-3 text-sm text-[var(--coffee-mocha)] border border-[var(--coffee-mocha)] hover:bg-[var(--coffee-mocha)] hover:text-white active:bg-[var(--coffee-espresso)] active:text-white active:border-[var(--coffee-espresso)] transition-colors border-radius"
                 >
                   Wyloguj
                 </button>
@@ -214,7 +214,7 @@ export function AppHeader() {
               <div className="px-4 py-3">
                 <Link
                   href="/register"
-                  className="block w-full py-3 text-sm text-center text-white bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] transition-colors border-radius"
+                  className="block w-full py-3 text-sm text-center text-white bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] transition-colors border-radius"
                 >
                   Rejestracja
                 </Link>

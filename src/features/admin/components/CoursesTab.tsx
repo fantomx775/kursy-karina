@@ -82,7 +82,7 @@ export function CoursesTab({ courses, loading }: CoursesTabProps) {
           href={`/dashboard/courses/${record.id}/edit`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] px-3 py-2 hover:bg-[var(--coffee-cream)] border-radius"
+          className="inline-block border border-[var(--coffee-mocha)] text-[var(--coffee-mocha)] px-3 py-2 hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-[0.98] border-radius transition-all duration-200"
         >
           Edytuj
         </Link>

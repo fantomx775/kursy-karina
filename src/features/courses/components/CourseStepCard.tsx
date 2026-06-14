@@ -67,10 +67,10 @@ export function CourseStepCard({
           <button
             type="button"
             onClick={() => onToggleCompleted(item.id)}
-            className={`h-10 border-radius px-4 text-sm font-medium transition-colors ${
+            className={`h-10 border-radius px-4 text-sm font-medium transition-all duration-200 active:scale-[0.98] ${
               isCompleted
-                ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                : "bg-[var(--coffee-mocha)] text-white hover:bg-[var(--coffee-espresso)]"
+                ? "bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800"
+                : "bg-[var(--coffee-mocha)] text-white hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)]"
             }`}
           >
             {isCompleted ? "Oznacz jako nieukonczone" : "Oznacz jako ukonczone"}

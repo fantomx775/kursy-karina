@@ -192,7 +192,7 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
                     <label
                       key={answerIndex}
                       htmlFor={inputId}
-                      className="flex cursor-pointer items-center gap-3 rounded border border-[var(--coffee-cappuccino)] bg-white px-3 py-3 text-sm text-[var(--coffee-charcoal)]"
+                      className="flex cursor-pointer items-center gap-3 border-radius border border-[var(--coffee-cappuccino)] bg-white px-3 py-3 text-sm text-[var(--coffee-charcoal)] transition-all duration-200 active:bg-[var(--coffee-latte)] active:scale-[0.99]"
                     >
                       <input
                         id={inputId}
@@ -241,7 +241,7 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
           void handleSubmit();
         }}
         disabled={isSubmitting}
-        className="h-10 border-radius bg-[var(--coffee-mocha)] px-4 text-sm font-medium text-white transition-colors hover:bg-[var(--coffee-espresso)] disabled:cursor-not-allowed disabled:opacity-60"
+        className="h-10 border-radius bg-[var(--coffee-mocha)] px-4 text-sm font-medium text-white transition-all duration-200 hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSubmitting ? "Zapisywanie..." : "Sprawdź"}
       </button>

@@ -56,7 +56,7 @@ export function CourseSearch({ courses, onCourseSelect }: CourseSearchProps) {
               <div
                 key={course.id}
                 onClick={() => onCourseSelect(course)}
-                className="p-3 border border-[var(--coffee-cappuccino)] border-radius cursor-pointer hover:bg-[var(--coffee-cream)] transition-colors"
+                className="p-3 border border-[var(--coffee-cappuccino)] border-radius clickable hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] transition-all duration-200"
               >
                 <h4 className="font-semibold text-[var(--coffee-charcoal)]">
                   {course.title}

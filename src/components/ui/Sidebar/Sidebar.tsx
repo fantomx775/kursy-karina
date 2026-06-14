@@ -66,7 +66,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
           disabled={item.disabled}
           className={cn(
             'w-full flex items-center gap-3 px-3 py-2 text-left border-radius transition-colors duration-200',
-            'hover:bg-[var(--coffee-cream)] focus:outline-none focus:ring-2 focus:ring-[var(--coffee-mocha)] focus:ring-offset-2',
+            'hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] focus:outline-none focus:ring-2 focus:ring-[var(--coffee-mocha)] focus:ring-offset-2',
             item.disabled && 'opacity-50 cursor-not-allowed',
             item.active && 'bg-[var(--coffee-cream)] text-[var(--coffee-mocha)]',
             !item.active && !item.disabled && 'text-[var(--coffee-macchiato)] hover:text-[var(--coffee-charcoal)]',
@@ -163,7 +163,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
             <button
               type="button"
               onClick={handleToggle}
-              className="p-2 text-gray-500 hover:text-gray-700 border-radius hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--coffee-mocha)]"
+              className="p-2 text-gray-500 hover:text-gray-700 border-radius hover:bg-gray-100 active:bg-[var(--coffee-latte)] active:opacity-70 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--coffee-mocha)]"
               aria-label={currentCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {currentCollapsed ? (

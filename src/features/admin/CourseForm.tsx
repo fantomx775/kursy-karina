@@ -1324,7 +1324,7 @@ export function CourseForm({
               href={`/api/admin/certificates/preview?templateId=${certificateTemplateId}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-[2.5rem] items-center justify-center border-radius border border-[var(--coffee-cappuccino)] bg-transparent px-4 py-2 text-base font-medium text-[var(--coffee-charcoal)] transition-all duration-200 hover:bg-[var(--coffee-cream)] focus:outline-none focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:ring-offset-2"
+              className="inline-flex min-h-[2.5rem] items-center justify-center border-radius border border-[var(--coffee-cappuccino)] bg-transparent px-4 py-2 text-base font-medium text-[var(--coffee-charcoal)] transition-all duration-200 hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[var(--coffee-macchiato)] focus:ring-offset-2"
             >
               Test PDF
             </a>
@@ -1485,7 +1485,7 @@ export function CourseForm({
                           ? `Rozwiń ${sectionLabel}`
                           : `Zwiń ${sectionLabel}`
                       }
-                      className="shrink-0 border-radius p-1 text-[var(--coffee-charcoal)] hover:bg-[var(--coffee-cream)]"
+                      className="shrink-0 border-radius p-1 text-[var(--coffee-charcoal)] hover:bg-[var(--coffee-cream)] active:bg-[var(--coffee-latte)] active:scale-95 transition-all duration-200"
                     >
                       {isCollapsed ? (
                         <FiChevronDown className="h-5 w-5" aria-hidden />

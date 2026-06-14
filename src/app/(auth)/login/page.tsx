@@ -140,14 +140,14 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] text-white py-2 transition-colors disabled:opacity-50"
+          className="w-full bg-[var(--coffee-mocha)] hover:bg-[var(--coffee-espresso)] active:bg-[var(--coffee-dark)] active:scale-[0.98] text-white py-2 transition-all duration-200 disabled:opacity-50"
         >
           {isSubmitting ? "Logowanie..." : "Zaloguj się"}
         </button>
       </form>
 
       <div className="mt-4 text-sm text-center text-[var(--coffee-espresso)]">
-        <Link href="/forgot-password" className="hover:underline">
+        <Link href="/forgot-password" className="hover:underline active:opacity-70 transition-opacity duration-150">
           Nie pamiętasz hasła?
         </Link>
       </div>
@@ -155,7 +155,7 @@ export default function LoginPage() {
         Nie masz konta?{" "}
         <Link
           href={registerHref}
-          className="text-[var(--coffee-mocha)] hover:underline"
+          className="text-[var(--coffee-mocha)] hover:underline active:opacity-70 transition-opacity duration-150"
         >
           Zarejestruj się
         </Link>
