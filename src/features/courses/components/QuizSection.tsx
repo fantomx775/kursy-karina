@@ -204,6 +204,11 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
             !isLockedCorrect &&
             !questionEvaluation.isCorrect &&
             questionEvaluation.isAnswered;
+          const showUnansweredBadge =
+            hasActiveAttempt &&
+            questionEvaluation !== null &&
+            !isLockedCorrect &&
+            !questionEvaluation.isAnswered;
 
           return (
           <fieldset
@@ -227,6 +232,11 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
               {showErrorBadge ? (
                 <Badge variant="error" size="sm" rounded={false}>
                   Źle
+                </Badge>
+              ) : null}
+              {showUnansweredBadge ? (
+                <Badge variant="warning" size="sm" rounded={false}>
+                  Brak odpowiedzi
                 </Badge>
               ) : null}
             </legend>

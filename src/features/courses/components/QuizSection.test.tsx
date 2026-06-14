@@ -80,6 +80,7 @@ describe("QuizSection", () => {
       "1 dobrze, 0 źle, 1 nieodpowiedziano",
     );
     expect(screen.getByText("Dobrze!")).toBeInTheDocument();
+    expect(screen.getByText("Brak odpowiedzi")).toBeInTheDocument();
   });
 
   it("hides attempt feedback after changing an answer until Sprawdź is clicked again", async () => {
