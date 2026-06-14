@@ -4,8 +4,6 @@ import { useMemo, useState } from "react";
 import { BlockingSpinner } from "@/components/ui";
 import { Badge } from "@/components/ui/Badge/Badge";
 import {
-  areQuizSelectionsEqual,
-  cloneQuizSelections,
   evaluateQuizAttempt,
   evaluateQuizQuestion,
   type QuizSelections,
@@ -28,10 +26,15 @@ type AttemptState = {
 };
 
 function getQuestionFieldsetClassName(
-  hasAttempt: boolean,
+  isLockedCorrect: boolean,
+  hasActiveAttempt: boolean,
   evaluation: { isCorrect: boolean; isAnswered: boolean } | null,
 ): string {
-  if (!hasAttempt || !evaluation) {
+  if (isLockedCorrect) {
+    return "border-radius border border-green-200 bg-green-50";
+  }
+
+  if (!hasActiveAttempt || !evaluation) {
     return "border-radius border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)]";
   }
 
@@ -55,26 +58,20 @@ function getQuestionTypeLabel(question: CourseQuizQuestion): string {
 export function QuizSection({ item, isCompleted, onPass }: Props) {
   const quiz = item.quiz_data;
   const [selections, setSelections] = useState<QuizSelections>({});
-  const [submittedSelections, setSubmittedSelections] =
-    useState<QuizSelections | null>(null);
   const [attempt, setAttempt] = useState<AttemptState | null>(null);
+  const [lockedCorrectQuestions, setLockedCorrectQuestions] = useState<
+    Set<number>
+  >(() => new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const showResults =
-    attempt !== null &&
-    submittedSelections !== null &&
-    areQuizSelectionsEqual(
-      selections,
-      submittedSelections,
-      quiz?.questions.length ?? 0,
-    );
+  const hasActiveAttempt = attempt !== null;
 
   const statusText = isCompleted
     ? "Quiz zaliczony. Kolejne próby nie cofną progresu."
     : "Rozwiąż quiz i kliknij Sprawdź.";
 
   const attemptMessage = useMemo(() => {
-    if (!showResults || !attempt) {
+    if (!hasActiveAttempt || !attempt) {
       return null;
     }
 
@@ -89,15 +86,31 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
     }
 
     return `Wynik: ${attempt.correctQuestions}/${attempt.totalQuestions}. Spróbuj ponownie.`;
-  }, [attempt, isCompleted, showResults]);
+  }, [attempt, hasActiveAttempt, isCompleted]);
 
   const attemptBreakdown = useMemo(() => {
-    if (!showResults || !attempt) {
+    if (!hasActiveAttempt || !attempt) {
       return null;
     }
 
     return `${attempt.correctQuestions} dobrze, ${attempt.wrongQuestions} źle, ${attempt.unansweredQuestions} nieodpowiedziano`;
-  }, [attempt, showResults]);
+  }, [attempt, hasActiveAttempt]);
+
+  const clearAttemptFeedback = () => {
+    setAttempt(null);
+  };
+
+  const unlockQuestion = (questionIndex: number) => {
+    setLockedCorrectQuestions((previous) => {
+      if (!previous.has(questionIndex)) {
+        return previous;
+      }
+
+      const next = new Set(previous);
+      next.delete(questionIndex);
+      return next;
+    });
+  };
 
   if (!quiz || quiz.questions.length === 0) {
     return (
@@ -108,6 +121,8 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
   }
 
   const setSingleSelection = (questionIndex: number, answerIndex: number) => {
+    clearAttemptFeedback();
+    unlockQuestion(questionIndex);
     setSelections((previous) => ({
       ...previous,
       [questionIndex]: [answerIndex],
@@ -118,6 +133,8 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
     questionIndex: number,
     answerIndex: number,
   ) => {
+    clearAttemptFeedback();
+    unlockQuestion(questionIndex);
     setSelections((previous) => {
       const current = previous[questionIndex] ?? [];
       const alreadySelected = current.includes(answerIndex);
@@ -135,7 +152,19 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
   const handleSubmit = async () => {
     const result = evaluateQuizAttempt(quiz, selections);
     setAttempt(result);
-    setSubmittedSelections(cloneQuizSelections(selections));
+    setLockedCorrectQuestions((previous) => {
+      const next = new Set(previous);
+      quiz.questions.forEach((question, questionIndex) => {
+        const evaluation = evaluateQuizQuestion(
+          question,
+          selections[questionIndex],
+        );
+        if (evaluation.isCorrect) {
+          next.add(questionIndex);
+        }
+      });
+      return next;
+    });
 
     if (!result.isPassed || isCompleted) {
       return;
@@ -163,26 +192,39 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
 
       <div className="space-y-4">
         {quiz.questions.map((question, questionIndex) => {
-          const questionEvaluation = showResults
-            ? evaluateQuizQuestion(
-                question,
-                submittedSelections?.[questionIndex],
-              )
+          const isLockedCorrect = lockedCorrectQuestions.has(questionIndex);
+          const questionEvaluation = hasActiveAttempt
+            ? evaluateQuizQuestion(question, selections[questionIndex])
             : null;
+          const showSuccessBadge =
+            isLockedCorrect || questionEvaluation?.isCorrect === true;
+          const showErrorBadge =
+            hasActiveAttempt &&
+            questionEvaluation !== null &&
+            !isLockedCorrect &&
+            !questionEvaluation.isCorrect &&
+            questionEvaluation.isAnswered;
 
           return (
           <fieldset
             key={questionIndex}
-            className={cn("p-4", getQuestionFieldsetClassName(showResults, questionEvaluation))}
+            className={cn(
+              "p-4",
+              getQuestionFieldsetClassName(
+                isLockedCorrect,
+                hasActiveAttempt,
+                questionEvaluation,
+              ),
+            )}
           >
             <legend className="flex w-full items-center justify-between gap-2 px-1 text-sm font-semibold text-[var(--coffee-charcoal)]">
               <span>Pytanie {questionIndex + 1}</span>
-              {questionEvaluation?.isCorrect ? (
+              {showSuccessBadge ? (
                 <Badge variant="success" size="sm" rounded={false}>
                   Dobrze!
                 </Badge>
               ) : null}
-              {questionEvaluation && !questionEvaluation.isCorrect && questionEvaluation.isAnswered ? (
+              {showErrorBadge ? (
                 <Badge variant="error" size="sm" rounded={false}>
                   Źle
                 </Badge>

@@ -82,7 +82,80 @@ describe("QuizSection", () => {
     expect(screen.getByText("Dobrze!")).toBeInTheDocument();
   });
 
-  it("hides feedback after changing an answer until Sprawdź is clicked again", async () => {
+  it("hides attempt feedback after changing an answer until Sprawdź is clicked again", async () => {
+    const user = userEvent.setup();
+    const onPass = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <QuizSection item={createQuizItem()} isCompleted={false} onPass={onPass} />,
+    );
+
+    await user.click(screen.getByLabelText("app"));
+    await user.click(screen.getByRole("button", { name: "Sprawdź" }));
+
+    expect(screen.getByText("Dobrze!")).toBeInTheDocument();
+
+    await user.click(screen.getByLabelText("layout.tsx"));
+
+    expect(screen.getByText("Dobrze!")).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Sprawdź" }));
+
+    expect(screen.getByText("Źle")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "1 dobrze, 1 źle, 0 nieodpowiedziano",
+    );
+  });
+
+  it("does not restore feedback when reverting to the same selection after a change", async () => {
+    const user = userEvent.setup();
+    const onPass = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <QuizSection item={createQuizItem()} isCompleted={false} onPass={onPass} />,
+    );
+
+    await user.click(screen.getByLabelText("pages"));
+    await user.click(screen.getByRole("button", { name: "Sprawdź" }));
+
+    expect(screen.getByText("Źle")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "0 dobrze, 1 źle, 1 nieodpowiedziano",
+    );
+
+    await user.click(screen.getByLabelText("app"));
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByText("Źle")).not.toBeInTheDocument();
+
+    await user.click(screen.getByLabelText("pages"));
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByText("Źle")).not.toBeInTheDocument();
+  });
+
+  it("keeps locked correct styling after changing another answer", async () => {
+    const user = userEvent.setup();
+    const onPass = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <QuizSection item={createQuizItem()} isCompleted={false} onPass={onPass} />,
+    );
+
+    await user.click(screen.getByLabelText("app"));
+    await user.click(screen.getByRole("button", { name: "Sprawdź" }));
+
+    expect(screen.getByText("Dobrze!")).toBeInTheDocument();
+
+    await user.click(screen.getByLabelText("layout.tsx"));
+
+    expect(screen.getByText("Dobrze!")).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByText("Źle")).not.toBeInTheDocument();
+  });
+
+  it("unlocks correct styling when the locked question answer changes", async () => {
     const user = userEvent.setup();
     const onPass = vi.fn().mockResolvedValue(undefined);
 
@@ -99,13 +172,6 @@ describe("QuizSection", () => {
 
     expect(screen.queryByText("Dobrze!")).not.toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Sprawdź" }));
-
-    expect(screen.getByText("Źle")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "0 dobrze, 1 źle, 1 nieodpowiedziano",
-    );
   });
 
   it("keeps the quiz completed even if a later retry is incorrect", async () => {
