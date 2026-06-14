@@ -61,6 +61,27 @@ describe("QuizSection", () => {
     );
   });
 
+  it("shows per-question feedback and a detailed breakdown after a failed attempt", async () => {
+    const user = userEvent.setup();
+    const onPass = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <QuizSection item={createQuizItem()} isCompleted={false} onPass={onPass} />,
+    );
+
+    await user.click(screen.getByLabelText("app"));
+    await user.click(screen.getByRole("button", { name: "Sprawdź" }));
+
+    expect(onPass).not.toHaveBeenCalled();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Wynik: 1/2. Spróbuj ponownie.",
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "1 dobrze, 0 źle, 1 nieodpowiedziano",
+    );
+    expect(screen.getByText("Dobrze!")).toBeInTheDocument();
+  });
+
   it("keeps the quiz completed even if a later retry is incorrect", async () => {
     const user = userEvent.setup();
     const onPass = vi.fn().mockResolvedValue(undefined);

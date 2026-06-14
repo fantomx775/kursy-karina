@@ -9,6 +9,7 @@ export type QuizSelections = Record<number, number[]>;
 export type QuizAttemptResult = {
   totalQuestions: number;
   correctQuestions: number;
+  wrongQuestions: number;
   unansweredQuestions: number;
   isPassed: boolean;
 };
@@ -87,9 +88,13 @@ export function evaluateQuizAttempt(
     { correctQuestions: 0, unansweredQuestions: 0 },
   );
 
+  const wrongQuestions =
+    totalQuestions - summary.correctQuestions - summary.unansweredQuestions;
+
   return {
     totalQuestions,
     correctQuestions: summary.correctQuestions,
+    wrongQuestions,
     unansweredQuestions: summary.unansweredQuestions,
     isPassed: totalQuestions > 0 && summary.correctQuestions === totalQuestions,
   };

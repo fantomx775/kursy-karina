@@ -33,6 +33,7 @@ describe("evaluateQuizAttempt", () => {
     expect(result).toEqual({
       totalQuestions: 2,
       correctQuestions: 2,
+      wrongQuestions: 0,
       unansweredQuestions: 0,
       isPassed: true,
     });
@@ -47,6 +48,7 @@ describe("evaluateQuizAttempt", () => {
     expect(result).toEqual({
       totalQuestions: 2,
       correctQuestions: 1,
+      wrongQuestions: 1,
       unansweredQuestions: 0,
       isPassed: false,
     });

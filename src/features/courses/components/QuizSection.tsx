@@ -2,7 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { BlockingSpinner } from "@/components/ui";
-import { evaluateQuizAttempt, type QuizSelections } from "@/lib/courseQuiz";
+import { Badge } from "@/components/ui/Badge/Badge";
+import {
+  evaluateQuizAttempt,
+  evaluateQuizQuestion,
+  type QuizSelections,
+} from "@/lib/courseQuiz";
+import { cn } from "@/lib/utils";
 import type { CourseItem, CourseQuizQuestion } from "@/types/course";
 
 type Props = {
@@ -14,9 +20,29 @@ type Props = {
 type AttemptState = {
   totalQuestions: number;
   correctQuestions: number;
+  wrongQuestions: number;
   unansweredQuestions: number;
   isPassed: boolean;
 };
+
+function getQuestionFieldsetClassName(
+  hasAttempt: boolean,
+  evaluation: { isCorrect: boolean; isAnswered: boolean } | null,
+): string {
+  if (!hasAttempt || !evaluation) {
+    return "border-radius border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)]";
+  }
+
+  if (evaluation.isCorrect) {
+    return "border-radius border border-green-200 bg-green-50";
+  }
+
+  if (evaluation.isAnswered) {
+    return "border-radius border border-red-200 bg-red-50";
+  }
+
+  return "border-radius border border-amber-200 bg-amber-50";
+}
 
 function getQuestionTypeLabel(question: CourseQuizQuestion): string {
   return question.type === "multiple"
@@ -51,6 +77,14 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
 
     return `Wynik: ${attempt.correctQuestions}/${attempt.totalQuestions}. Spróbuj ponownie.`;
   }, [attempt, isCompleted]);
+
+  const attemptBreakdown = useMemo(() => {
+    if (!attempt) {
+      return null;
+    }
+
+    return `${attempt.correctQuestions} dobrze, ${attempt.wrongQuestions} źle, ${attempt.unansweredQuestions} nieodpowiedziano`;
+  }, [attempt]);
 
   if (!quiz || quiz.questions.length === 0) {
     return (
@@ -114,13 +148,28 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
       </div>
 
       <div className="space-y-4">
-        {quiz.questions.map((question, questionIndex) => (
+        {quiz.questions.map((question, questionIndex) => {
+          const questionEvaluation = attempt
+            ? evaluateQuizQuestion(question, selections[questionIndex])
+            : null;
+
+          return (
           <fieldset
             key={questionIndex}
-            className="rounded border border-[var(--coffee-cappuccino)] bg-[var(--coffee-cream)] p-4"
+            className={cn("p-4", getQuestionFieldsetClassName(Boolean(attempt), questionEvaluation))}
           >
-            <legend className="px-1 text-sm font-semibold text-[var(--coffee-charcoal)]">
-              Pytanie {questionIndex + 1}
+            <legend className="flex w-full items-center justify-between gap-2 px-1 text-sm font-semibold text-[var(--coffee-charcoal)]">
+              <span>Pytanie {questionIndex + 1}</span>
+              {questionEvaluation?.isCorrect ? (
+                <Badge variant="success" size="sm" rounded={false}>
+                  Dobrze!
+                </Badge>
+              ) : null}
+              {questionEvaluation && !questionEvaluation.isCorrect && questionEvaluation.isAnswered ? (
+                <Badge variant="error" size="sm" rounded={false}>
+                  Źle
+                </Badge>
+              ) : null}
             </legend>
 
             <div className="space-y-3">
@@ -166,7 +215,8 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
               </div>
             </div>
           </fieldset>
-        ))}
+          );
+        })}
       </div>
 
       {attemptMessage ? (
@@ -179,10 +229,8 @@ export function QuizSection({ item, isCompleted, onPass }: Props) {
           role="status"
         >
           {attemptMessage}
-          {attempt && attempt.unansweredQuestions > 0 ? (
-            <div className="mt-1">
-              Nie odpowiedziano na: {attempt.unansweredQuestions}
-            </div>
+          {attemptBreakdown ? (
+            <div className="mt-1">{attemptBreakdown}</div>
           ) : null}
         </div>
       ) : null}
