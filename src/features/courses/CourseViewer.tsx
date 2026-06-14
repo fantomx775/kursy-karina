@@ -7,6 +7,10 @@ import type { CourseWithContent } from "@/types/course";
 import { CertificateActions } from "@/features/certificates/CertificateActions";
 import { useAuth } from "@/features/auth/AuthContext";
 import { useToast } from "@/components/ui/Toast";
+import {
+  getCourseProgressSaveErrorMessage,
+  upsertCourseProgress,
+} from "@/lib/courseProgress";
 import { createBrowserSupabaseClient } from "@/services/supabase/browser";
 import { CourseStepCard } from "./components/CourseStepCard";
 import { StepList } from "./components/StepList";
@@ -126,18 +130,12 @@ export function CourseViewer({
       return { error: new Error("Brak zalogowanego użytkownika.") };
     }
 
-    const { error } = await supabase.from("course_progress").upsert(
-      {
-        user_id: user.id,
-        course_id: course.id,
-        item_id: itemId,
-        completed,
-        last_watched: new Date().toISOString(),
-      },
-      { onConflict: "user_id,item_id" },
-    );
-
-    return { error };
+    return upsertCourseProgress(supabase, {
+      userId: user.id,
+      courseId: course.id,
+      itemId,
+      completed,
+    });
   };
 
   const revertCompletionIfUnchanged = (
@@ -163,13 +161,12 @@ export function CourseViewer({
     });
   };
 
-  const showProgressSaveError = (message?: string) => {
+  const showProgressSaveError = (error?: Error | null) => {
     addToast({
       type: "error",
       title: "Nie udało się zapisać postępu",
-      message:
-        message ??
-        "Sprawdź połączenie z internetem i spróbuj ponownie.",
+      message: getCourseProgressSaveErrorMessage(error),
+      duration: 0,
     });
   };
 
@@ -214,7 +211,7 @@ export function CourseViewer({
     const { error } = await persistCompletion(itemId, shouldComplete);
     if (error) {
       revertCompletionIfUnchanged(itemId, shouldComplete);
-      showProgressSaveError(error.message);
+      showProgressSaveError(error);
     }
   };
 
@@ -231,7 +228,7 @@ export function CourseViewer({
     const { error } = await persistCompletion(itemId, true);
     if (error) {
       revertCompletionIfUnchanged(itemId, true);
-      showProgressSaveError(error.message);
+      showProgressSaveError(error);
     }
   };
 

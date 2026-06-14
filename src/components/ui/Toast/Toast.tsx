@@ -204,10 +204,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
         {/* Close button */}
         <button
           onClick={() => onRemove(toast.id)}
-          className={cn(
-            'flex-shrink-0 ml-2 text-gray-400 hover:text-gray-600 active:opacity-60 transition-all duration-200',
-            'opacity-0'
-          )}
+          className="flex-shrink-0 ml-2 text-current opacity-60 hover:opacity-100 active:opacity-40 transition-opacity duration-200"
           aria-label="Zamknij"
         >
           <FiX className="w-4 h-4" />
