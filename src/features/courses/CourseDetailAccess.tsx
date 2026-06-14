@@ -99,7 +99,7 @@ export async function CourseAccessPurchasePanel({
 
   const infoBlock = (
     <div className="bg-white border border-[var(--coffee-cappuccino)] shadow-sm p-5 sm:p-6 text-sm text-[var(--coffee-espresso)] leading-relaxed">
-      <p>Pełny dostęp do materiałów SVG i video YouTube.</p>
+      <p>Pełny dostęp do materiałów tekstowych, video oraz quizów.</p>
       <p className="mt-2">
         Dostęp po zakupie:{" "}
         {formatAccessDuration(
