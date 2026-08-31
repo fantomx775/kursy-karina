@@ -50,14 +50,14 @@ describe("Fakturownia config", () => {
     });
   });
 
-  it("uses zw as the default tax rate", () => {
+  it("uses 23 as the default tax rate", () => {
     expect(
       getFakturowniaConfig({
         FAKTUROWNIA_ACCOUNT_DOMAIN: "firma",
         FAKTUROWNIA_API_TOKEN: "token",
       }),
     ).toMatchObject({
-      taxRate: "zw",
+      taxRate: 23,
     });
   });
 
